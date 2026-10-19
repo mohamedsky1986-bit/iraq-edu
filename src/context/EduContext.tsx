@@ -29,24 +29,17 @@ import {
 } from 'firebase/firestore';
 
 interface EduContextType {
-  // Auth state
   currentStudent: Student | null;
   isAdmin: boolean;
   adminUsername: string;
   adminPassword: string;
   soundOn: boolean;
-
-  // Subscription config & requests
   subscriptionConfig: SubscriptionConfig;
   subscriptionRequests: SubscriptionRequest[];
-
-  // Data
   students: Student[];
   subjects: Subject[];
   questions: Question[];
   quizAttempts: QuizAttempt[];
-
-  // Actions
   loginStudent: (username: string, password?: string) => { success: boolean; error?: string };
   registerStudent: (data: {
     fullName: string;
@@ -61,8 +54,6 @@ interface EduContextType {
   loginAdmin: (username: string, password: string) => { success: boolean; error?: string };
   logoutAdmin: () => void;
   changeAdminCredentials: (newUsername: string, newPassword: string) => boolean;
-
-  // Subscription management
   updateSubscriptionConfig: (updatedConfig: Partial<SubscriptionConfig>) => void;
   submitSubscriptionRequest: (data: {
     studentId: string;
@@ -76,16 +67,12 @@ interface EduContextType {
   }) => SubscriptionRequest;
   approveSubscriptionRequest: (requestId: string) => void;
   rejectSubscriptionRequest: (requestId: string) => void;
-
-  // Admin controls
   toggleStudentSubscription: (studentId: string, specificType?: SubscriptionType) => void;
   resetStudentPassword: (studentId: string, newPass: string) => void;
   deleteStudent: (studentId: string) => void;
   addQuestion: (question: Omit<Question, 'id'>) => void;
   updateQuestion: (question: Question) => void;
   deleteQuestion: (questionId: string) => void;
-
-  // Student quiz
   recordQuizAttempt: (attempt: {
     studentId: string;
     studentName: string;
@@ -98,8 +85,6 @@ interface EduContextType {
     passed: boolean;
     stars: number;
   }) => QuizAttempt;
-
-  // Settings
   toggleSound: () => void;
 }
 
@@ -120,11 +105,17 @@ const STORAGE_KEYS = {
 };
 
 export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Local state with localStorage caching
   const [students, setStudents] = useState<Student[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEYS.STUDENTS);
-      return saved ? JSON.parse(saved) : INITIAL_STUDENTS;
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          const valid = parsed.filter((s) => s && s.username);
+          if (valid.length > 0) return valid;
+        }
+      }
+      return INITIAL_STUDENTS;
     } catch {
       return INITIAL_STUDENTS;
     }
@@ -217,33 +208,27 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   });
 
-  // ----------------------------------------------------
-  // Realtime Cloud Synchronization with Firebase Firestore
-  // ----------------------------------------------------
-
-  // 1. Sync Students Collection
   useEffect(() => {
     try {
       const unsubscribe = onSnapshot(
         collection(db, 'students'),
         (snapshot) => {
           if (!snapshot.empty) {
-            const remoteStudents = snapshot.docs.map((docSnap) => ({
-              id: docSnap.id,
-              ...docSnap.data(),
-            })) as Student[];
-            setStudents(remoteStudents);
+            const remoteStudents = snapshot.docs
+              .map((docSnap) => ({
+                id: docSnap.id,
+                ...docSnap.data(),
+              }))
+              .filter((s: any) => s && s.username) as Student[];
 
-            // If current student is logged in, refresh their data from cloud
-            if (currentStudent) {
-              const updatedCurrent = remoteStudents.find((s) => s.id === currentStudent.id);
-              if (updatedCurrent) setCurrentStudent(updatedCurrent);
+            if (remoteStudents.length > 0) {
+              setStudents(remoteStudents);
+
+              if (currentStudent) {
+                const updatedCurrent = remoteStudents.find((s) => s.id === currentStudent.id);
+                if (updatedCurrent) setCurrentStudent(updatedCurrent);
+              }
             }
-          } else if (students.length === 0) {
-            // Seed initial students to cloud if Firestore collection is brand new
-            INITIAL_STUDENTS.forEach((std) => {
-              setDoc(doc(db, 'students', std.id), std).catch(() => {});
-            });
           }
         },
         (error) => {
@@ -256,7 +241,6 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, []);
 
-  // 2. Sync Questions Collection
   useEffect(() => {
     try {
       const unsubscribe = onSnapshot(
@@ -268,11 +252,6 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               ...docSnap.data(),
             })) as Question[];
             setQuestions(remoteQuestions);
-          } else {
-            // Seed initial default questions if empty
-            INITIAL_QUESTIONS.slice(0, 10).forEach((q) => {
-              setDoc(doc(db, 'questions', q.id), q).catch(() => {});
-            });
           }
         },
         (error) => {
@@ -285,7 +264,6 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, []);
 
-  // 3. Sync Subscription Requests
   useEffect(() => {
     try {
       const unsubscribe = onSnapshot(
@@ -309,7 +287,6 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, []);
 
-  // 4. Sync Quiz Attempts
   useEffect(() => {
     try {
       const unsubscribe = onSnapshot(
@@ -333,9 +310,8 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, []);
 
-  // Sync to LocalStorage as instant cache & session backup
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.STUDENTS, JSON.stringify(students));
+    localStorage.setItem(STORAGE_KEYS.STUDENTS, JSON.stringify(students.filter((s) => s && s.username)));
   }, [students]);
 
   useEffect(() => {
@@ -383,22 +359,26 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setSoundEnabled(soundOn);
   }, [soundOn]);
 
-  // Auth methods
   const loginStudent = (username: string, password?: string) => {
-    const cleanUser = username.trim().toLowerCase();
-    const student = students.find((s) => s.username.toLowerCase() === cleanUser);
+    try {
+      const cleanUser = (username || '').trim().toLowerCase();
+      const student = students.find((s) => s && s.username && s.username.toLowerCase() === cleanUser);
 
-    if (!student) {
-      return { success: false, error: 'اسم المستخدم غير مسجل، يرجى إنشاء حساب جديد يا بطل!' };
+      if (!student) {
+        return { success: false, error: 'اسم المستخدم غير مسجل، يرجى إنشاء حساب جديد يا بطل!' };
+      }
+
+      if (student.password && password && student.password !== password) {
+        return { success: false, error: 'رمز المرور غير صحيح، يرجى المحاولة مرة أخرى.' };
+      }
+
+      setCurrentStudent(student);
+      setIsAdmin(false);
+      return { success: true };
+    } catch (err: any) {
+      console.error('loginStudent error:', err);
+      return { success: false, error: err?.message || 'فشل تسجيل الدخول' };
     }
-
-    if (student.password && password && student.password !== password) {
-      return { success: false, error: 'رمز المرور غير صحيح، يرجى المحاولة مرة أخرى.' };
-    }
-
-    setCurrentStudent(student);
-    setIsAdmin(false);
-    return { success: true };
   };
 
   const registerStudent = (data: {
@@ -410,40 +390,43 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     schoolName?: string;
     city?: string;
   }) => {
-    const cleanUser = data.username.trim().toLowerCase();
-    const existing = students.find((s) => s.username.toLowerCase() === cleanUser);
-    if (existing) {
-      return { success: false, error: 'اسم المستخدم مستخدم بالفعل، اختر اسماً مميزاً آخر.' };
+    try {
+      const cleanUser = (data.username || '').trim().toLowerCase();
+      const existing = students.find((s) => s && s.username && s.username.toLowerCase() === cleanUser);
+      if (existing) {
+        return { success: false, error: 'اسم المستخدم مستخدم بالفعل، اختر اسماً مميزاً آخر.' };
+      }
+
+      const newStudent: Student = {
+        id: `std-${Date.now()}`,
+        username: cleanUser,
+        fullName: (data.fullName || '').trim(),
+        gradeId: data.gradeId,
+        password: data.password || '123',
+        subscription: 'free',
+        registeredAt: new Date().toISOString().split('T')[0],
+        avatar: data.avatar || '👦🏻',
+        totalScore: 0,
+        starsEarned: 0,
+        completedQuizzesCount: 0,
+        badges: ['طالب جديد واعد 🌟'],
+        schoolName: data.schoolName || 'مدرسة ابتدائية',
+        city: data.city || 'العراق',
+      };
+
+      setStudents((prev) => [newStudent, ...prev.filter((s) => s && s.username)]);
+      setCurrentStudent(newStudent);
+      setIsAdmin(false);
+
+      setDoc(doc(db, 'students', newStudent.id), newStudent).catch((err) => {
+        console.error('Error saving new student to Firebase:', err);
+      });
+
+      return { success: true };
+    } catch (err: any) {
+      console.error('registerStudent error:', err);
+      return { success: false, error: err?.message || 'حدث خطأ أثناء التسجيل' };
     }
-
-    const newStudent: Student = {
-      id: `std-${Date.now()}`,
-      username: cleanUser,
-      fullName: data.fullName.trim(),
-      gradeId: data.gradeId,
-      password: data.password || '123',
-      subscription: 'free',
-      registeredAt: new Date().toISOString().split('T')[0],
-      avatar: data.avatar || '👦🏻',
-      totalScore: 0,
-      starsEarned: 0,
-      completedQuizzesCount: 0,
-      badges: ['طالب جديد واعد 🌟'],
-      schoolName: data.schoolName || 'مدرسة ابتدائية',
-      city: data.city || 'العراق',
-    };
-
-    // Save to local state
-    setStudents((prev) => [newStudent, ...prev]);
-    setCurrentStudent(newStudent);
-    setIsAdmin(false);
-
-    // Save to Firebase Cloud Firestore
-    setDoc(doc(db, 'students', newStudent.id), newStudent).catch((err) => {
-      console.error('Error saving new student to Firebase:', err);
-    });
-
-    return { success: true };
   };
 
   const logout = () => {
@@ -505,7 +488,6 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     setSubscriptionRequests((prev) => [newReq, ...prev]);
 
-    // Save request to Firebase Firestore
     setDoc(doc(db, 'subscription_requests', newReq.id), newReq).catch((err) => {
       console.error('Error saving subscription request to Firebase:', err);
     });
@@ -517,17 +499,14 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const target = subscriptionRequests.find((r) => r.id === requestId);
     if (!target) return;
 
-    // Set request approved locally
     setSubscriptionRequests((prev) =>
       prev.map((r) => (r.id === requestId ? { ...r, status: 'approved' } : r))
     );
 
-    // Update in Firebase Firestore
     updateDoc(doc(db, 'subscription_requests', requestId), { status: 'approved' }).catch((err) => {
       console.error('Error updating request in Firebase:', err);
     });
 
-    // Automatically activate student subscription
     toggleStudentSubscription(target.studentId, 'paid');
   };
 
@@ -536,7 +515,6 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       prev.map((r) => (r.id === requestId ? { ...r, status: 'rejected' } : r))
     );
 
-    // Update in Firebase Firestore
     updateDoc(doc(db, 'subscription_requests', requestId), { status: 'rejected' }).catch((err) => {
       console.error('Error rejecting request in Firebase:', err);
     });
@@ -568,7 +546,6 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setCurrentStudent(updated);
     }
 
-    // Sync to Firebase Firestore
     setDoc(doc(db, 'students', studentId), updated, { merge: true }).catch((err) => {
       console.error('Error updating student subscription in Firebase:', err);
     });
@@ -582,7 +559,6 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setCurrentStudent((prev) => (prev ? { ...prev, password: newPass } : null));
     }
 
-    // Sync to Firebase
     updateDoc(doc(db, 'students', studentId), { password: newPass }).catch((err) => {
       console.error('Error updating password in Firebase:', err);
     });
@@ -594,7 +570,6 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setCurrentStudent(null);
     }
 
-    // Delete from Firebase Firestore
     deleteDoc(doc(db, 'students', studentId)).catch((err) => {
       console.error('Error deleting student from Firebase:', err);
     });
@@ -607,7 +582,6 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
     setQuestions((prev) => [questionWithId, ...prev]);
 
-    // Save to Firebase Firestore
     setDoc(doc(db, 'questions', questionWithId.id), questionWithId).catch((err) => {
       console.error('Error adding question to Firebase:', err);
     });
@@ -618,7 +592,6 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       prev.map((q) => (q.id === updatedQ.id ? updatedQ : q))
     );
 
-    // Update in Firebase Firestore
     setDoc(doc(db, 'questions', updatedQ.id), updatedQ, { merge: true }).catch((err) => {
       console.error('Error updating question in Firebase:', err);
     });
@@ -627,7 +600,6 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const deleteQuestion = (questionId: string) => {
     setQuestions((prev) => prev.filter((q) => q.id !== questionId));
 
-    // Delete from Firebase Firestore
     deleteDoc(doc(db, 'questions', questionId)).catch((err) => {
       console.error('Error deleting question from Firebase:', err);
     });
@@ -653,7 +625,6 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     setQuizAttempts((prev) => [newAttempt, ...prev]);
 
-    // Save attempt to Firebase
     setDoc(doc(db, 'quiz_attempts', newAttempt.id), newAttempt).catch((err) => {
       console.error('Error recording quiz attempt in Firebase:', err);
     });
@@ -682,7 +653,6 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           setCurrentStudent(updatedStudent);
         }
 
-        // Sync updated student score and badges to Firebase
         setDoc(doc(db, 'students', s.id), updatedStudent, { merge: true }).catch((err) => {
           console.error('Error updating student score in Firebase:', err);
         });

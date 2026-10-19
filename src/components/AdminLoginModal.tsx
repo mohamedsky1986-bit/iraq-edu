@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useEdu } from '../context/EduContext';
 import {
@@ -24,28 +23,37 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
   onClose,
 }) => {
   const { loginAdmin } = useEdu();
-  const [username, setUsername] = useState('admin');
+  const [username, setUsername] = useState('mohamedsky1986@gmail.com');
   const [password, setPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
+    setIsLoading(true);
 
-    const res = loginAdmin(username, password);
+    try {
+      const res = await loginAdmin(username, password);
 
-    if (res.success) {
-      playCorrectSound();
-      setPassword('');
-      setErrorMsg('');
-      onClose();
-    } else {
+      if (res.success) {
+        playCorrectSound();
+        setPassword('');
+        setErrorMsg('');
+        onClose();
+      } else {
+        playWrongSound();
+        setErrorMsg(
+          res.error || 'البريد الإلكتروني أو كلمة المرور غير صحيحة!'
+        );
+      }
+    } catch (err) {
       playWrongSound();
-      setErrorMsg(
-        res.error || 'اسم المشرف أو كلمة المرور غير صحيحة!'
-      );
+      setErrorMsg('حدث خطأ أثناء تسجيل الدخول. تحقق من الاتصال.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -63,7 +71,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
                 تسجيل دخول المشرف العام
               </h2>
               <p className="text-xs text-slate-500 font-medium">
-                يرجى إدخال بيانات الدخول للمتابعة
+                يرجى إدخال البريد الإلكتروني وكلمة المرور للمتابعة
               </p>
             </div>
           </div>
@@ -84,23 +92,23 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
         <form onSubmit={handleSubmit} className="mt-5 space-y-4">
           <div>
             <label className="block text-xs font-bold text-slate-700 mb-1.5">
-              اسم المستخدم
+              البريد الإلكتروني للمشرف
             </label>
 
             <div className="relative">
               <UserCheck className="absolute right-3.5 top-3.5 w-4 h-4 text-slate-400" />
 
               <input
-                type="text"
+                type="email"
                 value={username}
                 onChange={(e) => {
                   setUsername(e.target.value);
                   setErrorMsg('');
                 }}
-                placeholder="أدخل اسم المستخدم"
+                placeholder="admin@example.com"
                 className="w-full pr-10 pl-4 py-3 rounded-2xl border border-slate-200 focus:border-rose-500 focus:ring-2 focus:ring-rose-200 outline-none text-xs sm:text-sm font-medium transition-all"
                 dir="ltr"
-                autoComplete="username"
+                autoComplete="email"
                 required
               />
             </div>
@@ -142,9 +150,10 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
 
           <button
             type="submit"
-            className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-700 hover:to-rose-800 text-white font-black text-sm shadow-lg shadow-rose-600/25 transition-all transform hover:-translate-y-0.5 cursor-pointer"
+            disabled={isLoading}
+            className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-700 hover:to-rose-800 text-white font-black text-sm shadow-lg shadow-rose-600/25 transition-all transform hover:-translate-y-0.5 cursor-pointer disabled:opacity-50"
           >
-            دخول لوحة المشرف 🔐
+            {isLoading ? 'جاري التحقق...' : 'دخول لوحة المشرف 🔐'}
           </button>
         </form>
       </div>

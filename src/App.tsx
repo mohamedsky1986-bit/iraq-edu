@@ -106,16 +106,6 @@ function AppContent() {
             <button
               onClick={() => {
                 playClickSound();
-                setIsZipModalOpen(true);
-              }}
-              className="text-amber-700 hover:text-amber-800 font-bold flex items-center gap-1 cursor-pointer"
-            >
-              <Download className="w-3.5 h-3.5" />
-              <span>تحميل المشروع ZIP</span>
-            </button>
-            <button
-              onClick={() => {
-                playClickSound();
                 setIsSupportModalOpen(true);
               }}
               className="text-sky-700 hover:text-sky-800 font-bold flex items-center gap-1 cursor-pointer"

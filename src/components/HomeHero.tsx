@@ -60,18 +60,6 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
               <span>دخول الطالب / تسجيل حساب جديد</span>
               <ArrowLeft className="w-4 h-4" />
             </button>
-
-            <button
-              onClick={() => {
-                playClickSound();
-                onOpenZipModal();
-              }}
-              className="px-5 py-4 rounded-2xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 font-bold text-xs flex items-center gap-2 transition-all cursor-pointer"
-            >
-              <Download className="w-4 h-4 text-amber-400" />
-              <span>تحميل المشروع كاملاً (ZIP)</span>
-            </button>
-
             <button
               onClick={() => {
                 playClickSound();

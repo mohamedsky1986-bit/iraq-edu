@@ -1,7 +1,18 @@
+
 import React, { useState } from 'react';
 import { useEdu } from '../context/EduContext';
-import { playClickSound, playCorrectSound, playWrongSound } from '../utils/audio';
-import { X, ShieldCheck, KeyRound, UserCheck, AlertCircle } from 'lucide-react';
+import {
+  playClickSound,
+  playCorrectSound,
+  playWrongSound,
+} from '../utils/audio';
+import {
+  X,
+  ShieldCheck,
+  KeyRound,
+  UserCheck,
+  AlertCircle,
+} from 'lucide-react';
 
 interface AdminLoginModalProps {
   isOpen: boolean;
@@ -24,6 +35,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
     setErrorMsg('');
 
     const res = loginAdmin(username, password);
+
     if (res.success) {
       playCorrectSound();
       setPassword('');
@@ -31,7 +43,9 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
       onClose();
     } else {
       playWrongSound();
-      setErrorMsg(res.error || 'اسم المشرف أو كلمة المرور غير صحيحة!');
+      setErrorMsg(
+        res.error || 'اسم المشرف أو كلمة المرور غير صحيحة!'
+      );
     }
   };
 
@@ -43,16 +57,19 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
             <div className="w-11 h-11 rounded-2xl bg-rose-100 text-rose-700 flex items-center justify-center shadow-xs">
               <ShieldCheck className="w-6 h-6" />
             </div>
+
             <div>
               <h2 className="text-base sm:text-lg font-black text-slate-900">
-                تسجيل دخول المشرف العام (Admin)
+                تسجيل دخول المشرف العام
               </h2>
               <p className="text-xs text-slate-500 font-medium">
-                حماية أمنية مشددة (اسم مستخدم + رمز مرور)
+                يرجى إدخال بيانات الدخول للمتابعة
               </p>
             </div>
           </div>
+
           <button
+            type="button"
             onClick={() => {
               playClickSound();
               onClose();
@@ -67,10 +84,12 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
         <form onSubmit={handleSubmit} className="mt-5 space-y-4">
           <div>
             <label className="block text-xs font-bold text-slate-700 mb-1.5">
-              اسم المشرف (Admin Username)
+              اسم المستخدم
             </label>
+
             <div className="relative">
               <UserCheck className="absolute right-3.5 top-3.5 w-4 h-4 text-slate-400" />
+
               <input
                 type="text"
                 value={username}
@@ -78,9 +97,10 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
                   setUsername(e.target.value);
                   setErrorMsg('');
                 }}
-                placeholder="اسم المستخدم الإداري (الافتراضي: admin)"
+                placeholder="أدخل اسم المستخدم"
                 className="w-full pr-10 pl-4 py-3 rounded-2xl border border-slate-200 focus:border-rose-500 focus:ring-2 focus:ring-rose-200 outline-none text-xs sm:text-sm font-medium transition-all"
                 dir="ltr"
+                autoComplete="username"
                 required
               />
             </div>
@@ -88,10 +108,12 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
 
           <div>
             <label className="block text-xs font-bold text-slate-700 mb-1.5">
-              كلمة مرور المشرف (Admin Password)
+              كلمة المرور
             </label>
+
             <div className="relative">
               <KeyRound className="absolute right-3.5 top-3.5 w-4 h-4 text-slate-400" />
+
               <input
                 type="password"
                 value={password}
@@ -99,38 +121,30 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
                   setPassword(e.target.value);
                   setErrorMsg('');
                 }}
-                placeholder="كلمة المرور (الافتراضي: admin123)"
+                placeholder="أدخل كلمة المرور"
                 className="w-full pr-10 pl-4 py-3 rounded-2xl border border-slate-200 focus:border-rose-500 focus:ring-2 focus:ring-rose-200 outline-none text-xs sm:text-sm font-medium transition-all"
                 dir="ltr"
+                autoComplete="current-password"
                 required
-                autoFocus
               />
             </div>
           </div>
 
           {errorMsg && (
-            <div className="p-3 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-bold flex items-center gap-2">
+            <div
+              role="alert"
+              className="p-3 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-bold flex items-center gap-2"
+            >
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{errorMsg}</span>
             </div>
           )}
 
-          <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-slate-600 text-[11px] leading-relaxed">
-            <span className="font-bold text-slate-800">بيانات الدخول الافتراضية:</span>
-            <div className="mt-1 flex items-center justify-between font-mono bg-white p-2 rounded-xl border border-slate-200 text-slate-700">
-              <span>اسم المشرف: <strong>admin</strong></span>
-              <span>الرمز: <strong>admin123</strong></span>
-            </div>
-            <p className="mt-1.5 text-slate-400">
-              يمكنك تغيير اسم المشرف والرمز في أي وقت من لوحة التحكم لمنع الاختراق.
-            </p>
-          </div>
-
           <button
             type="submit"
             className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-700 hover:to-rose-800 text-white font-black text-sm shadow-lg shadow-rose-600/25 transition-all transform hover:-translate-y-0.5 cursor-pointer"
           >
-            دخول آمن للوحة المشرف 🔐
+            دخول لوحة المشرف 🔐
           </button>
         </form>
       </div>

@@ -18,7 +18,8 @@ import {
 } from '../data/initialData';
 import { setSoundEnabled } from '../utils/audio';
 import { validateAdminCredentials } from '../utils/edu-logic';
-import { db } from '../firebase';
+import { db, auth } from '../firebase';
+import { signInWithEmailAndPassword, updatePassword } from 'firebase/auth';
 import {
   collection,
   doc,
@@ -51,9 +52,9 @@ interface EduContextType {
     city?: string;
   }) => { success: boolean; error?: string };
   logout: () => void;
-  loginAdmin: (username: string, password: string) => { success: boolean; error?: string };
+  loginAdmin: (username: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logoutAdmin: () => void;
-  changeAdminCredentials: (newUsername: string, newPassword: string) => boolean;
+  changeAdminCredentials: (newUsername: string, newPassword: string) => Promise<boolean>;
   updateSubscriptionConfig: (updatedConfig: Partial<SubscriptionConfig>) => void;
   submitSubscriptionRequest: (data: {
     studentId: string;
@@ -150,17 +151,17 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const [adminUsername, setAdminUsername] = useState<string>(() => {
     try {
-      return localStorage.getItem(STORAGE_KEYS.ADMIN_USER) || 'admin';
+      return localStorage.getItem(STORAGE_KEYS.ADMIN_USER) || 'mohamedsky1986@gmail.com';
     } catch {
-      return 'admin';
+      return 'mohamedsky1986@gmail.com';
     }
   });
 
   const [adminPassword, setAdminPassword] = useState<string>(() => {
     try {
-      return localStorage.getItem(STORAGE_KEYS.ADMIN_PASS) || 'admin123';
+      return localStorage.getItem(STORAGE_KEYS.ADMIN_PASS) || '';
     } catch {
-      return 'admin123';
+      return '';
     }
   });
 
@@ -433,32 +434,51 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setCurrentStudent(null);
   };
 
-  const loginAdmin = (usernameInput: string, passwordInput: string) => {
-    const check = validateAdminCredentials(
-      usernameInput,
-      passwordInput,
-      adminUsername,
-      adminPassword
-    );
-    if (check.isValid) {
+  const loginAdmin = async (usernameInput: string, passwordInput: string) => {
+    try {
+      // Authenticate against Firebase Authentication using the admin email
+      await signInWithEmailAndPassword(auth, usernameInput.trim(), passwordInput);
       setIsAdmin(true);
       setCurrentStudent(null);
+      setAdminUsername(usernameInput.trim());
       return { success: true };
+    } catch (err: any) {
+      console.error('Firebase Admin login error:', err);
+      // Fallback to local check if needed or return auth error
+      const check = validateAdminCredentials(
+        usernameInput,
+        passwordInput,
+        adminUsername,
+        adminPassword
+      );
+      if (check.isValid) {
+        setIsAdmin(true);
+        setCurrentStudent(null);
+        return { success: true };
+      }
+      return { success: false, error: 'البريد الإلكتروني أو كلمة المرور للمشرف غير صحيحة في النظام.' };
     }
-    return { success: false, error: check.error || 'فشل تسجيل الدخول' };
   };
 
   const logoutAdmin = () => {
     setIsAdmin(false);
   };
 
-  const changeAdminCredentials = (newUsername: string, newPassword: string) => {
+  const changeAdminCredentials = async (newUsername: string, newPassword: string) => {
     if (!newUsername.trim() || newUsername.trim().length < 3) return false;
-    if (!newPassword || newPassword.trim().length < 4) return false;
+    if (!newPassword || newPassword.trim().length < 6) return false;
 
-    setAdminUsername(newUsername.trim());
-    setAdminPassword(newPassword.trim());
-    return true;
+    try {
+      if (auth.currentUser) {
+        await updatePassword(auth.currentUser, newPassword.trim());
+      }
+      setAdminUsername(newUsername.trim());
+      setAdminPassword(newPassword.trim());
+      return true;
+    } catch (err) {
+      console.error('Error updating admin password in Firebase:', err);
+      return false;
+    }
   };
 
   const updateSubscriptionConfig = (updated: Partial<SubscriptionConfig>) => {

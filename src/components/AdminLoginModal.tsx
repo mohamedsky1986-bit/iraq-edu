@@ -99,11 +99,6 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
                   setPassword(e.target.value);
                   setErrorMsg('');
                 }}
-                placeholder="كلمة المرور (الافتراضي: admin123)"
-                className="w-full pr-10 pl-4 py-3 rounded-2xl border border-slate-200 focus:border-rose-500 focus:ring-2 focus:ring-rose-200 outline-none text-xs sm:text-sm font-medium transition-all"
-                dir="ltr"
-                required
-                autoFocus
               />
             </div>
           </div>

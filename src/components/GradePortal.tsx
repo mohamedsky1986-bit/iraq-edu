@@ -40,10 +40,8 @@ export const GradePortal: React.FC<GradePortalProps> = ({
   const currentGradeId = currentStudent.gradeId;
   const gradeInfo = GRADES_DATA.find((g) => g.id === currentGradeId);
 
-  // Filter subjects strictly for the student's grade
   const gradeSubjects = subjects.filter((s) => s.gradeId === currentGradeId);
 
-  // Active selected subject
   const [selectedSubjectId, setSelectedSubjectId] = useState<string>(
     gradeSubjects[0]?.id || ''
   );
@@ -52,14 +50,13 @@ export const GradePortal: React.FC<GradePortalProps> = ({
   const selectedSubject =
     gradeSubjects.find((s) => s.id === selectedSubjectId) || gradeSubjects[0];
 
-  // Questions for current subject
   const currentSubjectQuestions = questions.filter(
     (q) => q.gradeId === currentGradeId && q.subjectId === selectedSubject?.id
   );
 
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
-      {/* Student Welcome & Grade Hero Banner */}
+      {/* Student Welcome Banner */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-emerald-600 via-teal-700 to-cyan-800 text-white p-6 sm:p-10 shadow-xl shadow-teal-900/10">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex items-start sm:items-center gap-4">
@@ -113,7 +110,6 @@ export const GradePortal: React.FC<GradePortalProps> = ({
             </div>
           </div>
 
-          {/* Student Stats Badges */}
           <div className="flex items-center gap-2 sm:gap-3 bg-white/10 backdrop-blur-md p-3 rounded-2xl border border-white/15 shrink-0">
             <div className="text-center px-3 py-1 border-l border-white/20">
               <div className="flex items-center justify-center gap-1 text-amber-300 text-lg font-black">
@@ -141,7 +137,6 @@ export const GradePortal: React.FC<GradePortalProps> = ({
           </div>
         </div>
 
-        {/* Badges Ribbon */}
         {currentStudent.badges && currentStudent.badges.length > 0 && (
           <div className="relative z-10 mt-6 pt-4 border-t border-white/15 flex flex-wrap items-center gap-2">
             <span className="text-xs font-bold text-emerald-200 flex items-center gap-1">
@@ -157,9 +152,6 @@ export const GradePortal: React.FC<GradePortalProps> = ({
             ))}
           </div>
         )}
-
-        <div className="absolute -bottom-12 -left-12 w-64 h-64 rounded-full bg-white/5 pointer-events-none" />
-        <div className="absolute -top-16 -right-16 w-80 h-80 rounded-full bg-amber-400/10 pointer-events-none" />
       </div>
 
       {/* Grade Subject Carousel */}
@@ -189,10 +181,13 @@ export const GradePortal: React.FC<GradePortalProps> = ({
           </button>
         </div>
 
-        {/* Subjects Horizontal Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
           {gradeSubjects.map((subj) => {
             const isSelected = selectedSubject?.id === subj.id;
+            const subjectQuestionsCount = questions.filter(
+              (q) => q.gradeId === currentGradeId && q.subjectId === subj.id
+            ).length;
+
             return (
               <button
                 key={subj.id}
@@ -214,8 +209,8 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                 </div>
                 <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500 font-semibold">
                   <span>{subj.lessonsCount} درس</span>
-                  <span className="text-emerald-700">
-                    {questions.filter((q) => q.gradeId === currentGradeId && q.subjectId === subj.id).length} سؤال
+                  <span className="text-emerald-700 font-bold">
+                    {subjectQuestionsCount} سؤال
                   </span>
                 </div>
               </button>
@@ -224,16 +219,27 @@ export const GradePortal: React.FC<GradePortalProps> = ({
         </div>
       </div>
 
-      {/* Special Interactive Section for 1st Grade Arabic Reading, English Letters & Science */}
-      {currentGradeId === 'grade-1' && selectedSubject?.id === 'ar-1' && (
+      {/* وحدة النطق الصوتي ومعالجة الحركات للحروف العربية (للأول والثاني وأي مادة قراءة/عربية) */}
+      {(currentGradeId === 'grade-1' ||
+        currentGradeId === 'grade-2' ||
+        selectedSubject?.id?.startsWith('ar-') ||
+        selectedSubject?.name?.includes('قراءتي') ||
+        selectedSubject?.name?.includes('العربية')) && (
         <Grade1ArabicReading />
       )}
 
-      {currentGradeId === 'grade-1' && selectedSubject?.id === 'eng-1' && (
+      {/* وحدة الحروف الإنجليزية والنطق الصوتي والفونكس (للأول والثاني وأي مادة إنجليزية) */}
+      {(currentGradeId === 'grade-1' ||
+        currentGradeId === 'grade-2' ||
+        selectedSubject?.id?.startsWith('eng-') ||
+        selectedSubject?.name?.includes('الإنجليزية') ||
+        selectedSubject?.name?.includes('English')) && (
         <Grade1EnglishLetters />
       )}
 
-      {currentGradeId === 'grade-1' && selectedSubject?.id === 'sci-1' && (
+      {/* قسم العلوم التفاعلي */}
+      {(selectedSubject?.id?.startsWith('sci-') ||
+        selectedSubject?.name?.includes('العلوم')) && (
         <Grade1Science />
       )}
 
@@ -255,7 +261,6 @@ export const GradePortal: React.FC<GradePortalProps> = ({
               </div>
             </div>
 
-            {/* Launch Quiz Button */}
             <button
               onClick={() => {
                 playClickSound();
@@ -268,7 +273,6 @@ export const GradePortal: React.FC<GradePortalProps> = ({
             </button>
           </div>
 
-          {/* Tabs for Questions vs Lessons */}
           <div className="flex items-center gap-3">
             <button
               onClick={() => {
@@ -300,7 +304,6 @@ export const GradePortal: React.FC<GradePortalProps> = ({
             </button>
           </div>
 
-          {/* Tab Content: Questions Bank */}
           {activeTab === 'qa' && (
             <div className="space-y-4 pt-2">
               {currentSubjectQuestions.length > 0 ? (
@@ -319,38 +322,23 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                     لا توجد أسئلة مضافة لهذه المادة بعد.
                   </p>
                   <p className="text-xs text-slate-400 mt-1">
-                    يمكن للمشرف إضافة أسئلة من لوحة التحكم.
+                    يمكن للمشرف إضافة أسئلة من لوحة التحكم في أي وقت.
                   </p>
                 </div>
               )}
             </div>
           )}
 
-          {/* Tab Content: Curriculum Units */}
           {activeTab === 'curriculum' && (
-            <div className="pt-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
-                <span className="text-xs font-black text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md">
-                  الوحدة الأولى
-                </span>
-                <h4 className="font-bold text-slate-800 text-sm">
-                  المفاهيم الأساسية والدروس التمهيدية
-                </h4>
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  تشمل شروحات المنهج المعتمدة من وزارة التربية العراقية، مع الأمثلة التوضيحية والتمارين الصفية.
-                </p>
-              </div>
-
-              <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
-                <span className="text-xs font-black text-sky-700 bg-sky-100 px-2 py-0.5 rounded-md">
-                  الوحدة الثانية
-                </span>
-                <h4 className="font-bold text-slate-800 text-sm">
-                  التطبيقات والتدريبات والأنشطة العملية
-                </h4>
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  تمارين لتعزيز الفهم والاستيعاب مع التركيز على النطق السليم والقراءة النموذجية وحل المسائل.
-                </p>
+            <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 text-slate-700 text-xs sm:text-sm leading-relaxed space-y-3">
+              <h4 className="font-black text-slate-900 text-base">
+                مفردات ومنهاج {selectedSubject.name} - {gradeInfo?.name}
+              </h4>
+              <p>
+                يتضمن هذا المنهج {selectedSubject.lessonsCount} درساً تدريبياً مع تمارين واختبارات تفاعلية، متطابقة مع كتاب وزارة التربية العراقية الرسمي.
+              </p>
+              <div className="p-4 rounded-xl bg-white border border-slate-200 font-medium">
+                💡 <strong>نصيحة للمتفوق:</strong> يمكنك حل الأسئلة والاستماع للنطق الصوتي لترسيخ المعلومات قبل بدء الاختبار التقييمي للحصول على وسام التفوق الذهبي.
               </div>
             </div>
           )}

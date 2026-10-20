@@ -39,6 +39,42 @@ const OFFICIAL_IRAQI_SUBJECTS: Record<GradeId, { id: string; name: string }[]> =
   ]
 };
 
+function formatArabicDateTime(dateStr?: string) {
+  if (!dateStr) return 'لم يسجل دخول بعد';
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    const now = new Date();
+    const diffMs = now.getTime() - d.getTime();
+    const diffMinutes = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffMinutes < 5) return '🟢 متواجد الآن';
+    if (diffMinutes < 60) return `منذ ${diffMinutes} دقيقة`;
+    if (diffHours < 24 && d.getDate() === now.getDate()) {
+      return `اليوم ${d.toLocaleTimeString('ar-IQ', { hour: '2-digit', minute: '2-digit' })}`;
+    }
+    if (diffDays === 1) {
+      return `أمس ${d.toLocaleTimeString('ar-IQ', { hour: '2-digit', minute: '2-digit' })}`;
+    }
+    return d.toLocaleDateString('ar-IQ', { year: 'numeric', month: 'short', day: 'numeric' });
+  } catch {
+    return dateStr;
+  }
+}
+
+function formatArabicDate(dateStr?: string) {
+  if (!dateStr) return 'غير محدد';
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    return d.toLocaleDateString('ar-IQ', { year: 'numeric', month: 'short', day: 'numeric' });
+  } catch {
+    return dateStr;
+  }
+}
+
 export const AdminPanel: React.FC = () => {
   const {
     students, questions, adminUsername, subscriptionConfig, subscriptionRequests,
@@ -47,7 +83,7 @@ export const AdminPanel: React.FC = () => {
     approveSubscriptionRequest, rejectSubscriptionRequest
   } = useEdu();
 
-  const [activeTab, setActiveTab] = useState<'students' | 'requests' | 'curriculum' | 'pricing' | 'security'>('curriculum');
+  const [activeTab, setActiveTab] = useState<'students' | 'requests' | 'curriculum' | 'pricing' | 'security'>('students');
   const [studentSearch, setStudentSearch] = useState('');
   const [selectedGradeFilter, setSelectedGradeFilter] = useState<string>('all');
 
@@ -175,7 +211,7 @@ export const AdminPanel: React.FC = () => {
       <div className="p-6 rounded-3xl bg-slate-900 text-white flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
         <div>
           <h1 className="text-xl sm:text-2xl font-black">لوحة الإشراف وإدارة منصة المتفوق</h1>
-          <p className="text-xs text-slate-400">إدارة الأسئلة، التعاليل، التعاريف، الاشتراكات والأسعار</p>
+          <p className="text-xs text-slate-400">إدارة الأسئلة، التعاليل، التعاريف، حضور الطلاب والاشتراكات</p>
         </div>
         <button
           onClick={openCreateQuestion}
@@ -189,8 +225,8 @@ export const AdminPanel: React.FC = () => {
       {/* Tabs */}
       <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 bg-slate-100 p-1.5 rounded-2xl border border-slate-200">
         {[
+          { id: 'students', label: 'الطلاب المشتركون والحضور', icon: Users, count: students.length },
           { id: 'curriculum', label: 'بنك الأسئلة والمناهج', icon: BookOpen, count: questions.length },
-          { id: 'students', label: 'الطلاب المشتركون', icon: Users, count: students.length },
           { id: 'requests', label: 'طلبات الاشتراك', icon: CheckCheck, count: subscriptionRequests.filter(r => r.status === 'pending').length },
           { id: 'pricing', label: 'تسعير المنهاج والدفع', icon: CreditCard },
           { id: 'security', label: 'حماية المشرف', icon: Shield },
@@ -212,6 +248,108 @@ export const AdminPanel: React.FC = () => {
           );
         })}
       </div>
+
+      {/* Students Tab with Attendance & Registration Tracking */}
+      {activeTab === 'students' && (
+        <div className="bg-white rounded-3xl border border-slate-200 p-5 space-y-4">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+            <input
+              type="text"
+              placeholder="ابحث بالاسم الكامل أو اسم المستخدم..."
+              value={studentSearch}
+              onChange={(e) => setStudentSearch(e.target.value)}
+              className="w-full sm:w-80 p-2.5 rounded-xl border border-slate-200 text-xs font-bold"
+            />
+            <select
+              value={selectedGradeFilter}
+              onChange={(e) => setSelectedGradeFilter(e.target.value)}
+              className="p-2.5 rounded-xl border border-slate-200 text-xs font-bold w-full sm:w-auto"
+            >
+              <option value="all">كل المراحل الدراسية</option>
+              {GRADES_DATA.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
+            </select>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs text-right border-collapse">
+              <thead>
+                <tr className="border-b border-slate-200 text-slate-700 font-black bg-slate-50/80">
+                  <th className="p-3">الطالب واسم المستخدم</th>
+                  <th className="p-3">المرحلة الدراسية</th>
+                  <th className="p-3">تاريخ التسجيل</th>
+                  <th className="p-3">آخر تواجد وحضور</th>
+                  <th className="p-3">حالة الاشتراك</th>
+                  <th className="p-3 text-center">الإجراءات</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredStudents.map((st) => (
+                  <tr key={st.id} className="border-b border-slate-100 hover:bg-slate-50/80 transition-colors">
+                    <td className="p-3 font-bold text-slate-900 flex items-center gap-2.5">
+                      <span className="text-2xl p-1.5 rounded-xl bg-slate-100">{st.avatar}</span>
+                      <div>
+                        <div className="font-black text-sm text-slate-950">{st.fullName}</div>
+                        <div className="text-[11px] text-emerald-700 font-bold font-mono">@{st.username}</div>
+                        {st.schoolName && <div className="text-[10px] text-slate-400">🏫 {st.schoolName}</div>}
+                      </div>
+                    </td>
+                    <td className="p-3 text-slate-700 font-bold whitespace-nowrap">
+                      <span className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200 font-black text-[11px]">
+                        {getIraqiGradeName(st.gradeId)}
+                      </span>
+                    </td>
+                    <td className="p-3 text-slate-600 font-bold whitespace-nowrap">
+                      <div className="flex items-center gap-1.5 text-xs">
+                        <span className="text-slate-400">📅</span>
+                        <span>{formatArabicDate(st.registeredAt)}</span>
+                      </div>
+                    </td>
+                    <td className="p-3 whitespace-nowrap">
+                      <div className="flex items-center gap-1.5 text-xs font-bold">
+                        <span className="text-slate-400">⏱️</span>
+                        <span className={(st as any).lastActiveAt ? 'text-slate-900 font-black' : 'text-slate-500'}>
+                          {formatArabicDateTime((st as any).lastActiveAt || st.registeredAt)}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="p-3 whitespace-nowrap">
+                      <span className={`px-2.5 py-1 rounded-full text-[10px] font-black inline-flex items-center gap-1 ${
+                        st.subscription === 'paid' ? 'bg-amber-100 text-amber-900 border border-amber-300' : 'bg-slate-100 text-slate-600'
+                      }`}>
+                        {st.subscription === 'paid' ? '⭐ VIP مفعل' : 'مجاني'}
+                      </span>
+                    </td>
+                    <td className="p-3 text-center whitespace-nowrap">
+                      <div className="flex items-center justify-center gap-1.5">
+                        <button
+                          onClick={() => toggleStudentSubscription(st.id)}
+                          className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-500 hover:bg-amber-600 text-white cursor-pointer shadow-2xs"
+                        >
+                          {st.subscription === 'paid' ? 'تحويل لمجاني' : 'تفعيل VIP'}
+                        </button>
+                        <button
+                          onClick={() => resetStudentPassword(st.id)}
+                          className="p-1 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 cursor-pointer"
+                          title="تصفير كلمة المرور"
+                        >
+                          <KeyRound className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => { if (confirm('هل أنت متأكد من حذف الطالب؟')) deleteStudent(st.id); }}
+                          className="p-1 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 cursor-pointer"
+                          title="حذف الطالب"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* Questions Tab */}
       {activeTab === 'curriculum' && (
@@ -242,40 +380,6 @@ export const AdminPanel: React.FC = () => {
                 </div>
               </div>
             ))}
-          </div>
-        </div>
-      )}
-
-      {/* Students Tab */}
-      {activeTab === 'students' && (
-        <div className="bg-white rounded-3xl border border-slate-200 p-5 space-y-4">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-            <input type="text" placeholder="بحث عن طالب..." value={studentSearch} onChange={(e) => setStudentSearch(e.target.value)} className="w-full sm:w-80 p-2.5 rounded-xl border border-slate-200 text-xs font-bold" />
-            <select value={selectedGradeFilter} onChange={(e) => setSelectedGradeFilter(e.target.value)} className="p-2.5 rounded-xl border border-slate-200 text-xs font-bold w-full sm:w-auto">
-              <option value="all">كل المراحل الدراسية</option>
-              {GRADES_DATA.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
-            </select>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs text-right border-collapse">
-              <thead><tr className="border-b border-slate-200 text-slate-500 font-bold bg-slate-50/50"><th className="p-3">الطالب</th><th className="p-3">المرحلة</th><th className="p-3">الاشتراك</th><th className="p-3 text-center">الإجراءات</th></tr></thead>
-              <tbody>
-                {filteredStudents.map((st) => (
-                  <tr key={st.id} className="border-b border-slate-100 hover:bg-slate-50">
-                    <td className="p-3 font-bold text-slate-900 flex items-center gap-2"><span>{st.avatar}</span><div><div>{st.fullName}</div><div className="text-[10px] text-slate-400">@{st.username}</div></div></td>
-                    <td className="p-3 text-slate-600">{getIraqiGradeName(st.gradeId)}</td>
-                    <td className="p-3"><span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${st.subscription === 'paid' ? 'bg-amber-100 text-amber-900' : 'bg-slate-100 text-slate-600'}`}>{st.subscription === 'paid' ? 'VIP ⭐' : 'مجاني'}</span></td>
-                    <td className="p-3 text-center">
-                      <div className="flex items-center justify-center gap-1.5">
-                        <button onClick={() => toggleStudentSubscription(st.id)} className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-500 text-white cursor-pointer">{st.subscription === 'paid' ? 'تحويل لمجاني' : 'تفعيل VIP'}</button>
-                        <button onClick={() => resetStudentPassword(st.id)} className="p-1 text-slate-500 cursor-pointer" title="تصفير كلمة المرور"><KeyRound className="w-4 h-4" /></button>
-                        <button onClick={() => { if (confirm('حذف الطالب؟')) deleteStudent(st.id); }} className="p-1 text-rose-500 cursor-pointer"><Trash2 className="w-4 h-4" /></button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
           </div>
         </div>
       )}

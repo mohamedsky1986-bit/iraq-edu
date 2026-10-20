@@ -24,14 +24,14 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
     setErrorMsg('');
 
     const res = loginAdmin(username, password);
-    if (res.success) {
+    if (res && res.success) {
       playCorrectSound();
       setPassword('');
       setErrorMsg('');
       onClose();
     } else {
       playWrongSound();
-      setErrorMsg(res.error || 'اسم المشرف أو كلمة المرور غير صحيحة!');
+      setErrorMsg((res && res.error) || 'اسم المشرف أو كلمة المرور غير صحيحة!');
     }
   };
 
@@ -48,7 +48,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
                 تسجيل دخول المشرف العام (Admin)
               </h2>
               <p className="text-xs text-slate-500 font-medium">
-                حماية أمنية مشددة (اسم مستخدم + رمز مرور)
+                دخول آمن بلوحة التحكم لجميع الأجهزة
               </p>
             </div>
           </div>
@@ -67,7 +67,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
         <form onSubmit={handleSubmit} className="mt-5 space-y-4">
           <div>
             <label className="block text-xs font-bold text-slate-700 mb-1.5">
-              اسم المشرف (Admin Username)
+              اسم المشرف أو البريد الإلكتروني
             </label>
             <div className="relative">
               <UserCheck className="absolute right-3.5 top-3.5 w-4 h-4 text-slate-400" />
@@ -78,7 +78,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
                   setUsername(e.target.value);
                   setErrorMsg('');
                 }}
-                placeholder="اسم المستخدم الإداري (الافتراضي: admin)"
+                placeholder="اكتب admin أو mohamedsky1986@gmail.com"
                 className="w-full pr-10 pl-4 py-3 rounded-2xl border border-slate-200 focus:border-rose-500 focus:ring-2 focus:ring-rose-200 outline-none text-xs sm:text-sm font-medium transition-all"
                 dir="ltr"
                 required
@@ -99,7 +99,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
                   setPassword(e.target.value);
                   setErrorMsg('');
                 }}
-                placeholder="كلمة المرور (الافتراضي: admin123)"
+                placeholder="كلمة المرور: admin123"
                 className="w-full pr-10 pl-4 py-3 rounded-2xl border border-slate-200 focus:border-rose-500 focus:ring-2 focus:ring-rose-200 outline-none text-xs sm:text-sm font-medium transition-all"
                 dir="ltr"
                 required
@@ -116,13 +116,13 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
           )}
 
           <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-slate-600 text-[11px] leading-relaxed">
-            <span className="font-bold text-slate-800">بيانات الدخول الافتراضية:</span>
+            <span className="font-bold text-slate-800">بيانات الدخول المعتمدة لجميع المتصفحات:</span>
             <div className="mt-1 flex items-center justify-between font-mono bg-white p-2 rounded-xl border border-slate-200 text-slate-700">
-              <span>اسم المشرف: <strong>admin</strong></span>
+              <span>المشرف: <strong>admin</strong></span>
               <span>الرمز: <strong>admin123</strong></span>
             </div>
-            <p className="mt-1.5 text-slate-400">
-              يمكنك تغيير اسم المشرف والرمز في أي وقت من لوحة التحكم لمنع الاختراق.
+            <p className="mt-1 text-slate-400">
+              أو يمكنك كتابة إيميلك: mohamedsky1986@gmail.com
             </p>
           </div>
 
@@ -130,7 +130,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
             type="submit"
             className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-700 hover:to-rose-800 text-white font-black text-sm shadow-lg shadow-rose-600/25 transition-all transform hover:-translate-y-0.5 cursor-pointer"
           >
-            دخول آمن للوحة المشرف 🔐
+            دخول لوحة المشرف 🔐
           </button>
         </form>
       </div>

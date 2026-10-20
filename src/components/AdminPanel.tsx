@@ -39,28 +39,43 @@ const OFFICIAL_IRAQI_SUBJECTS: Record<GradeId, { id: string; name: string }[]> =
   ]
 };
 
-function formatArabicDateTime(dateStr?: string) {
-  if (!dateStr) return 'لم يسجل دخول بعد';
+// فحص هل الطالب متواجد أونلاين الآن (خلال آخر 3 دقائق)
+function isStudentOnline(st: any): boolean {
+  if (!st) return false;
+  const lastActiveStr = st.lastActiveAt || st.registeredAt;
+  if (!lastActiveStr) return false;
   try {
-    const d = new Date(dateStr);
-    if (isNaN(d.getTime())) return dateStr;
-    const now = new Date();
-    const diffMs = now.getTime() - d.getTime();
+    const diffMs = Date.now() - new Date(lastActiveStr).getTime();
+    return st.isOnline !== false && diffMs < 3 * 60 * 1000;
+  } catch {
+    return false;
+  }
+}
+
+// تنسيق وقت وتاريخ الحضور والظهور
+function formatAttendanceText(st: any): string {
+  if (!st) return 'غير محدد';
+  const lastActiveStr = st.lastActiveAt || st.registeredAt;
+  if (!lastActiveStr) return 'لم يسجل دخول بعد';
+  try {
+    const d = new Date(lastActiveStr);
+    if (isNaN(d.getTime())) return lastActiveStr;
+    const diffMs = Date.now() - d.getTime();
     const diffMinutes = Math.floor(diffMs / (1000 * 60));
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-    if (diffMinutes < 5) return '🟢 متواجد الآن';
+    if (diffMinutes < 3 && st.isOnline !== false) return 'متواجد الآن في المنصة';
     if (diffMinutes < 60) return `منذ ${diffMinutes} دقيقة`;
+    const now = new Date();
     if (diffHours < 24 && d.getDate() === now.getDate()) {
       return `اليوم ${d.toLocaleTimeString('ar-IQ', { hour: '2-digit', minute: '2-digit' })}`;
     }
-    if (diffDays === 1) {
+    if (diffHours < 48) {
       return `أمس ${d.toLocaleTimeString('ar-IQ', { hour: '2-digit', minute: '2-digit' })}`;
     }
-    return d.toLocaleDateString('ar-IQ', { year: 'numeric', month: 'short', day: 'numeric' });
+    return d.toLocaleDateString('ar-IQ', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
   } catch {
-    return dateStr;
+    return lastActiveStr;
   }
 }
 
@@ -80,7 +95,7 @@ export const AdminPanel: React.FC = () => {
     students, questions, adminUsername, subscriptionConfig, subscriptionRequests,
     toggleStudentSubscription, resetStudentPassword, deleteStudent, addQuestion,
     updateQuestion, deleteQuestion, changeAdminCredentials, updateSubscriptionConfig,
-    approveSubscriptionRequest, rejectSubscriptionRequest
+    approveSubscriptionRequest, rejectSubscriptionRequest, logoutAdmin
   } = useEdu();
 
   const [activeTab, setActiveTab] = useState<'students' | 'requests' | 'curriculum' | 'pricing' | 'security'>('students');
@@ -207,19 +222,30 @@ export const AdminPanel: React.FC = () => {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto px-2 sm:px-4 text-center sm:text-right">
-      {/* Top Banner */}
+      {/* Top Banner with Exit/Back Button */}
       <div className="p-6 rounded-3xl bg-slate-900 text-white flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
         <div>
           <h1 className="text-xl sm:text-2xl font-black">لوحة الإشراف وإدارة منصة المتفوق</h1>
-          <p className="text-xs text-slate-400">إدارة الأسئلة، التعاليل، التعاريف، حضور الطلاب والاشتراكات</p>
+          <p className="text-xs text-slate-400">إدارة الأسئلة، التعاليل، التعاريف، تتبع حضور الطلاب والاشتراكات</p>
         </div>
-        <button
-          onClick={openCreateQuestion}
-          className="px-5 py-2.5 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-black flex items-center gap-2 cursor-pointer shadow-lg"
-        >
-          <PlusCircle className="w-4 h-4" />
-          <span>إضافة سؤال / تعليل / تعريف</span>
-        </button>
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          <button
+            onClick={() => {
+              playClickSound();
+              logoutAdmin();
+            }}
+            className="px-4 py-2.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-black flex items-center gap-1.5 cursor-pointer border border-slate-700 shadow-xs"
+          >
+            <span>← خروج وعودة للمنصة</span>
+          </button>
+          <button
+            onClick={openCreateQuestion}
+            className="px-5 py-2.5 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-black flex items-center gap-2 cursor-pointer shadow-lg shadow-emerald-500/25"
+          >
+            <PlusCircle className="w-4 h-4" />
+            <span>إضافة سؤال / تعليل / تعريف</span>
+          </button>
+        </div>
       </div>
 
       {/* Tabs */}
@@ -249,7 +275,7 @@ export const AdminPanel: React.FC = () => {
         })}
       </div>
 
-      {/* Students Tab with Attendance & Registration Tracking */}
+      {/* Students Tab with Live Online/Offline Status */}
       {activeTab === 'students' && (
         <div className="bg-white rounded-3xl border border-slate-200 p-5 space-y-4">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
@@ -277,7 +303,7 @@ export const AdminPanel: React.FC = () => {
                   <th className="p-3">الطالب واسم المستخدم</th>
                   <th className="p-3">المرحلة الدراسية</th>
                   <th className="p-3">تاريخ التسجيل</th>
-                  <th className="p-3">آخر تواجد وحضور</th>
+                  <th className="p-3">حالة التواجد (Online)</th>
                   <th className="p-3">حالة الاشتراك</th>
                   <th className="p-3 text-center">الإجراءات</th>
                 </tr>
@@ -304,13 +330,24 @@ export const AdminPanel: React.FC = () => {
                         <span>{formatArabicDate(st.registeredAt)}</span>
                       </div>
                     </td>
+                    {/* عمود الأونلاين والأوفلاين الذكي */}
                     <td className="p-3 whitespace-nowrap">
-                      <div className="flex items-center gap-1.5 text-xs font-bold">
-                        <span className="text-slate-400">⏱️</span>
-                        <span className={(st as any).lastActiveAt ? 'text-slate-900 font-black' : 'text-slate-500'}>
-                          {formatArabicDateTime((st as any).lastActiveAt || st.registeredAt)}
-                        </span>
-                      </div>
+                      {isStudentOnline(st) ? (
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
+                          <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-900 font-black text-[11px] border border-emerald-300 shadow-2xs">
+                            🟢 أونلاين (متصل الآن)
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full bg-slate-400 shrink-0"></span>
+                          <span className="text-[11px] text-slate-500 font-bold">آخر ظهور:</span>
+                          <span className="text-[11px] text-slate-800 font-black">
+                            {formatAttendanceText(st)}
+                          </span>
+                        </div>
+                      )}
                     </td>
                     <td className="p-3 whitespace-nowrap">
                       <span className={`px-2.5 py-1 rounded-full text-[10px] font-black inline-flex items-center gap-1 ${
@@ -351,7 +388,7 @@ export const AdminPanel: React.FC = () => {
         </div>
       )}
 
-      {/* Questions Tab */}
+      {/* Curriculum Tab */}
       {activeTab === 'curriculum' && (
         <div className="bg-white rounded-3xl border border-slate-200 p-5 space-y-4">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
@@ -433,7 +470,7 @@ export const AdminPanel: React.FC = () => {
         </form>
       )}
 
-      {/* Modal */}
+      {/* Add / Edit Question Modal */}
       {isQuestionModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-slate-950/70 backdrop-blur-xs">
           <div className="bg-white rounded-3xl max-w-2xl w-full p-5 sm:p-6 shadow-2xl border border-slate-200 max-h-[92vh] overflow-y-auto text-right">

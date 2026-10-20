@@ -58,14 +58,14 @@ export const GradePortal: React.FC<GradePortalProps> = ({
     <div className="space-y-8 animate-in fade-in duration-300">
       {/* Student Welcome Banner */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-emerald-600 via-teal-700 to-cyan-800 text-white p-6 sm:p-10 shadow-xl shadow-teal-900/10">
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="flex items-start sm:items-center gap-4">
+        <div className="relative z-10 flex flex-col md:flex-row items-center md:items-center text-center md:text-right justify-between gap-6">
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
             <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-4xl sm:text-5xl shadow-lg shrink-0">
               {currentStudent.avatar}
             </div>
 
-            <div className="space-y-1.5">
-              <div className="flex flex-wrap items-center gap-2">
+            <div className="space-y-1.5 flex flex-col items-center sm:items-start">
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
                 <span className="text-xs font-black uppercase px-2.5 py-0.5 rounded-full bg-amber-400 text-amber-950 shadow-xs">
                   بوابة الطالب الخاصة 🎓
                 </span>
@@ -86,11 +86,11 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                 )}
               </div>
 
-              <h1 className="text-2xl sm:text-3xl font-black tracking-tight">
+              <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-center sm:text-right">
                 أهلاً بك يا بطل: {currentStudent.fullName}
               </h1>
 
-              <div className="flex flex-wrap items-center gap-3 text-xs sm:text-sm text-emerald-100 font-medium">
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 text-xs sm:text-sm text-emerald-100 font-medium">
                 <span className="font-bold text-white bg-emerald-500/40 px-2 py-0.5 rounded-lg border border-white/10">
                   {getIraqiGradeName(currentGradeId)}
                 </span>
@@ -110,7 +110,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-3 bg-white/10 backdrop-blur-md p-3 rounded-2xl border border-white/15 shrink-0">
+          <div className="flex items-center justify-center gap-2 sm:gap-3 bg-white/10 backdrop-blur-md p-3 rounded-2xl border border-white/15 shrink-0 mx-auto md:mx-0">
             <div className="text-center px-3 py-1 border-l border-white/20">
               <div className="flex items-center justify-center gap-1 text-amber-300 text-lg font-black">
                 <Sparkles className="w-4 h-4 fill-amber-300" />
@@ -138,7 +138,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
         </div>
 
         {currentStudent.badges && currentStudent.badges.length > 0 && (
-          <div className="relative z-10 mt-6 pt-4 border-t border-white/15 flex flex-wrap items-center gap-2">
+          <div className="relative z-10 mt-6 pt-4 border-t border-white/15 flex flex-wrap items-center justify-center sm:justify-start gap-2">
             <span className="text-xs font-bold text-emerald-200 flex items-center gap-1">
               <Award className="w-3.5 h-3.5" /> الأوسمة الممنوحة:
             </span>
@@ -156,9 +156,9 @@ export const GradePortal: React.FC<GradePortalProps> = ({
 
       {/* Grade Subject Carousel */}
       <div className="space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-center sm:text-right">
           <div>
-            <h2 className="text-xl font-black text-slate-900 flex items-center gap-2">
+            <h2 className="text-xl font-black text-slate-900 flex items-center justify-center sm:justify-start gap-2">
               <span>مناهج {gradeInfo?.name}</span>
               <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
                 {gradeSubjects.length} مواد مقررة
@@ -174,7 +174,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
               playClickSound();
               onOpenSearch();
             }}
-            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-extrabold shadow-md shadow-amber-500/20 transition-all cursor-pointer"
+            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-extrabold shadow-md shadow-amber-500/20 transition-all cursor-pointer mx-auto sm:mx-0"
           >
             <Search className="w-4 h-4" />
             <span>البحث السريع في بنك الأسئلة</span>
@@ -195,7 +195,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                   playClickSound();
                   setSelectedSubjectId(subj.id);
                 }}
-                className={`p-4 rounded-3xl border-2 text-right transition-all flex flex-col justify-between cursor-pointer ${
+                className={`p-4 rounded-3xl border-2 text-center sm:text-right transition-all flex flex-col justify-between cursor-pointer ${
                   isSelected
                     ? 'border-emerald-500 bg-emerald-50/80 shadow-md scale-102 ring-2 ring-emerald-200'
                     : 'border-slate-200/90 bg-white hover:border-slate-300 hover:shadow-xs'
@@ -219,22 +219,39 @@ export const GradePortal: React.FC<GradePortalProps> = ({
         </div>
       </div>
 
-      {/* وحدة النطق الصوتي ومعالجة الحركات للحروف العربية (للأول والثاني وأي مادة قراءة/عربية) */}
-      {(currentGradeId === 'grade-1' ||
-        currentGradeId === 'grade-2' ||
-        selectedSubject?.id?.startsWith('ar-') ||
-        selectedSubject?.name?.includes('قراءتي') ||
-        selectedSubject?.name?.includes('العربية')) && (
-        <Grade1ArabicReading />
-      )}
+      {/* وحدة تأسيس ومراجعة الحروف والمقاطع بالحركات (للصفين الأول والثاني فقط في مجلد منفصل) */}
+      {(currentGradeId === 'grade-1' || currentGradeId === 'grade-2') && (
+        <div className="space-y-3">
+          <details className="group bg-gradient-to-r from-amber-50 to-orange-50 rounded-3xl border-2 border-amber-200 p-4 sm:p-5 transition-all shadow-xs" open={currentGradeId === 'grade-1'}>
+            <summary className="cursor-pointer font-black text-amber-950 flex flex-col sm:flex-row items-center justify-between gap-2 text-sm sm:text-base select-none list-none text-center sm:text-right">
+              <span className="flex items-center gap-2">
+                <span className="text-2xl">📁</span>
+                <span>مجلد تأسيس ومراجعة الحروف والمقاطع بالحركات ({currentGradeId === 'grade-1' ? 'الصف الأول الابتدائي' : 'الصف الثاني الابتدائي'})</span>
+              </span>
+              <span className="text-xs bg-amber-200 text-amber-900 px-3 py-1 rounded-full font-bold group-open:rotate-180 transition-transform">
+                ▼ فتح / غلق المجلد
+              </span>
+            </summary>
+            <div className="mt-4 pt-4 border-t border-amber-200/80">
+              <Grade1ArabicReading />
+            </div>
+          </details>
 
-      {/* وحدة الحروف الإنجليزية والنطق الصوتي والفونكس (للأول والثاني وأي مادة إنجليزية) */}
-      {(currentGradeId === 'grade-1' ||
-        currentGradeId === 'grade-2' ||
-        selectedSubject?.id?.startsWith('eng-') ||
-        selectedSubject?.name?.includes('الإنجليزية') ||
-        selectedSubject?.name?.includes('English')) && (
-        <Grade1EnglishLetters />
+          <details className="group bg-gradient-to-r from-blue-50 to-indigo-50 rounded-3xl border-2 border-blue-200 p-4 sm:p-5 transition-all shadow-xs">
+            <summary className="cursor-pointer font-black text-blue-950 flex flex-col sm:flex-row items-center justify-between gap-2 text-sm sm:text-base select-none list-none text-center sm:text-right">
+              <span className="flex items-center gap-2">
+                <span className="text-2xl">📁</span>
+                <span>مجلد الحروف الإنجليزية وأصوات الفونكس (English Phonics)</span>
+              </span>
+              <span className="text-xs bg-blue-200 text-blue-900 px-3 py-1 rounded-full font-bold group-open:rotate-180 transition-transform">
+                ▼ فتح / غلق المجلد
+              </span>
+            </summary>
+            <div className="mt-4 pt-4 border-t border-blue-200/80">
+              <Grade1EnglishLetters />
+            </div>
+          </details>
+        </div>
       )}
 
       {/* قسم العلوم التفاعلي */}
@@ -246,8 +263,8 @@ export const GradePortal: React.FC<GradePortalProps> = ({
       {/* Selected Subject Area */}
       {selectedSubject && (
         <div className="bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-8 shadow-xs space-y-6">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-100">
-            <div className="flex items-center gap-3">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-100 text-center sm:text-right">
+            <div className="flex flex-col sm:flex-row items-center gap-3">
               <span className="text-4xl p-3 rounded-2xl bg-slate-100">
                 {selectedSubject.icon}
               </span>
@@ -266,14 +283,14 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                 playClickSound();
                 onStartQuiz(selectedSubject, currentSubjectQuestions);
               }}
-              className="flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 text-white font-extrabold text-sm shadow-lg shadow-emerald-600/25 transition-all transform hover:-translate-y-0.5 cursor-pointer shrink-0"
+              className="flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 text-white font-extrabold text-sm shadow-lg shadow-emerald-600/25 transition-all transform hover:-translate-y-0.5 cursor-pointer shrink-0 mx-auto md:mx-0 w-full sm:w-auto"
             >
               <PlayCircle className="w-5 h-5" />
               <span>بدء الاختبار التفاعلي والتقييم 🎯</span>
             </button>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
             <button
               onClick={() => {
                 playClickSound();
@@ -330,7 +347,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
           )}
 
           {activeTab === 'curriculum' && (
-            <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 text-slate-700 text-xs sm:text-sm leading-relaxed space-y-3">
+            <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 text-slate-700 text-xs sm:text-sm leading-relaxed space-y-3 text-center sm:text-right">
               <h4 className="font-black text-slate-900 text-base">
                 مفردات ومنهاج {selectedSubject.name} - {gradeInfo?.name}
               </h4>

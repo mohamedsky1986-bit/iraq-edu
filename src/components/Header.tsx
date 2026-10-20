@@ -9,7 +9,6 @@ import {
   ShieldCheck,
   LogOut,
   Sparkles,
-  Download,
   HelpCircle,
   Crown,
   Search,
@@ -27,7 +26,6 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenAuth,
   onOpenAdminLogin,
   onOpenSupport,
-  onOpenZipModal,
   onOpenSearch,
 }) => {
   const { currentStudent, isAdmin, logout, logoutAdmin, soundOn, toggleSound } = useEdu();
@@ -55,7 +53,7 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        {/* Center / Action buttons */}
+        {/* Center / Action buttons (تم حذف زر تحميل ZIP نهائياً) */}
         <div className="hidden md:flex items-center gap-2">
           {currentStudent && (
             <button
@@ -76,21 +74,9 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             onClick={() => {
               playClickSound();
-              onOpenZipModal();
-            }}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 text-xs font-bold border border-amber-200 transition-all"
-            title="تحميل ملف المشروع ZIP مباشرة"
-          >
-            <Download className="w-4 h-4 text-amber-600" />
-            <span>تحميل ملف ZIP</span>
-          </button>
-
-          <button
-            onClick={() => {
-              playClickSound();
               onOpenSupport();
             }}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-800 text-xs font-bold border border-sky-200 transition-all"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-800 text-xs font-bold border border-sky-200 transition-all cursor-pointer"
           >
             <HelpCircle className="w-4 h-4 text-sky-600" />
             <span>دعم فوري</span>
@@ -125,7 +111,7 @@ export const Header: React.FC<HeaderProps> = ({
                 </span>
                 <div className="text-right flex flex-col justify-center min-w-0">
                   <div className="flex items-center gap-1.5">
-                    {/* الاسم الأول واسم الوالد بالموبايل، والاسم الكامل بالشاشات الأكبر */}
+                    {/* إبراز اسم الطالب الأول واسم الوالد بالموبايل، والاسم الكامل بالشاشات الأكبر */}
                     <span className="text-xs sm:text-sm font-black text-slate-950 leading-tight">
                       <span className="sm:hidden">
                         {(currentStudent.fullName || '').trim().split(/\s+/).slice(0, 2).join(' ')}
@@ -217,3 +203,5 @@ export const Header: React.FC<HeaderProps> = ({
     </header>
   );
 };
+
+export default Header;

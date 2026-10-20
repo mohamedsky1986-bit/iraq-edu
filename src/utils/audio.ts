@@ -32,16 +32,13 @@ function getAudioContext(): AudioContext | null {
   return audioCtx;
 }
 
-/**
- * Cheerful ascending chime for correct quiz answers
- */
 export function playCorrectSound() {
   if (!soundEnabled) return;
   const ctx = getAudioContext();
   if (!ctx) return;
 
   const now = ctx.currentTime;
-  const notes = [523.25, 659.25, 783.99, 1046.5]; // C5, E5, G5, C6
+  const notes = [523.25, 659.25, 783.99, 1046.5];
   notes.forEach((freq, index) => {
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
@@ -61,9 +58,6 @@ export function playCorrectSound() {
   });
 }
 
-/**
- * Gentle boing/tone for wrong quiz answers
- */
 export function playWrongSound() {
   if (!soundEnabled) return;
   const ctx = getAudioContext();
@@ -87,9 +81,6 @@ export function playWrongSound() {
   osc.stop(now + 0.36);
 }
 
-/**
- * Playful syllable blend sound (combining consonant + vowel)
- */
 export function playSyllableBlendSound() {
   if (!soundEnabled) return;
   const ctx = getAudioContext();
@@ -114,9 +105,6 @@ export function playSyllableBlendSound() {
   osc.stop(now + 0.26);
 }
 
-/**
- * Soft playful click sound for UI buttons
- */
 export function playClickSound() {
   if (!soundEnabled) return;
   const ctx = getAudioContext();
@@ -140,9 +128,6 @@ export function playClickSound() {
   osc.stop(now + 0.055);
 }
 
-/**
- * Fanfare for completed quiz with stars
- */
 export function playCelebrationFanfare() {
   if (!soundEnabled) return;
   const ctx = getAudioContext();
@@ -175,14 +160,10 @@ export function playCelebrationFanfare() {
   });
 }
 
-/** Alias for components importing playFanfareSound */
 export function playFanfareSound() {
   playCelebrationFanfare();
 }
 
-/**
- * Stop any ongoing speech or cloud audio
- */
 export function stopSpeaking() {
   if (currentAudio) {
     try {
@@ -198,10 +179,6 @@ export function stopSpeaking() {
   }
 }
 
-/**
- * Universal Arabic Speech Synthesis:
- * Uses high-quality Cloud TTS fallback when Windows/Android browser lacks an Arabic voice.
- */
 export function speakArabicText(
   text: string,
   callbacks?: {
@@ -227,47 +204,72 @@ export function speakArabicText(
     return;
   }
 
-  // Check if browser has a native Arabic voice installed
-  let hasNativeArabicVoice = false;
+  // استخدام المحرك الصوتي المتوافق مع حواسيب Windows والهواتف
   if ('speechSynthesis' in window) {
-    const voices = window.speechSynthesis.getVoices();
-    const arabicVoice = voices.find(
-      (v) =>
-        v.lang.toLowerCase().startsWith('ar') ||
-        v.name.toLowerCase().includes('arabic') ||
-        v.name.toLowerCase().includes('عربي')
-    );
-
-    if (arabicVoice) {
-      hasNativeArabicVoice = true;
+    try {
+      window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(cleanText);
-      utterance.voice = arabicVoice;
-      utterance.lang = arabicVoice.lang || 'ar-SA';
-      utterance.rate = options?.rate ?? 0.82;
-      utterance.pitch = options?.pitch ?? 1.05;
+      utterance.lang = 'ar-SA';
+      utterance.rate = options?.rate ?? 0.85;
+      utterance.pitch = options?.pitch ?? 1.0;
 
-      utterance.onstart = () => callbacks?.onStart?.();
-      utterance.onend = () => callbacks?.onEnd?.();
+      const voices = window.speechSynthesis.getVoices();
+      const arVoice = voices.find(
+        (v) =>
+          v.lang.toLowerCase().startsWith('ar') ||
+          v.lang.toLowerCase().includes('arabic') ||
+          v.name.toLowerCase().includes('arabic') ||
+          v.name.includes('عرب') ||
+          v.name.toLowerCase().includes('salma') ||
+          v.name.toLowerCase().includes('shakir') ||
+          v.name.toLowerCase().includes('hoda') ||
+          v.name.toLowerCase().includes('naayf') ||
+          v.name.toLowerCase().includes('zeina')
+      );
+
+      if (arVoice) {
+        utterance.voice = arVoice;
+      }
+
+      let ended = false;
+      utterance.onstart = () => {
+        callbacks?.onStart?.();
+      };
+      utterance.onend = () => {
+        if (!ended) {
+          ended = true;
+          callbacks?.onEnd?.();
+        }
+      };
       utterance.onerror = (e) => {
-        callbacks?.onError?.(e);
-        callbacks?.onEnd?.();
+        if (!ended) {
+          ended = true;
+          playCloudAudioFallback(cleanText, callbacks, options);
+        }
       };
 
       window.speechSynthesis.speak(utterance);
       return;
+    } catch {
+      // Fallback below
     }
   }
 
-  // Universal Cloud TTS fallback
+  playCloudAudioFallback(cleanText, callbacks, options);
+}
+
+function playCloudAudioFallback(
+  cleanText: string,
+  callbacks?: { onStart?: () => void; onEnd?: () => void; onError?: (err: unknown) => void; },
+  options?: { rate?: number; pitch?: number; }
+) {
   try {
     const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(
       cleanText.slice(0, 160)
     )}&tl=ar&client=tw-ob`;
-
     const audio = new Audio(ttsUrl);
     currentAudio = audio;
     audio.playbackRate = options?.rate ?? 0.9;
-
     audio.onplay = () => callbacks?.onStart?.();
     audio.onended = () => {
       currentAudio = null;
@@ -275,32 +277,14 @@ export function speakArabicText(
     };
     audio.onerror = () => {
       currentAudio = null;
-      if ('speechSynthesis' in window) {
-        const u = new SpeechSynthesisUtterance(cleanText);
-        u.lang = 'ar';
-        u.onend = () => callbacks?.onEnd?.();
-        window.speechSynthesis.speak(u);
-      } else {
-        callbacks?.onEnd?.();
-      }
-    };
-
-    audio.play().catch(() => {
-      if ('speechSynthesis' in window) {
-        const u = new SpeechSynthesisUtterance(cleanText);
-        u.lang = 'ar';
-        window.speechSynthesis.speak(u);
-      }
       callbacks?.onEnd?.();
-    });
+    };
+    audio.play().catch(() => callbacks?.onEnd?.());
   } catch {
     callbacks?.onEnd?.();
   }
 }
 
-/**
- * Tuned English Speech Synthesis for English letters and phonics
- */
 export function speakEnglishPhonics(
   text: string,
   callbacks?: {
@@ -357,7 +341,6 @@ export function speakEnglishPhonics(
     return;
   }
 
-  // Cloud fallback for English if needed
   try {
     const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(
       cleanText.slice(0, 160)

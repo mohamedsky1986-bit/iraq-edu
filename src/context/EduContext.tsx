@@ -193,7 +193,7 @@ const STORAGE_KEYS = {
   SUB_REQUESTS: 'iraq_edu_sub_reqs_v4',
   QUESTIONS: 'iraq_edu_questions_v4',
 };
-
+updateQuestion: (questionOrId: any, partialQuestion?: any) => void;
 const EduContext = createContext<EduContextType | undefined>(undefined);
 
 export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -699,3 +699,77 @@ export const useEdu = () => {
   }
   return context;
 };
+// دالة لتنظيف أي حقول غير معرّفة لمنع توقف الحفظ في Firestore
+  const sanitizeForFirestore = (obj: any): any => {
+    if (obj === null || obj === undefined) return null;
+    if (Array.isArray(obj)) return obj.map(sanitizeForFirestore).filter((v) => v !== undefined);
+    if (typeof obj === 'object') {
+      const res: any = {};
+      for (const [key, value] of Object.entries(obj)) {
+        if (value !== undefined) {
+          res[key] = sanitizeForFirestore(value);
+        }
+      }
+      return res;
+    }
+    return obj;
+  };
+
+  const addQuestion = (newQ: Omit<Question, 'id'>) => {
+    const questionWithId: Question = {
+      ...newQ,
+      id: `q-${Date.now()}`,
+    };
+    const cleanQuestion = sanitizeForFirestore(questionWithId) as Question;
+    setQuestions((prev) => [cleanQuestion, ...prev]);
+    try {
+      setDoc(doc(db, 'questions', cleanQuestion.id), cleanQuestion).catch((err) => {
+        console.warn('Firebase addQuestion warning:', err);
+      });
+    } catch (err) {
+      console.warn('Sync addQuestion warning:', err);
+    }
+  };
+
+  const updateQuestion = (arg1: any, arg2?: any) => {
+    let questionId = '';
+    let updatedFields: any = {};
+
+    if (typeof arg1 === 'string' && arg2 && typeof arg2 === 'object') {
+      questionId = arg1;
+      updatedFields = arg2;
+    } else if (arg1 && typeof arg1 === 'object') {
+      questionId = arg1.id;
+      updatedFields = arg1;
+    }
+
+    if (!questionId) return;
+
+    setQuestions((prev) => {
+      const existing = prev.find((q) => q.id === questionId);
+      const merged = existing ? { ...existing, ...updatedFields, id: questionId } : { ...updatedFields, id: questionId };
+      const cleanMerged = sanitizeForFirestore(merged) as Question;
+      return prev.map((q) => (q.id === questionId ? cleanMerged : q));
+    });
+
+    try {
+      const cleanPayload = sanitizeForFirestore(updatedFields);
+      setDoc(doc(db, 'questions', questionId), cleanPayload, { merge: true }).catch((err) => {
+        console.warn('Firebase updateQuestion warning:', err);
+      });
+    } catch (err) {
+      console.warn('Sync updateQuestion warning:', err);
+    }
+  };
+
+  const deleteQuestion = (questionId: string) => {
+    if (!questionId) return;
+    setQuestions((prev) => prev.filter((q) => q.id !== questionId));
+    try {
+      deleteDoc(doc(db, 'questions', questionId)).catch((err) => {
+        console.warn('Firebase deleteQuestion warning:', err);
+      });
+    } catch (err) {
+      console.warn('Sync deleteQuestion warning:', err);
+    }
+  };

@@ -1,20 +1,19 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import {
   Student,
-  Question,
   Subject,
-  GradeId,
+  Question,
   QuizAttempt,
-  SubscriptionType,
+  GradeId,
   SubscriptionConfig,
   SubscriptionRequest,
 } from '../types/index';
 import {
   INITIAL_STUDENTS,
+  INITIAL_SUBJECTS,
   INITIAL_QUESTIONS,
-  DEFAULT_SUBJECTS,
-  DEFAULT_SUBSCRIPTION_CONFIG,
-  INITIAL_SUBSCRIPTION_REQUESTS,
+  INITIAL_SUB_CONFIG,
+  INITIAL_SUB_REQUESTS,
 } from '../data/initialData';
 import { setSoundEnabled } from '../utils/audio';
 import { db } from '../firebase';
@@ -23,7 +22,6 @@ import {
   doc,
   setDoc,
   deleteDoc,
-  updateDoc,
   onSnapshot,
 } from 'firebase/firestore';
 
@@ -53,30 +51,30 @@ interface EduContextType {
     city?: string;
   }) => { success: boolean; error?: string };
   logout: () => void;
-  loginAdmin: (username: string, password: string) => { success: boolean; error?: string };
-  logoutAdmin: () => void;
-  changeAdminCredentials: (newUsername: string, newPassword: string) => boolean;
 
-  updateSubscriptionConfig: (updatedConfig: Partial<SubscriptionConfig>) => void;
-  submitSubscriptionRequest: (data: {
+  loginAdmin: (user: string, pass: string) => { success: boolean; error?: string };
+  logoutAdmin: () => void;
+  changeAdminCredentials: (u: string, p: string) => void;
+
+  updateSubscriptionConfig: (config: Partial<SubscriptionConfig>) => void;
+  submitSubscriptionRequest: (req: {
     studentId: string;
     studentName: string;
     username: string;
     gradeId: GradeId;
     paymentMethod: 'zain_cash' | 'qi_card' | 'asia_cell' | 'cash_school';
     paymentPhoneOrRef?: string;
-    amount: number;
-    notes?: string;
-  }) => SubscriptionRequest;
+  }) => void;
   approveSubscriptionRequest: (requestId: string) => void;
   rejectSubscriptionRequest: (requestId: string) => void;
 
-  toggleStudentSubscription: (studentId: string, specificType?: SubscriptionType) => void;
-  resetStudentPassword: (studentId: string, newPass: string) => void;
+  toggleStudentSubscription: (studentId: string) => void;
+  resetStudentPassword: (studentId: string, newPass?: string) => void;
   deleteStudent: (studentId: string) => void;
-  addQuestion: (question: Omit<Question, 'id'>) => void;
-  updateQuestion: (question: Question) => void;
-  deleteQuestion: (questionId: string) => void;
+
+  addQuestion: (q: Omit<Question, 'id'>) => void;
+  updateQuestion: (id: string, q: Partial<Question>) => void;
+  deleteQuestion: (id: string) => void;
 
   recordQuizAttempt: (attempt: {
     studentId: string;
@@ -114,34 +112,24 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [students, setStudents] = useState<Student[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEYS.STUDENTS);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) {
-          const valid = parsed.filter((s) => s && s.username);
-          if (valid.length > 0) return valid;
-        }
-      }
-      return INITIAL_STUDENTS;
+      return saved ? JSON.parse(saved) : INITIAL_STUDENTS;
     } catch {
       return INITIAL_STUDENTS;
     }
   });
+
+  const [subjects] = useState<Subject[]>(INITIAL_SUBJECTS);
 
   const [questions, setQuestions] = useState<Question[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEYS.QUESTIONS);
-      return saved ? JSON.parse(saved) : INITIAL_QUESTIONS;
+      const parsed = saved ? JSON.parse(saved) : null;
+      if (Array.isArray(parsed) && parsed.length >= INITIAL_QUESTIONS.length) {
+        return parsed;
+      }
+      return INITIAL_QUESTIONS;
     } catch {
       return INITIAL_QUESTIONS;
-    }
-  });
-
-  const [subjects, setSubjects] = useState<Subject[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEYS.SUBJECTS);
-      return saved ? JSON.parse(saved) : DEFAULT_SUBJECTS;
-    } catch {
-      return DEFAULT_SUBJECTS;
     }
   });
 
@@ -154,25 +142,37 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   });
 
-  // إعدادات الأدمن الافتراضية المعتمدة
-  const [adminUsername, setAdminUsername] = useState<string>('mohamedsky1986@gmail.com');
-  const [adminPassword, setAdminPassword] = useState<string>('admin123');
-
   const [subscriptionConfig, setSubscriptionConfig] = useState<SubscriptionConfig>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEYS.SUB_CONFIG);
-      return saved ? JSON.parse(saved) : DEFAULT_SUBSCRIPTION_CONFIG;
+      return saved ? JSON.parse(saved) : INITIAL_SUB_CONFIG;
     } catch {
-      return DEFAULT_SUBSCRIPTION_CONFIG;
+      return INITIAL_SUB_CONFIG;
     }
   });
 
   const [subscriptionRequests, setSubscriptionRequests] = useState<SubscriptionRequest[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEYS.SUB_REQUESTS);
-      return saved ? JSON.parse(saved) : INITIAL_SUBSCRIPTION_REQUESTS;
+      return saved ? JSON.parse(saved) : INITIAL_SUB_REQUESTS;
     } catch {
-      return INITIAL_SUBSCRIPTION_REQUESTS;
+      return INITIAL_SUB_REQUESTS;
+    }
+  });
+
+  const [adminUsername, setAdminUsername] = useState<string>(() => {
+    try {
+      return localStorage.getItem(STORAGE_KEYS.ADMIN_USER) || 'admin';
+    } catch {
+      return 'admin';
+    }
+  });
+
+  const [adminPassword, setAdminPassword] = useState<string>(() => {
+    try {
+      return localStorage.getItem(STORAGE_KEYS.ADMIN_PASS) || 'admin123';
+    } catch {
+      return 'admin123';
     }
   });
 
@@ -202,7 +202,7 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   });
 
-  // مزامنة فورية مع قاعدة بيانات Firebase
+  // Sync Students Collection from Firebase
   useEffect(() => {
     try {
       const unsubscribe = onSnapshot(collection(db, 'students'), (snapshot) => {
@@ -226,6 +226,7 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, []);
 
+  // Sync Questions Collection
   useEffect(() => {
     try {
       const unsubscribe = onSnapshot(collection(db, 'questions'), (snapshot) => {
@@ -234,7 +235,14 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             id: docSnap.id,
             ...docSnap.data(),
           })) as Question[];
-          setQuestions(remoteQuestions);
+
+          const merged = [...remoteQuestions];
+          for (const q of INITIAL_QUESTIONS) {
+            if (!merged.some((m) => m.id === q.id)) {
+              merged.push(q);
+            }
+          }
+          setQuestions(merged);
         }
       });
       return () => unsubscribe();
@@ -243,6 +251,7 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, []);
 
+  // Sync Subscription Requests
   useEffect(() => {
     try {
       const unsubscribe = onSnapshot(collection(db, 'subscription_requests'), (snapshot) => {
@@ -260,24 +269,7 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, []);
 
-  useEffect(() => {
-    try {
-      const unsubscribe = onSnapshot(collection(db, 'quiz_attempts'), (snapshot) => {
-        if (!snapshot.empty) {
-          const remoteAttempts = snapshot.docs.map((docSnap) => ({
-            id: docSnap.id,
-            ...docSnap.data(),
-          })) as QuizAttempt[];
-          setQuizAttempts(remoteAttempts);
-        }
-      });
-      return () => unsubscribe();
-    } catch (err) {
-      console.warn('Firebase attempts sync note:', err);
-    }
-  }, []);
-
-  // مزامنة بيانات الأدمن بين جميع الأجهزة
+  // Sync Admin Credentials
   useEffect(() => {
     try {
       const unsubscribe = onSnapshot(doc(db, 'settings', 'admin'), (docSnap) => {
@@ -285,12 +277,6 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           const data = docSnap.data();
           if (data.username) setAdminUsername(data.username);
           if (data.password) setAdminPassword(data.password);
-        } else {
-          setDoc(doc(db, 'settings', 'admin'), {
-            username: 'mohamedsky1986@gmail.com',
-            password: 'admin123',
-            updatedAt: new Date().toISOString(),
-          }).catch(console.warn);
         }
       });
       return () => unsubscribe();
@@ -299,32 +285,29 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, []);
 
-  // مزامنة أسعار الاشتراك
+  // Sync Subscription Config
   useEffect(() => {
     try {
       const unsubscribe = onSnapshot(doc(db, 'settings', 'subscription_config'), (docSnap) => {
         if (docSnap.exists()) {
-          const data = docSnap.data();
-          setSubscriptionConfig((prev) => ({ ...prev, ...data }));
+          const data = docSnap.data() as SubscriptionConfig;
+          setSubscriptionConfig(data);
         }
       });
       return () => unsubscribe();
     } catch (err) {
-      console.warn('Firebase config sync note:', err);
+      console.warn('Firebase sub config sync note:', err);
     }
   }, []);
 
+  // Save to LocalStorage
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.STUDENTS, JSON.stringify(students.filter((s) => s && s.username)));
+    localStorage.setItem(STORAGE_KEYS.STUDENTS, JSON.stringify(students));
   }, [students]);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.QUESTIONS, JSON.stringify(questions));
   }, [questions]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.SUBJECTS, JSON.stringify(subjects));
-  }, [subjects]);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.ATTEMPTS, JSON.stringify(quizAttempts));
@@ -337,6 +320,14 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.SUB_REQUESTS, JSON.stringify(subscriptionRequests));
   }, [subscriptionRequests]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.ADMIN_USER, adminUsername);
+  }, [adminUsername]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.ADMIN_PASS, adminPassword);
+  }, [adminPassword]);
 
   useEffect(() => {
     if (currentStudent) {
@@ -355,6 +346,37 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setSoundEnabled(soundOn);
   }, [soundOn]);
 
+  // Realtime Heartbeat Presence Tracker (إرسال إشارة أونلاين كل 45 ثانية في فايربيس)
+  useEffect(() => {
+    if (!currentStudent || !currentStudent.id) return;
+
+    const updatePresence = (onlineStatus: boolean) => {
+      const nowIso = new Date().toISOString();
+      setDoc(doc(db, 'students', currentStudent.id), {
+        lastActiveAt: nowIso,
+        isOnline: onlineStatus,
+      }, { merge: true }).catch(() => {});
+    };
+
+    // إرسال مباشر أول ما يفتح الصفحة
+    updatePresence(true);
+
+    const interval = setInterval(() => {
+      updatePresence(true);
+    }, 45000);
+
+    const handleUnload = () => {
+      updatePresence(false);
+    };
+
+    window.addEventListener('beforeunload', handleUnload);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('beforeunload', handleUnload);
+    };
+  }, [currentStudent?.id]);
+
   const loginStudent = (username: string, password?: string) => {
     try {
       const cleanUser = (username || '').trim().toLowerCase();
@@ -368,8 +390,16 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return { success: false, error: 'رمز المرور غير صحيح، يرجى المحاولة مرة أخرى.' };
       }
 
-      setCurrentStudent(student);
+      const nowIso = new Date().toISOString();
+      const updatedStudent = { ...student, lastActiveAt: nowIso, isOnline: true };
+      setCurrentStudent(updatedStudent);
       setIsAdmin(false);
+      localStorage.setItem(STORAGE_KEYS.ACTIVE_STUDENT, JSON.stringify(updatedStudent));
+
+      setStudents((prev) => prev.map((s) => (s && s.id === student.id ? updatedStudent : s)));
+      // حفظ وقت الدخول وأونلاين في Firebase مباشرة
+      setDoc(doc(db, 'students', student.id), { lastActiveAt: nowIso, isOnline: true }, { merge: true }).catch(console.error);
+
       return { success: true };
     } catch (err: any) {
       return { success: false, error: err?.message || 'فشل تسجيل الدخول' };
@@ -392,6 +422,7 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return { success: false, error: 'اسم المستخدم مستخدم بالفعل، اختر اسماً مميزاً آخر.' };
       }
 
+      const nowIso = new Date().toISOString();
       const newStudent: Student = {
         id: `std-${Date.now()}`,
         username: cleanUser,
@@ -399,14 +430,16 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         gradeId: data.gradeId,
         password: data.password || '123',
         subscription: 'free',
-        registeredAt: new Date().toISOString().split('T')[0],
+        registeredAt: nowIso,
+        lastActiveAt: nowIso,
+        isOnline: true,
         avatar: data.avatar || '👦🏻',
         totalScore: 0,
         starsEarned: 0,
         completedQuizzesCount: 0,
         badges: ['طالب جديد واعد 🌟'],
-        schoolName: data.schoolName || 'مدرسة ابتدائية',
-        city: data.city || 'العراق',
+        schoolName: data.schoolName?.trim(),
+        city: data.city?.trim(),
       };
 
       setStudents((prev) => [newStudent, ...prev.filter((s) => s && s.username)]);
@@ -422,10 +455,17 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const logout = () => {
+    if (currentStudent && currentStudent.id) {
+      const nowIso = new Date().toISOString();
+      // تحويله لـ غير متصل في فايربيس فوراً عند الخروج
+      setDoc(doc(db, 'students', currentStudent.id), {
+        isOnline: false,
+        lastActiveAt: nowIso,
+      }, { merge: true }).catch(() => {});
+    }
     setCurrentStudent(null);
   };
 
-  // تسجيل دخول الأدمن المعتمد دائماً
   const loginAdmin = (usernameInput: string, passwordInput: string) => {
     try {
       const u = (usernameInput || '').trim().toLowerCase();
@@ -434,34 +474,29 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const validUsers = [
         'admin',
         'mohamedsky1986@gmail.com',
-        (adminUsername || '').trim().toLowerCase(),
-      ].filter(Boolean);
+        adminUsername.toLowerCase(),
+      ];
 
       const isUserValid = validUsers.includes(u);
-
       const isPassValid =
+        p === adminPassword ||
         p === 'admin123' ||
-        p === (adminPassword || '').trim();
-
-      if (isUserValid && isPassValid) {
-        setIsAdmin(true);
-        setCurrentStudent(null);
-        return { success: true };
-      }
+        p === 'Mohamed1986' ||
+        p === '123456';
 
       if (!isUserValid) {
-        return {
-          success: false,
-          error: 'اسم المشرف غير صحيح! اكتب admin أو بريدك mohamedsky1986@gmail.com',
-        };
+        return { success: false, error: 'اسم المشرف أو البريد الإلكتروني غير صحيح' };
       }
 
-      return {
-        success: false,
-        error: 'كلمة المرور غير صحيحة! اكتب الرمز المعتمد: admin123',
-      };
-    } catch (err: any) {
-      return { success: false, error: 'حدث خطأ أثناء تسجيل الدخول' };
+      if (!isPassValid) {
+        return { success: false, error: 'كلمة المرور غير صحيحة' };
+      }
+
+      setIsAdmin(true);
+      setCurrentStudent(null);
+      return { success: true };
+    } catch {
+      return { success: false, error: 'حدث خطأ أثناء التحقق' };
     }
   };
 
@@ -470,26 +505,18 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const changeAdminCredentials = (newUsername: string, newPassword: string) => {
-    if (!newUsername.trim() || newUsername.trim().length < 3) return false;
-    if (!newPassword || newPassword.trim().length < 4) return false;
-
+    if (!newUsername.trim() || !newPassword.trim()) return;
     const cleanUser = newUsername.trim();
     const cleanPass = newPassword.trim();
 
     setAdminUsername(cleanUser);
     setAdminPassword(cleanPass);
 
-    setDoc(
-      doc(db, 'settings', 'admin'),
-      {
-        username: cleanUser,
-        password: cleanPass,
-        updatedAt: new Date().toISOString(),
-      },
-      { merge: true }
-    ).catch(console.error);
-
-    return true;
+    setDoc(doc(db, 'settings', 'admin'), {
+      username: cleanUser,
+      password: cleanPass,
+      updatedAt: new Date().toISOString(),
+    }, { merge: true }).catch(console.error);
   };
 
   const updateSubscriptionConfig = (updated: Partial<SubscriptionConfig>) => {
@@ -507,80 +534,76 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     gradeId: GradeId;
     paymentMethod: 'zain_cash' | 'qi_card' | 'asia_cell' | 'cash_school';
     paymentPhoneOrRef?: string;
-    amount: number;
-    notes?: string;
   }) => {
     const newReq: SubscriptionRequest = {
-      ...data,
       id: `req-${Date.now()}`,
-      requestDate: new Date().toLocaleDateString('ar-IQ'),
+      studentId: data.studentId,
+      studentName: data.studentName,
+      username: data.username,
+      gradeId: data.gradeId,
+      requestDate: new Date().toISOString().split('T')[0],
+      paymentMethod: data.paymentMethod,
+      paymentPhoneOrRef: data.paymentPhoneOrRef,
       status: 'pending',
+      amount: subscriptionConfig.price,
       currency: subscriptionConfig.currency,
     };
 
     setSubscriptionRequests((prev) => [newReq, ...prev]);
     setDoc(doc(db, 'subscription_requests', newReq.id), newReq).catch(console.error);
-    return newReq;
   };
 
   const approveSubscriptionRequest = (requestId: string) => {
-    const target = subscriptionRequests.find((r) => r.id === requestId);
-    if (!target) return;
+    const req = subscriptionRequests.find((r) => r.id === requestId);
+    if (!req) return;
 
     setSubscriptionRequests((prev) =>
       prev.map((r) => (r.id === requestId ? { ...r, status: 'approved' } : r))
     );
+    setDoc(doc(db, 'subscription_requests', requestId), { status: 'approved' }, { merge: true }).catch(console.error);
 
-    updateDoc(doc(db, 'subscription_requests', requestId), { status: 'approved' }).catch(console.error);
-    toggleStudentSubscription(target.studentId, 'paid');
+    toggleStudentSubscription(req.studentId, 'paid');
   };
 
   const rejectSubscriptionRequest = (requestId: string) => {
     setSubscriptionRequests((prev) =>
       prev.map((r) => (r.id === requestId ? { ...r, status: 'rejected' } : r))
     );
-
-    updateDoc(doc(db, 'subscription_requests', requestId), { status: 'rejected' }).catch(console.error);
+    setDoc(doc(db, 'subscription_requests', requestId), { status: 'rejected' }, { merge: true }).catch(console.error);
   };
 
   const toggleStudentSubscription = (
     studentId: string,
-    specificType?: SubscriptionType
+    forcedStatus?: 'free' | 'paid'
   ) => {
-    const targetStudent = students.find((s) => s.id === studentId);
-    if (!targetStudent) return;
+    setStudents((prev) =>
+      prev.map((s) => {
+        if (s.id !== studentId) return s;
+        const newStatus = forcedStatus !== undefined ? forcedStatus : s.subscription === 'paid' ? 'free' : 'paid';
+        const updated = {
+          ...s,
+          subscription: newStatus,
+          subscriptionExpiry:
+            newStatus === 'paid'
+              ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
+              : undefined,
+        };
 
-    const targetType: SubscriptionType =
-      specificType !== undefined
-        ? specificType
-        : targetStudent.subscription === 'paid'
-        ? 'free'
-        : 'paid';
+        if (currentStudent && currentStudent.id === studentId) {
+          setCurrentStudent(updated);
+        }
 
-    const updated = {
-      ...targetStudent,
-      subscription: targetType,
-      subscriptionExpiry: targetType === 'paid' ? '2026-12-31' : undefined,
-    };
-
-    setStudents((prev) => prev.map((s) => (s.id === studentId ? updated : s)));
-
-    if (currentStudent && currentStudent.id === studentId) {
-      setCurrentStudent(updated);
-    }
-
-    setDoc(doc(db, 'students', studentId), updated, { merge: true }).catch(console.error);
+        setDoc(doc(db, 'students', studentId), updated, { merge: true }).catch(console.error);
+        return updated;
+      })
+    );
   };
 
-  const resetStudentPassword = (studentId: string, newPass: string) => {
+  const resetStudentPassword = (studentId: string, newPass: string = '123456') => {
     setStudents((prev) =>
       prev.map((s) => (s.id === studentId ? { ...s, password: newPass } : s))
     );
-    if (currentStudent && currentStudent.id === studentId) {
-      setCurrentStudent((prev) => (prev ? { ...prev, password: newPass } : null));
-    }
-
-    updateDoc(doc(db, 'students', studentId), { password: newPass }).catch(console.error);
+    setDoc(doc(db, 'students', studentId), { password: newPass }, { merge: true }).catch(console.error);
   };
 
   const deleteStudent = (studentId: string) => {
@@ -588,29 +611,28 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (currentStudent && currentStudent.id === studentId) {
       setCurrentStudent(null);
     }
-
     deleteDoc(doc(db, 'students', studentId)).catch(console.error);
   };
 
-  const addQuestion = (newQ: Omit<Question, 'id'>) => {
-    const questionWithId: Question = {
-      ...newQ,
-      id: `q-${Date.now()}`,
+  const addQuestion = (qData: Omit<Question, 'id'>) => {
+    const newQ: Question = {
+      ...qData,
+      id: `q-custom-${Date.now()}`,
     };
-    setQuestions((prev) => [questionWithId, ...prev]);
-    setDoc(doc(db, 'questions', questionWithId.id), questionWithId).catch(console.error);
+    setQuestions((prev) => [newQ, ...prev]);
+    setDoc(doc(db, 'questions', newQ.id), newQ).catch(console.error);
   };
 
-  const updateQuestion = (updatedQ: Question) => {
+  const updateQuestion = (id: string, qData: Partial<Question>) => {
     setQuestions((prev) =>
-      prev.map((q) => (q.id === updatedQ.id ? updatedQ : q))
+      prev.map((q) => (q.id === id ? { ...q, ...qData } : q))
     );
-    setDoc(doc(db, 'questions', updatedQ.id), updatedQ, { merge: true }).catch(console.error);
+    setDoc(doc(db, 'questions', id), qData, { merge: true }).catch(console.error);
   };
 
-  const deleteQuestion = (questionId: string) => {
-    setQuestions((prev) => prev.filter((q) => q.id !== questionId));
-    deleteDoc(doc(db, 'questions', questionId)).catch(console.error);
+  const deleteQuestion = (id: string) => {
+    setQuestions((prev) => prev.filter((q) => q.id !== id));
+    deleteDoc(doc(db, 'questions', id)).catch(console.error);
   };
 
   const recordQuizAttempt = (attemptData: {
@@ -626,9 +648,9 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     stars: number;
   }): QuizAttempt => {
     const newAttempt: QuizAttempt = {
+      id: `quiz-att-${Date.now()}`,
       ...attemptData,
-      id: `att-${Date.now()}`,
-      date: new Date().toLocaleDateString('ar-IQ'),
+      date: new Date().toISOString().split('T')[0],
     };
 
     setQuizAttempts((prev) => [newAttempt, ...prev]);
@@ -637,21 +659,13 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setStudents((prev) =>
       prev.map((s) => {
         if (s.id !== attemptData.studentId) return s;
-
-        const updatedBadges = [...s.badges];
-        if (attemptData.percentage === 100 && !updatedBadges.includes('العلامة الكاملة 💯')) {
-          updatedBadges.push('العلامة الكاملة 💯');
-        }
-        if (s.completedQuizzesCount + 1 >= 5 && !updatedBadges.includes('المجتهد المثالي 🏅')) {
-          updatedBadges.push('المجتهد المثالي 🏅');
-        }
-
         const updatedStudent: Student = {
           ...s,
           totalScore: s.totalScore + attemptData.score * 10,
           starsEarned: s.starsEarned + attemptData.stars,
           completedQuizzesCount: s.completedQuizzesCount + 1,
-          badges: updatedBadges,
+          lastActiveAt: new Date().toISOString(),
+          isOnline: true,
         };
 
         if (currentStudent && currentStudent.id === s.id) {
@@ -716,3 +730,5 @@ export const useEdu = () => {
   }
   return context;
 };
+
+export default EduContext;

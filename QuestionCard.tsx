@@ -20,6 +20,45 @@ interface QuestionCardProps {
   index: number;
 }
 
+function renderFormattedText(text: string) {
+  if (!text) return '';
+  const parts = text.split(/(\*\*.*?\*\*|==.*?==|«.*?»|\.\.\.\.\.\.)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return (
+        <strong key={i} className="font-black text-slate-950 underline decoration-amber-400 decoration-2">
+          {part.slice(2, -2)}
+        </strong>
+      );
+    }
+    if (part.startsWith('==') && part.endsWith('==')) {
+      return (
+        <mark key={i} className="bg-amber-200 text-amber-950 px-1.5 py-0.5 rounded font-black">
+          {part.slice(2, -2)}
+        </mark>
+      );
+    }
+    if (part.startsWith('«') && part.endsWith('»')) {
+      return (
+        <span key={i} className="text-emerald-800 font-bold font-serif">
+          {part}
+        </span>
+      );
+    }
+    if (part === '......') {
+      return (
+        <span
+          key={i}
+          className="inline-block px-3 mx-1 font-mono font-black text-amber-600 bg-amber-50 border-b-2 border-dashed border-amber-500"
+        >
+          ......
+        </span>
+      );
+    }
+    return part;
+  });
+}
+
 export const QuestionCard: React.FC<QuestionCardProps> = ({
   question,
   studentSubscription,
@@ -47,10 +86,17 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
     });
   };
 
+  const isMinisterial = (question as any).badgeType === 'ministerial';
+  const isSmartChallenge = (question as any).badgeType === 'smart_challenge';
+
   return (
     <div
       className={`rounded-3xl border transition-all duration-200 overflow-hidden ${
-        canAccess
+        isMinisterial
+          ? 'border-amber-400 bg-gradient-to-r from-amber-50/40 via-white to-white shadow-sm ring-1 ring-amber-300'
+          : isSmartChallenge
+          ? 'border-purple-300 bg-gradient-to-r from-purple-50/40 via-white to-white shadow-sm'
+          : canAccess
           ? 'bg-white border-slate-200/90 hover:border-emerald-300 hover:shadow-md'
           : 'bg-slate-50/80 border-slate-200 opacity-95'
       }`}
@@ -81,7 +127,20 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
                 </span>
               )}
 
-              {/* وسم نوع السؤال لتوضيح نمطه للطفل وولي الأمر */}
+              {isMinisterial ? (
+                <span className="text-[11px] font-black px-2.5 py-0.5 rounded-full bg-amber-400 text-amber-950 shadow-xs border border-amber-500 flex items-center gap-1 animate-pulse">
+                  🌟 سؤال وزاري مرشح
+                </span>
+              ) : isSmartChallenge ? (
+                <span className="text-[11px] font-black px-2.5 py-0.5 rounded-full bg-purple-600 text-white shadow-xs flex items-center gap-1">
+                  🎯 تحدي الأذكياء
+                </span>
+              ) : (question as any).badgeType === 'focus_tip' ? (
+                <span className="text-[11px] font-black px-2.5 py-0.5 rounded-full bg-blue-600 text-white shadow-xs flex items-center gap-1">
+                  💡 فهم وتركيز
+                </span>
+              ) : null}
+
               {question.questionType === 'fill_in_the_blank' || question.questionText.includes('......') || question.questionText.includes('____') ? (
                 <span className="text-[11px] font-black px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-200 flex items-center gap-1">
                   ✏️ أكمل الفراغ
@@ -104,7 +163,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
             </div>
 
             <h3 className="text-base sm:text-lg font-bold text-slate-900 leading-snug">
-              {question.questionText}
+              {renderFormattedText(question.questionText)}
             </h3>
           </div>
 
@@ -165,7 +224,6 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
 
       {isOpen && canAccess && (
         <div className="px-5 sm:px-6 pb-6 pt-2 border-t border-slate-100 bg-emerald-50/30 animate-in fade-in duration-200 space-y-3">
-          {/* يظهر فقط عند وجود اختبار متعدد الخيارات */}
           {(question.questionType === 'multiple_choice' || (question.options && question.options.length >= 2 && question.questionType !== 'qa')) && (
             <div>
               <p className="text-xs font-bold text-slate-600 mb-2 flex items-center gap-1">
@@ -197,7 +255,6 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
             </div>
           )}
 
-          {/* في نمط أكمل الفراغ يظهر الحل بشكل مميز وواضح */}
           {(question.questionType === 'fill_in_the_blank' || question.questionText.includes('......')) && (
             <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-between">
               <div>
@@ -212,7 +269,6 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
             </div>
           )}
 
-          {/* في نمط سؤال وجواب يظهر الجواب النموذجي الصافي بدون تشويش الخيارات */}
           {question.questionType !== 'fill_in_the_blank' && (
             <div className="p-4 rounded-2xl bg-white border border-emerald-200 shadow-2xs">
               <div className="flex items-center gap-2 text-emerald-700 font-extrabold text-sm mb-1.5">

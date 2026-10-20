@@ -154,22 +154,9 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   });
 
-  // اعتماد إيميلك رسمياً كأدمن المنصة
-  const [adminUsername, setAdminUsername] = useState<string>(() => {
-    try {
-      return localStorage.getItem(STORAGE_KEYS.ADMIN_USER) || 'mohamedsky1986@gmail.com';
-    } catch {
-      return 'mohamedsky1986@gmail.com';
-    }
-  });
-
-  const [adminPassword, setAdminPassword] = useState<string>(() => {
-    try {
-      return localStorage.getItem(STORAGE_KEYS.ADMIN_PASS) || 'admin123';
-    } catch {
-      return 'admin123';
-    }
-  });
+  // إعدادات الأدمن الافتراضية المعتمدة
+  const [adminUsername, setAdminUsername] = useState<string>('mohamedsky1986@gmail.com');
+  const [adminPassword, setAdminPassword] = useState<string>('admin123');
 
   const [subscriptionConfig, setSubscriptionConfig] = useState<SubscriptionConfig>(() => {
     try {
@@ -215,7 +202,7 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   });
 
-  // مزامنة فورية مع Firebase
+  // مزامنة فورية مع قاعدة بيانات Firebase
   useEffect(() => {
     try {
       const unsubscribe = onSnapshot(collection(db, 'students'), (snapshot) => {
@@ -235,7 +222,7 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       });
       return () => unsubscribe();
     } catch (err) {
-      console.warn('Firebase sync note:', err);
+      console.warn('Firebase students sync note:', err);
     }
   }, []);
 
@@ -344,14 +331,6 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [quizAttempts]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.ADMIN_USER, adminUsername);
-  }, [adminUsername]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.ADMIN_PASS, adminPassword);
-  }, [adminPassword]);
-
-  useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.SUB_CONFIG, JSON.stringify(subscriptionConfig));
   }, [subscriptionConfig]);
 
@@ -446,31 +425,41 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setCurrentStudent(null);
   };
 
-  // قبول إيميلك الشخصي mohamedsky1986@gmail.com أو admin
+  // تسجيل دخول الأدمن المعتمد دائماً
   const loginAdmin = (usernameInput: string, passwordInput: string) => {
     try {
-      const cleanInputUser = (usernameInput || '').trim().toLowerCase();
-      const cleanExpectedUser = (adminUsername || 'mohamedsky1986@gmail.com').trim().toLowerCase();
+      const u = (usernameInput || '').trim().toLowerCase();
+      const p = (passwordInput || '').trim();
 
-      const isKnownUser =
-        cleanInputUser === 'mohamedsky1986@gmail.com' ||
-        cleanInputUser === 'admin' ||
-        cleanInputUser === cleanExpectedUser;
+      const validUsers = [
+        'admin',
+        'mohamedsky1986@gmail.com',
+        (adminUsername || '').trim().toLowerCase(),
+      ].filter(Boolean);
 
-      const isPasswordMatch =
-        passwordInput === adminPassword ||
-        passwordInput === 'admin123';
+      const isUserValid = validUsers.includes(u);
 
-      if (isKnownUser && isPasswordMatch) {
+      const isPassValid =
+        p === 'admin123' ||
+        p === (adminPassword || '').trim();
+
+      if (isUserValid && isPassValid) {
         setIsAdmin(true);
         setCurrentStudent(null);
         return { success: true };
       }
 
-      if (!isKnownUser) {
-        return { success: false, error: 'البريد الإلكتروني للمشرف غير مسجل!' };
+      if (!isUserValid) {
+        return {
+          success: false,
+          error: 'اسم المشرف غير صحيح! اكتب admin أو بريدك mohamedsky1986@gmail.com',
+        };
       }
-      return { success: false, error: 'كلمة مرور المشرف غير صحيحة! جرب كلمة المرور admin123' };
+
+      return {
+        success: false,
+        error: 'كلمة المرور غير صحيحة! اكتب الرمز المعتمد: admin123',
+      };
     } catch (err: any) {
       return { success: false, error: 'حدث خطأ أثناء تسجيل الدخول' };
     }

@@ -219,50 +219,66 @@ export const GradePortal: React.FC<GradePortalProps> = ({
         </div>
       </div>
 
-      {/* وحدة تأسيس ومراجعة الحروف والمقاطع بالحركات (للصفين الأول والثاني فقط في مجلد منفصل) */}
-      {(currentGradeId === 'grade-1' || currentGradeId === 'grade-2') && (
-        <div className="space-y-3">
-          <details className="group bg-gradient-to-r from-amber-50 to-orange-50 rounded-3xl border-2 border-amber-200 p-4 sm:p-5 transition-all shadow-xs" open={currentGradeId === 'grade-1'}>
-            <summary className="cursor-pointer font-black text-amber-950 flex flex-col sm:flex-row items-center justify-between gap-2 text-sm sm:text-base select-none list-none text-center sm:text-right">
-              <span className="flex items-center gap-2">
-                <span className="text-2xl">📁</span>
-                <span>مجلد تأسيس ومراجعة الحروف والمقاطع بالحركات ({currentGradeId === 'grade-1' ? 'الصف الأول الابتدائي' : 'الصف الثاني الابتدائي'})</span>
-              </span>
-              <span className="text-xs bg-amber-200 text-amber-900 px-3 py-1 rounded-full font-bold group-open:rotate-180 transition-transform">
-                ▼ فتح / غلق المجلد
-              </span>
-            </summary>
-            <div className="mt-4 pt-4 border-t border-amber-200/80">
-              <Grade1ArabicReading />
-            </div>
-          </details>
-
-          <details className="group bg-gradient-to-r from-blue-50 to-indigo-50 rounded-3xl border-2 border-blue-200 p-4 sm:p-5 transition-all shadow-xs">
-            <summary className="cursor-pointer font-black text-blue-950 flex flex-col sm:flex-row items-center justify-between gap-2 text-sm sm:text-base select-none list-none text-center sm:text-right">
-              <span className="flex items-center gap-2">
-                <span className="text-2xl">📁</span>
-                <span>مجلد الحروف الإنجليزية وأصوات الفونكس (English Phonics)</span>
-              </span>
-              <span className="text-xs bg-blue-200 text-blue-900 px-3 py-1 rounded-full font-bold group-open:rotate-180 transition-transform">
-                ▼ فتح / غلق المجلد
-              </span>
-            </summary>
-            <div className="mt-4 pt-4 border-t border-blue-200/80">
-              <Grade1EnglishLetters />
-            </div>
-          </details>
-        </div>
-      )}
-
-      {/* قسم العلوم التفاعلي */}
-      {(selectedSubject?.id?.startsWith('sci-') ||
-        selectedSubject?.name?.includes('العلوم')) && (
-        <Grade1Science />
-      )}
-
       {/* Selected Subject Area */}
       {selectedSubject && (
         <div className="bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-8 shadow-xs space-y-6">
+          {/* زر الرجوع لقائمة المواد الدراسية والتوسيط */}
+          <div className="flex items-center justify-center sm:justify-start pb-1">
+            <button
+              onClick={() => {
+                playClickSound();
+                window.scrollTo({ top: 300, behavior: 'smooth' });
+              }}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-black transition-all cursor-pointer shadow-2xs border border-slate-200/80"
+            >
+              <span>← العودة لجميع المواد الدراسية</span>
+            </button>
+          </div>
+
+          {/* مجلد الحروف العربية: يظهر حصراً في مادة اللغة العربية / قراءتي وللصفين الأول والثاني فقط */}
+          {(currentGradeId === 'grade-1' || currentGradeId === 'grade-2') &&
+            (selectedSubject.id.startsWith('ar-') || selectedSubject.name.includes('قراءتي') || selectedSubject.name.includes('العربية')) && (
+              <details className="group bg-gradient-to-r from-amber-50 to-orange-50 rounded-3xl border-2 border-amber-200 p-4 sm:p-5 transition-all shadow-xs" open={currentGradeId === 'grade-1'}>
+                <summary className="cursor-pointer font-black text-amber-950 flex flex-col sm:flex-row items-center justify-between gap-2 text-sm sm:text-base select-none list-none text-center sm:text-right">
+                  <span className="flex items-center gap-2">
+                    <span className="text-2xl">📁</span>
+                    <span>مجلد تأسيس ومراجعة الحروف والمقاطع بالحركات ({currentGradeId === 'grade-1' ? 'الصف الأول' : 'الصف الثاني'})</span>
+                  </span>
+                  <span className="text-xs bg-amber-200 text-amber-900 px-3 py-1 rounded-full font-bold group-open:rotate-180 transition-transform">
+                    ▼ فتح / غلق المجلد
+                  </span>
+                </summary>
+                <div className="mt-4 pt-4 border-t border-amber-200/80">
+                  <Grade1ArabicReading />
+                </div>
+              </details>
+          )}
+
+          {/* مجلد الحروف الإنجليزية: يظهر حصراً في مادة اللغة الإنجليزية وللصفين الأول والثاني فقط */}
+          {(currentGradeId === 'grade-1' || currentGradeId === 'grade-2') &&
+            (selectedSubject.id.startsWith('eng-') || selectedSubject.name.includes('English') || selectedSubject.name.includes('الإنجليزية')) && (
+              <details className="group bg-gradient-to-r from-blue-50 to-indigo-50 rounded-3xl border-2 border-blue-200 p-4 sm:p-5 transition-all shadow-xs" open={currentGradeId === 'grade-1'}>
+                <summary className="cursor-pointer font-black text-blue-950 flex flex-col sm:flex-row items-center justify-between gap-2 text-sm sm:text-base select-none list-none text-center sm:text-right">
+                  <span className="flex items-center gap-2">
+                    <span className="text-2xl">📁</span>
+                    <span>مجلد الحروف الإنجليزية وأصوات الفونكس (English Phonics)</span>
+                  </span>
+                  <span className="text-xs bg-blue-200 text-blue-900 px-3 py-1 rounded-full font-bold group-open:rotate-180 transition-transform">
+                    ▼ فتح / غلق المجلد
+                  </span>
+                </summary>
+                <div className="mt-4 pt-4 border-t border-blue-200/80">
+                  <Grade1EnglishLetters />
+                </div>
+              </details>
+          )}
+
+          {/* قسم العلوم التفاعلي للأول فقط وفي مادة العلوم فقط */}
+          {currentGradeId === 'grade-1' &&
+            (selectedSubject.id.startsWith('sci-') || selectedSubject.name.includes('العلوم')) && (
+              <Grade1Science />
+          )}
+
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-100 text-center sm:text-right">
             <div className="flex flex-col sm:flex-row items-center gap-3">
               <span className="text-4xl p-3 rounded-2xl bg-slate-100">

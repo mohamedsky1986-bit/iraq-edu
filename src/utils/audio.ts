@@ -1,10 +1,12 @@
 /**
  * Web Audio API synthesizer for interactive kids sounds
- * + Enhanced Arabic and English Speech Synthesis with tuned audio processing for 1st grade children.
+ * + Enhanced Arabic and English Speech Synthesis with tuned audio processing for primary pupils.
+ * + Universal Cloud Audio Fallback for Arabic speech on Windows PCs without Arabic TTS voice packs.
  */
 
 let audioCtx: AudioContext | null = null;
 let soundEnabled = true;
+let currentAudio: HTMLAudioElement | null = null;
 
 export function setSoundEnabled(enabled: boolean) {
   soundEnabled = enabled;
@@ -30,16 +32,13 @@ function getAudioContext(): AudioContext | null {
   return audioCtx;
 }
 
-/**
- * Cheerful ascending chime for correct quiz answers
- */
 export function playCorrectSound() {
   if (!soundEnabled) return;
   const ctx = getAudioContext();
   if (!ctx) return;
 
   const now = ctx.currentTime;
-  const notes = [523.25, 659.25, 783.99, 1046.5]; // C5, E5, G5, C6
+  const notes = [523.25, 659.25, 783.99, 1046.5];
   notes.forEach((freq, index) => {
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
@@ -59,9 +58,6 @@ export function playCorrectSound() {
   });
 }
 
-/**
- * Gentle boing/tone for wrong quiz answers
- */
 export function playWrongSound() {
   if (!soundEnabled) return;
   const ctx = getAudioContext();
@@ -85,9 +81,6 @@ export function playWrongSound() {
   osc.stop(now + 0.36);
 }
 
-/**
- * Playful syllable blend sound (combining consonant + vowel)
- */
 export function playSyllableBlendSound() {
   if (!soundEnabled) return;
   const ctx = getAudioContext();
@@ -112,9 +105,6 @@ export function playSyllableBlendSound() {
   osc.stop(now + 0.26);
 }
 
-/**
- * Soft playful click sound for UI buttons
- */
 export function playClickSound() {
   if (!soundEnabled) return;
   const ctx = getAudioContext();
@@ -126,22 +116,19 @@ export function playClickSound() {
 
   osc.type = 'sine';
   osc.frequency.setValueAtTime(800, now);
-  osc.frequency.exponentialRampToValueAtTime(400, now + 0.05);
+  osc.frequency.exponentialRampToValueAtTime(400, now + 0.04);
 
   gain.gain.setValueAtTime(0.12, now);
-  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
 
   osc.connect(gain);
   gain.connect(ctx.destination);
 
   osc.start(now);
-  osc.stop(now + 0.07);
+  osc.stop(now + 0.055);
 }
 
-/**
- * Triumphant fanfare celebration when student completes a test
- */
-export function playFanfareSound() {
+export function playCelebrationFanfare() {
   if (!soundEnabled) return;
   const ctx = getAudioContext();
   if (!ctx) return;
@@ -173,18 +160,22 @@ export function playFanfareSound() {
   });
 }
 
-/**
- * Stop any ongoing speech
- */
 export function stopSpeaking() {
+  if (currentAudio) {
+    try {
+      currentAudio.pause();
+      currentAudio.currentTime = 0;
+    } catch {}
+    currentAudio = null;
+  }
   if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-    window.speechSynthesis.cancel();
+    try {
+      window.speechSynthesis.cancel();
+    } catch {}
   }
 }
 
-/**
- * Processed Arabic Speech Synthesis with speed control and clear pronunciation
- */
+// النطق العربي الشامل والمضمون لجميع الحواسيب والهواتف
 export function speakArabicText(
   text: string,
   callbacks?: {
@@ -197,12 +188,12 @@ export function speakArabicText(
     pitch?: number;
   }
 ) {
-  if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+  if (typeof window === 'undefined') {
     callbacks?.onEnd?.();
     return;
   }
 
-  window.speechSynthesis.cancel();
+  stopSpeaking();
 
   const cleanText = text.replace(/[*#_~`[\]()]/g, ' ').trim();
   if (!cleanText) {
@@ -210,32 +201,75 @@ export function speakArabicText(
     return;
   }
 
-  const utterance = new SpeechSynthesisUtterance(cleanText);
-  utterance.lang = 'ar-IQ'; // Iraqi Arabic preferred, fallback to ar
-  utterance.rate = options?.rate ?? 0.82; // Calibrated for primary pupils
-  utterance.pitch = options?.pitch ?? 1.05; // Warm friendly tone
+  // 1. فحص وجود صوت عربي في المتصفح
+  if ('speechSynthesis' in window) {
+    const voices = window.speechSynthesis.getVoices();
+    const arabicVoice = voices.find(
+      (v) =>
+        v.lang.toLowerCase().startsWith('ar') ||
+        v.name.toLowerCase().includes('arabic') ||
+        v.name.toLowerCase().includes('عربي')
+    );
 
-  const voices = window.speechSynthesis.getVoices();
-  const arabicVoice = voices.find(
-    (v) => v.lang.startsWith('ar') || v.name.toLowerCase().includes('arabic')
-  );
-  if (arabicVoice) {
-    utterance.voice = arabicVoice;
+    if (arabicVoice) {
+      const utterance = new SpeechSynthesisUtterance(cleanText);
+      utterance.voice = arabicVoice;
+      utterance.lang = arabicVoice.lang || 'ar-SA';
+      utterance.rate = options?.rate ?? 0.82;
+      utterance.pitch = options?.pitch ?? 1.05;
+
+      utterance.onstart = () => callbacks?.onStart?.();
+      utterance.onend = () => callbacks?.onEnd?.();
+      utterance.onerror = (e) => {
+        callbacks?.onError?.(e);
+        callbacks?.onEnd?.();
+      };
+
+      window.speechSynthesis.speak(utterance);
+      return;
+    }
   }
 
-  utterance.onstart = () => callbacks?.onStart?.();
-  utterance.onend = () => callbacks?.onEnd?.();
-  utterance.onerror = (e) => {
-    callbacks?.onError?.(e);
-    callbacks?.onEnd?.();
-  };
+  // 2. تشغيل النطق العربي السحابي عالي الدقة في حال عدم توفر صوت عربي في ويندوز
+  try {
+    const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(
+      cleanText.slice(0, 160)
+    )}&tl=ar&client=tw-ob`;
 
-  window.speechSynthesis.speak(utterance);
+    const audio = new Audio(ttsUrl);
+    currentAudio = audio;
+    audio.playbackRate = options?.rate ?? 0.9;
+
+    audio.onplay = () => callbacks?.onStart?.();
+    audio.onended = () => {
+      currentAudio = null;
+      callbacks?.onEnd?.();
+    };
+    audio.onerror = () => {
+      currentAudio = null;
+      if ('speechSynthesis' in window) {
+        const u = new SpeechSynthesisUtterance(cleanText);
+        u.lang = 'ar';
+        u.onend = () => callbacks?.onEnd?.();
+        window.speechSynthesis.speak(u);
+      } else {
+        callbacks?.onEnd?.();
+      }
+    };
+
+    audio.play().catch(() => {
+      if ('speechSynthesis' in window) {
+        const u = new SpeechSynthesisUtterance(cleanText);
+        u.lang = 'ar';
+        window.speechSynthesis.speak(u);
+      }
+      callbacks?.onEnd?.();
+    });
+  } catch {
+    callbacks?.onEnd?.();
+  }
 }
 
-/**
- * Tuned English Speech Synthesis for 1st grade English letters and phonics
- */
 export function speakEnglishPhonics(
   text: string,
   callbacks?: {
@@ -248,35 +282,64 @@ export function speakEnglishPhonics(
     pitch?: number;
   }
 ) {
-  if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+  if (typeof window === 'undefined') {
     callbacks?.onEnd?.();
     return;
   }
 
-  window.speechSynthesis.cancel();
+  stopSpeaking();
 
-  const utterance = new SpeechSynthesisUtterance(text.trim());
-  utterance.lang = 'en-US';
-  utterance.rate = options?.rate ?? 0.85; // Easy to follow for ESL primary kids
-  utterance.pitch = options?.pitch ?? 1.1; // Cheerful children tone
-
-  const voices = window.speechSynthesis.getVoices();
-  const enVoice = voices.find(
-    (v) =>
-      (v.lang.startsWith('en') || v.name.toLowerCase().includes('english')) &&
-      (v.name.toLowerCase().includes('natural') || v.name.toLowerCase().includes('google') || v.name.toLowerCase().includes('samantha'))
-  ) || voices.find((v) => v.lang.startsWith('en'));
-
-  if (enVoice) {
-    utterance.voice = enVoice;
+  const cleanText = text.replace(/[*#_~`[\]()]/g, ' ').trim();
+  if (!cleanText) {
+    callbacks?.onEnd?.();
+    return;
   }
 
-  utterance.onstart = () => callbacks?.onStart?.();
-  utterance.onend = () => callbacks?.onEnd?.();
-  utterance.onerror = (e) => {
-    callbacks?.onError?.(e);
-    callbacks?.onEnd?.();
-  };
+  if ('speechSynthesis' in window) {
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    utterance.lang = 'en-US';
+    utterance.rate = options?.rate ?? 0.85;
+    utterance.pitch = options?.pitch ?? 1.1;
 
-  window.speechSynthesis.speak(utterance);
+    const voices = window.speechSynthesis.getVoices();
+    const enVoice =
+      voices.find(
+        (v) =>
+          (v.lang.startsWith('en') || v.name.toLowerCase().includes('english')) &&
+          (v.name.toLowerCase().includes('natural') ||
+            v.name.toLowerCase().includes('google') ||
+            v.name.toLowerCase().includes('samantha'))
+      ) || voices.find((v) => v.lang.startsWith('en'));
+
+    if (enVoice) {
+      utterance.voice = enVoice;
+    }
+
+    utterance.onstart = () => callbacks?.onStart?.();
+    utterance.onend = () => callbacks?.onEnd?.();
+    utterance.onerror = (e) => {
+      callbacks?.onError?.(e);
+      callbacks?.onEnd?.();
+    };
+
+    window.speechSynthesis.speak(utterance);
+    return;
+  }
+
+  try {
+    const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(
+      cleanText.slice(0, 160)
+    )}&tl=en&client=tw-ob`;
+    const audio = new Audio(ttsUrl);
+    currentAudio = audio;
+    audio.onplay = () => callbacks?.onStart?.();
+    audio.onended = () => {
+      currentAudio = null;
+      callbacks?.onEnd?.();
+    };
+    audio.onerror = () => callbacks?.onEnd?.();
+    audio.play().catch(() => callbacks?.onEnd?.());
+  } catch {
+    callbacks?.onEnd?.();
+  }
 }

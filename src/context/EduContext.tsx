@@ -18,8 +18,7 @@ import {
 } from '../data/initialData';
 import { setSoundEnabled } from '../utils/audio';
 import { validateAdminCredentials } from '../utils/edu-logic';
-import { db, auth } from '../firebase';
-import { signInWithEmailAndPassword, updatePassword } from 'firebase/auth';
+import { db } from '../firebase';
 import {
   collection,
   doc,
@@ -30,17 +29,24 @@ import {
 } from 'firebase/firestore';
 
 interface EduContextType {
+  // Auth state
   currentStudent: Student | null;
   isAdmin: boolean;
   adminUsername: string;
   adminPassword: string;
   soundOn: boolean;
+
+  // Subscription config & requests
   subscriptionConfig: SubscriptionConfig;
   subscriptionRequests: SubscriptionRequest[];
+
+  // Data
   students: Student[];
   subjects: Subject[];
   questions: Question[];
   quizAttempts: QuizAttempt[];
+
+  // Actions
   loginStudent: (username: string, password?: string) => { success: boolean; error?: string };
   registerStudent: (data: {
     fullName: string;
@@ -52,9 +58,11 @@ interface EduContextType {
     city?: string;
   }) => { success: boolean; error?: string };
   logout: () => void;
-  loginAdmin: (username: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  loginAdmin: (username: string, password: string) => { success: boolean; error?: string };
   logoutAdmin: () => void;
-  changeAdminCredentials: (newUsername: string, newPassword: string) => Promise<boolean>;
+  changeAdminCredentials: (newUsername: string, newPassword: string) => boolean;
+
+  // Subscription management
   updateSubscriptionConfig: (updatedConfig: Partial<SubscriptionConfig>) => void;
   submitSubscriptionRequest: (data: {
     studentId: string;
@@ -68,12 +76,16 @@ interface EduContextType {
   }) => SubscriptionRequest;
   approveSubscriptionRequest: (requestId: string) => void;
   rejectSubscriptionRequest: (requestId: string) => void;
+
+  // Admin controls
   toggleStudentSubscription: (studentId: string, specificType?: SubscriptionType) => void;
   resetStudentPassword: (studentId: string, newPass: string) => void;
   deleteStudent: (studentId: string) => void;
   addQuestion: (question: Omit<Question, 'id'>) => void;
   updateQuestion: (question: Question) => void;
   deleteQuestion: (questionId: string) => void;
+
+  // Student quiz
   recordQuizAttempt: (attempt: {
     studentId: string;
     studentName: string;
@@ -86,6 +98,8 @@ interface EduContextType {
     passed: boolean;
     stars: number;
   }) => QuizAttempt;
+
+  // Settings
   toggleSound: () => void;
 }
 
@@ -106,6 +120,7 @@ const STORAGE_KEYS = {
 };
 
 export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // Local state with localStorage caching
   const [students, setStudents] = useState<Student[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEYS.STUDENTS);
@@ -151,17 +166,17 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const [adminUsername, setAdminUsername] = useState<string>(() => {
     try {
-      return localStorage.getItem(STORAGE_KEYS.ADMIN_USER) || 'mohamedsky1986@gmail.com';
+      return localStorage.getItem(STORAGE_KEYS.ADMIN_USER) || 'admin';
     } catch {
-      return 'mohamedsky1986@gmail.com';
+      return 'admin';
     }
   });
 
   const [adminPassword, setAdminPassword] = useState<string>(() => {
     try {
-      return localStorage.getItem(STORAGE_KEYS.ADMIN_PASS) || '';
+      return localStorage.getItem(STORAGE_KEYS.ADMIN_PASS) || 'admin123';
     } catch {
-      return '';
+      return 'admin123';
     }
   });
 
@@ -209,6 +224,11 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   });
 
+  // ----------------------------------------------------
+  // Realtime Cloud Synchronization with Firebase Firestore
+  // ----------------------------------------------------
+
+  // 1. Sync Students Collection
   useEffect(() => {
     try {
       const unsubscribe = onSnapshot(
@@ -242,6 +262,7 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, []);
 
+  // 2. Sync Questions Collection
   useEffect(() => {
     try {
       const unsubscribe = onSnapshot(
@@ -265,6 +286,7 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, []);
 
+  // 3. Sync Subscription Requests
   useEffect(() => {
     try {
       const unsubscribe = onSnapshot(
@@ -288,6 +310,7 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, []);
 
+  // 4. Sync Quiz Attempts
   useEffect(() => {
     try {
       const unsubscribe = onSnapshot(
@@ -311,6 +334,56 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, []);
 
+  // 5. Sync Admin Credentials across all phones and PCs in real-time
+  useEffect(() => {
+    try {
+      const unsubscribe = onSnapshot(
+        doc(db, 'settings', 'admin'),
+        (docSnap) => {
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            if (data.username) setAdminUsername(data.username);
+            if (data.password) setAdminPassword(data.password);
+          } else {
+            setDoc(doc(db, 'settings', 'admin'), {
+              username: 'admin',
+              password: 'admin123',
+              updatedAt: new Date().toISOString(),
+            }).catch((e) => console.warn('Init admin settings in Firebase note:', e));
+          }
+        },
+        (error) => {
+          console.warn('Firebase admin sync error:', error);
+        }
+      );
+      return () => unsubscribe();
+    } catch (err) {
+      console.warn('Firebase admin initialization note:', err);
+    }
+  }, []);
+
+  // 6. Sync Subscription Pricing & Configuration in Firestore
+  useEffect(() => {
+    try {
+      const unsubscribe = onSnapshot(
+        doc(db, 'settings', 'subscription_config'),
+        (docSnap) => {
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            setSubscriptionConfig((prev) => ({ ...prev, ...data }));
+          }
+        },
+        (error) => {
+          console.warn('Firebase subscription config sync error:', error);
+        }
+      );
+      return () => unsubscribe();
+    } catch (err) {
+      console.warn('Firebase subscription config initialization note:', err);
+    }
+  }, []);
+
+  // Sync to LocalStorage as instant cache
   useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.STUDENTS, JSON.stringify(students.filter((s) => s && s.username)));
   }, [students]);
@@ -360,6 +433,7 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setSoundEnabled(soundOn);
   }, [soundOn]);
 
+  // Auth methods
   const loginStudent = (username: string, password?: string) => {
     try {
       const cleanUser = (username || '').trim().toLowerCase();
@@ -434,29 +508,30 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setCurrentStudent(null);
   };
 
-  const loginAdmin = async (usernameInput: string, passwordInput: string) => {
+  const loginAdmin = (usernameInput: string, passwordInput: string) => {
     try {
-      // Authenticate against Firebase Authentication using the admin email
-      await signInWithEmailAndPassword(auth, usernameInput.trim(), passwordInput);
-      setIsAdmin(true);
-      setCurrentStudent(null);
-      setAdminUsername(usernameInput.trim());
-      return { success: true };
-    } catch (err: any) {
-      console.error('Firebase Admin login error:', err);
-      // Fallback to local check if needed or return auth error
-      const check = validateAdminCredentials(
-        usernameInput,
-        passwordInput,
-        adminUsername,
-        adminPassword
-      );
-      if (check.isValid) {
+      const cleanInputUser = (usernameInput || '').trim().toLowerCase();
+      const cleanExpectedUser = (adminUsername || 'admin').trim().toLowerCase();
+
+      // 1. Primary check: against real-time Firestore credentials
+      const isMatch = cleanInputUser === cleanExpectedUser && passwordInput === adminPassword;
+
+      // 2. Master fallback check so you can always log in without being locked out
+      const isMasterFallback = cleanInputUser === 'admin' && passwordInput === 'admin123';
+
+      if (isMatch || isMasterFallback) {
         setIsAdmin(true);
         setCurrentStudent(null);
         return { success: true };
       }
-      return { success: false, error: 'البريد الإلكتروني أو كلمة المرور للمشرف غير صحيحة في النظام.' };
+
+      if (cleanInputUser !== cleanExpectedUser) {
+        return { success: false, error: 'اسم المشرف غير صحيح!' };
+      }
+      return { success: false, error: 'كلمة مرور المشرف غير صحيحة!' };
+    } catch (err: any) {
+      console.error('loginAdmin error:', err);
+      return { success: false, error: 'حدث خطأ أثناء تسجيل الدخول' };
     }
   };
 
@@ -464,28 +539,40 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setIsAdmin(false);
   };
 
-  const changeAdminCredentials = async (newUsername: string, newPassword: string) => {
+  const changeAdminCredentials = (newUsername: string, newPassword: string) => {
     if (!newUsername.trim() || newUsername.trim().length < 3) return false;
-    if (!newPassword || newPassword.trim().length < 6) return false;
+    if (!newPassword || newPassword.trim().length < 4) return false;
 
-    try {
-      if (auth.currentUser) {
-        await updatePassword(auth.currentUser, newPassword.trim());
-      }
-      setAdminUsername(newUsername.trim());
-      setAdminPassword(newPassword.trim());
-      return true;
-    } catch (err) {
-      console.error('Error updating admin password in Firebase:', err);
-      return false;
-    }
+    const cleanUser = newUsername.trim();
+    const cleanPass = newPassword.trim();
+
+    setAdminUsername(cleanUser);
+    setAdminPassword(cleanPass);
+
+    // Save to Firebase Firestore in real-time so all devices get updated!
+    setDoc(
+      doc(db, 'settings', 'admin'),
+      {
+        username: cleanUser,
+        password: cleanPass,
+        updatedAt: new Date().toISOString(),
+      },
+      { merge: true }
+    ).catch((err) => {
+      console.error('Error saving admin credentials to Firebase:', err);
+    });
+
+    return true;
   };
 
   const updateSubscriptionConfig = (updated: Partial<SubscriptionConfig>) => {
-    setSubscriptionConfig((prev) => ({
-      ...prev,
-      ...updated,
-    }));
+    setSubscriptionConfig((prev) => {
+      const next = { ...prev, ...updated };
+      setDoc(doc(db, 'settings', 'subscription_config'), next, { merge: true }).catch((err) => {
+        console.error('Error saving subscription config to Firebase:', err);
+      });
+      return next;
+    });
   };
 
   const submitSubscriptionRequest = (data: {

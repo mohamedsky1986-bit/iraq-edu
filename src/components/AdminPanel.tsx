@@ -680,6 +680,34 @@ export const AdminPanel: React.FC = () => {
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {filteredStudents.map((st) => (
+<td className="p-4 font-bold text-slate-900 flex items-center gap-2.5">
+                        <div className="relative shrink-0">
+                          <span className="text-xl">{st.avatar}</span>
+                          {(st as any).isOnline && (
+                            <span
+                              className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 border-2 border-white rounded-full animate-pulse"
+                              title="متصل الآن"
+                            />
+                          )}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span>{st.fullName}</span>
+                            {(st as any).isOnline ? (
+                              <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                🟢 أونلاين
+                              </span>
+                            ) : (st as any).lastActiveAt ? (
+                              <span className="text-[9px] font-normal text-slate-400">
+                                آخر ظهور: {new Date((st as any).lastActiveAt).toLocaleTimeString('ar-IQ', { hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                            ) : null}
+                          </div>
+                          <span className="text-[10px] text-slate-400 font-normal block mt-0.5">
+                            {st.city || 'العراق'} • {st.schoolName || 'مدرسة ابتدائية'}
+                          </span>
+                        </div>
+                      </td>
                     <tr key={st.id} className="hover:bg-slate-50/60 transition-colors">
                       <td className="p-4 font-bold text-slate-900 flex items-center gap-2.5">
                         <span className="text-xl">{st.avatar}</span>

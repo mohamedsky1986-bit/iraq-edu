@@ -1345,7 +1345,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
             </details>
           )}
 
-          {/* مجلد أصوات ونطق الحروف الإنجليزية للأول والثاني الابتدائي */}
+          {/* مجلد أصوات ونطق الحروف الإنجليزية التفاعلية للأول والثاني الابتدائي */}
           {(currentGradeId === 'grade-1' || currentGradeId === 'grade-2') && isEnglishSubject && (
             <details className="group bg-gradient-to-r from-sky-50 via-indigo-50 to-blue-50 rounded-3xl border-2 border-indigo-200 p-4 sm:p-5 transition-all shadow-xs" open>
               <summary className="cursor-pointer font-black text-indigo-950 flex flex-col sm:flex-row items-center justify-between gap-2 text-sm sm:text-base select-none list-none text-center sm:text-right">

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useEdu } from '../context/EduContext';
 import { Subject, Question } from '../types/index';
-import { GRADES_DATA, DEFAULT_SUBJECTS } from '../data/initialData';
+import { GRADES_DATA } from '../data/initialData';
 import { getIraqiGradeName } from '../utils/edu-logic';
 import { QuestionCard } from './QuestionCard';
 import { Grade1ArabicReading } from './Grade1ArabicReading';
@@ -33,6 +33,552 @@ import {
   Home,
   LogOut
 } from 'lucide-react';
+
+
+export const ALL_IRAQI_OFFICIAL_SUBJECTS: Subject[] = [
+  // ================= الصف الأول الابتدائي =================
+  {
+    id: 'ar-1',
+    gradeId: 'grade-1',
+    name: 'قراءتي (الحروف والأصوات والمقاطع)',
+    code: 'ARABIC_1',
+    icon: '🔤',
+    themeColor: 'emerald',
+    description: 'منهج قراءتي التفاعلي: الحركات، الحروف الهجائية، المقاطع الصوتية ونطق دار ودور وبابا وماما',
+    lessonsCount: 16,
+    questionsCount: 15,
+    isSpecialInteractive: true,
+  },
+  {
+    id: 'eng-1',
+    gradeId: 'grade-1',
+    name: 'اللغة الإنجليزية (English Letters)',
+    code: 'ENG_1',
+    icon: '🔠',
+    themeColor: 'sky',
+    description: 'English for Iraq: Letters A to Z, Phonics, Sounds, Numbers and Words with interactive audio',
+    lessonsCount: 12,
+    questionsCount: 12,
+    isSpecialInteractive: true,
+  },
+  {
+    id: 'sci-1',
+    gradeId: 'grade-1',
+    name: 'العلوم (الكائنات الحية والبيئة)',
+    code: 'SCIENCE_1',
+    icon: '🌿',
+    themeColor: 'lime',
+    description: 'العلوم للصف الأول: الكائنات الحية، أجزاء النبات، الحواس الخمسة، والبيئة العراقية',
+    lessonsCount: 10,
+    questionsCount: 12,
+    isSpecialInteractive: true,
+  },
+  {
+    id: 'math-1',
+    gradeId: 'grade-1',
+    name: 'الرياضيات',
+    code: 'MATH_1',
+    icon: '🔢',
+    themeColor: 'teal',
+    description: 'الأعداد من 1 إلى 20، الجمع والطرح البسيط والمقارنة بين الأشياء',
+    lessonsCount: 10,
+    questionsCount: 10,
+  },
+  {
+    id: 'isl-1',
+    gradeId: 'grade-1',
+    name: 'التربية الإسلامية',
+    code: 'ISLAMIC_1',
+    icon: '🕌',
+    themeColor: 'green',
+    description: 'السور القرآنية القصيرة، أركان الإيمان، والآداب الإسلامية الحميدة',
+    lessonsCount: 8,
+    questionsCount: 8,
+  },
+
+  // ================= الصف الثاني الابتدائي =================
+  {
+    id: 'ar-2',
+    gradeId: 'grade-2',
+    name: 'قراءتي (اللغة العربية)',
+    code: 'ARABIC_2',
+    icon: '📖',
+    themeColor: 'sky',
+    description: 'قصص قصيرة مشوقة، التعبير الشفهي، والتدريب على الإملاء السليم',
+    lessonsCount: 16,
+    questionsCount: 14,
+  },
+  {
+    id: 'math-2',
+    gradeId: 'grade-2',
+    name: 'الرياضيات',
+    code: 'MATH_2',
+    icon: '➕',
+    themeColor: 'indigo',
+    description: 'الأعداد حتى 999، القيمة المكانية، والجمع والطرح مع إعادة التسمية',
+    lessonsCount: 14,
+    questionsCount: 12,
+  },
+  {
+    id: 'sci-2',
+    gradeId: 'grade-2',
+    name: 'العلوم',
+    code: 'SCIENCE_2',
+    icon: '🔬',
+    themeColor: 'emerald',
+    description: 'أعضاء جسم الإنسان، صحة الغذاء، وتنوع البيئات الطبيعية',
+    lessonsCount: 12,
+    questionsCount: 10,
+  },
+  {
+    id: 'isl-2',
+    gradeId: 'grade-2',
+    name: 'التربية الإسلامية',
+    code: 'ISLAMIC_2',
+    icon: '🕌',
+    themeColor: 'amber',
+    description: 'سور الفيل وقريش والماعون، سيرة النبي محمد (ص) في طفولته',
+    lessonsCount: 10,
+    questionsCount: 10,
+  },
+  {
+    id: 'eng-2',
+    gradeId: 'grade-2',
+    name: 'اللغة الإنجليزية (English for Iraq)',
+    code: 'ENG_2',
+    icon: '🇬🇧',
+    themeColor: 'blue',
+    description: 'My School, My Body, Colors and Animals with interactive vocabulary',
+    lessonsCount: 12,
+    questionsCount: 10,
+  },
+
+  // ================= الصف الثالث الابتدائي =================
+  {
+    id: 'ar-3',
+    gradeId: 'grade-3',
+    name: 'قراءتي (اللغة العربية)',
+    code: 'ARABIC_3',
+    icon: '📚',
+    themeColor: 'violet',
+    description: 'نصوص أدبية مختارة، التدريبات اللغوية، وعلامات الترقيم',
+    lessonsCount: 18,
+    questionsCount: 15,
+  },
+  {
+    id: 'math-3',
+    gradeId: 'grade-3',
+    name: 'الرياضيات',
+    code: 'MATH_3',
+    icon: '✖️',
+    themeColor: 'cyan',
+    description: 'الأعداد حتى 9999، جدول الضرب كاملاً، ومبادئ القسمة والهندسة',
+    lessonsCount: 16,
+    questionsCount: 14,
+  },
+  {
+    id: 'sci-3',
+    gradeId: 'grade-3',
+    name: 'العلوم',
+    code: 'SCIENCE_3',
+    icon: '🌱',
+    themeColor: 'teal',
+    description: 'دورة حياة النباتات والحيوانات، مصادر الطاقة، والصخور والمعادن',
+    lessonsCount: 14,
+    questionsCount: 12,
+  },
+  {
+    id: 'isl-3',
+    gradeId: 'grade-3',
+    name: 'التربية الإسلامية',
+    code: 'ISLAMIC_3',
+    icon: '🕌',
+    themeColor: 'emerald',
+    description: 'سور التين والعلق والقدر، معجزات الرسل، والآداب الاجتماعية',
+    lessonsCount: 12,
+    questionsCount: 12,
+  },
+  {
+    id: 'eng-3',
+    gradeId: 'grade-3',
+    name: 'اللغة الإنجليزية (English for Iraq)',
+    code: 'ENG_3',
+    icon: '🇬🇧',
+    themeColor: 'blue',
+    description: 'Numbers, Alphabet Phonics, Clothes, Food and Daily Routines',
+    lessonsCount: 12,
+    questionsCount: 12,
+  },
+
+  // ================= الصف الرابع الابتدائي =================
+  {
+    id: 'ar-4',
+    gradeId: 'grade-4',
+    name: 'قواعد اللغة العربية والمطالعة',
+    code: 'ARABIC_4',
+    icon: '📜',
+    themeColor: 'rose',
+    description: 'المفرد والمثنى والجمع، أسماء الإشارة، الأسماء الموصولة والضمائر',
+    lessonsCount: 20,
+    questionsCount: 20,
+  },
+  {
+    id: 'math-4',
+    gradeId: 'grade-4',
+    name: 'الرياضيات',
+    code: 'MATH_4',
+    icon: '📐',
+    themeColor: 'blue',
+    description: 'الأعداد ضمن الملايين، الضرب في مرتبتين، القسمة على مرتبة، والكسور الاعتيادية والعشرية',
+    lessonsCount: 20,
+    questionsCount: 18,
+  },
+  {
+    id: 'sci-4',
+    gradeId: 'grade-4',
+    name: 'العلوم',
+    code: 'SCIENCE_4',
+    icon: '🪐',
+    themeColor: 'emerald',
+    description: 'البكتيريا والفطريات، النباتات الزهرية واللازهرية، ودورات حياة الحيوانات الفقرية واللافقرية',
+    lessonsCount: 18,
+    questionsCount: 16,
+  },
+  {
+    id: 'soc-4',
+    gradeId: 'grade-4',
+    name: 'الاجتماعيات',
+    code: 'SOC_4',
+    icon: '🏛️',
+    themeColor: 'amber',
+    description: 'جغرافية العراق: الجهات، البيئات، مدن العراق التاريخية وحضارات بلاد الرافدين',
+    lessonsCount: 15,
+    questionsCount: 15,
+  },
+  {
+    id: 'isl-4',
+    gradeId: 'grade-4',
+    name: 'التربية الإسلامية',
+    code: 'ISLAMIC_4',
+    icon: '🕌',
+    themeColor: 'green',
+    description: 'سورة الضحى وسورة الزلزلة، سيرة النبي محمد (ص) في مكة، والآداب الإسلامية',
+    lessonsCount: 14,
+    questionsCount: 12,
+  },
+  {
+    id: 'eng-4',
+    gradeId: 'grade-4',
+    name: 'اللغة الإنجليزية (English for Iraq)',
+    code: 'ENG_4',
+    icon: '🇬🇧',
+    themeColor: 'sky',
+    description: 'English for Iraq 4th Primary: Countries, Family, Time, School subjects and Vocabulary',
+    lessonsCount: 14,
+    questionsCount: 14,
+  },
+
+  // ================= الصف الخامس الابتدائي =================
+  {
+    id: 'ar-5',
+    gradeId: 'grade-5',
+    name: 'قواعد اللغة العربية والمطالعة',
+    code: 'ARABIC_5',
+    icon: '📖',
+    themeColor: 'emerald',
+    description: 'أقسام الفعل: الماضي والمضارع والأمر، الفاعل والمفعول به، المبتدأ والخبر، وكان وأخواتها وإن وأخواتها',
+    lessonsCount: 20,
+    questionsCount: 20,
+  },
+  {
+    id: 'math-5',
+    gradeId: 'grade-5',
+    name: 'الرياضيات',
+    code: 'MATH_5',
+    icon: '📊',
+    themeColor: 'teal',
+    description: 'الأعداد ضمن المليارات، الضرب والقسمة، جمع وطرح الكسور الاعتيادية والعشرية، ومساحة المثلث والمربع',
+    lessonsCount: 20,
+    questionsCount: 18,
+  },
+  {
+    id: 'sci-5',
+    gradeId: 'grade-5',
+    name: 'العلوم',
+    code: 'SCIENCE_5',
+    icon: '🔬',
+    themeColor: 'cyan',
+    description: 'جهاز الدوران والتنفس والهضم عند الإنسان، الكهربائية والمغناطيس، والمركبات والمخاليط في الطبيعة',
+    lessonsCount: 16,
+    questionsCount: 16,
+  },
+  {
+    id: 'soc-5',
+    gradeId: 'grade-5',
+    name: 'الاجتماعيات',
+    code: 'SOC_5',
+    icon: '🏛️',
+    themeColor: 'amber',
+    description: 'تضاريس العراق، مناخ وموارد العراق المائية، والتاريخ الإسلامي وحضارة بابل وآشور وسومر',
+    lessonsCount: 14,
+    questionsCount: 14,
+  },
+  {
+    id: 'isl-5',
+    gradeId: 'grade-5',
+    name: 'التربية الإسلامية',
+    code: 'ISLAMIC_5',
+    icon: '🕌',
+    themeColor: 'green',
+    description: 'سورة البلد والماعون والملك المقررة، أركان الإيمان، معركة بدر وسيرة الرسول (ص)، وآداب صلة الرحم',
+    lessonsCount: 16,
+    questionsCount: 14,
+  },
+  {
+    id: 'eng-5',
+    gradeId: 'grade-5',
+    name: 'اللغة الإنجليزية (English for Iraq)',
+    code: 'ENG_5',
+    icon: '🇬🇧',
+    themeColor: 'blue',
+    description: 'English for Iraq 5th Primary: Countries & Nationalities, Animals, Sports, Food & Jobs',
+    lessonsCount: 16,
+    questionsCount: 16,
+  },
+
+  // ================= الصف السادس الابتدائي =================
+  {
+    id: 'ar-6',
+    gradeId: 'grade-6',
+    name: 'قواعد اللغة العربية (وزاري)',
+    code: 'ARABIC_6',
+    icon: '🏆',
+    themeColor: 'amber',
+    description: 'النكرة والمعرفة، المعرف بالإضافة، المفاعيل (المطلق وفيه)، إعراب الفعل المضارع، والأسماء الخمسة',
+    lessonsCount: 24,
+    questionsCount: 25,
+  },
+  {
+    id: 'math-6',
+    gradeId: 'grade-6',
+    name: 'الرياضيات (وزاري)',
+    code: 'MATH_6',
+    icon: '📐',
+    themeColor: 'indigo',
+    description: 'الأعداد الصحيحة، العمليات على الكسور، النسبة والتناسب ومقياس الرسم، والدائرة والمجسمات',
+    lessonsCount: 24,
+    questionsCount: 24,
+  },
+  {
+    id: 'sci-6',
+    gradeId: 'grade-6',
+    name: 'العلوم (وزاري)',
+    code: 'SCIENCE_6',
+    icon: '🧬',
+    themeColor: 'rose',
+    description: 'التكاثر في النباتات (بذور، درنات، أبصال)، الجهاز العصبي والهيكلي، الذرة، والموجات الصوتية والضوئية',
+    lessonsCount: 22,
+    questionsCount: 22,
+  },
+  {
+    id: 'isl-6',
+    gradeId: 'grade-6',
+    name: 'التربية الإسلامية (وزاري)',
+    code: 'ISLAMIC_6',
+    icon: '🕌',
+    themeColor: 'emerald',
+    description: 'سورة النجم ولقمان والرحمن، أحكام اللام، سيرة أولي العزم والجهاد في الإسلام، والأخلاق الفاضلة',
+    lessonsCount: 18,
+    questionsCount: 20,
+  },
+  {
+    id: 'soc-6',
+    gradeId: 'grade-6',
+    name: 'الاجتماعيات (وزاري)',
+    code: 'SOC_6',
+    icon: '🗺️',
+    themeColor: 'orange',
+    description: 'دراسة محافظات العراق الـ 18 بالتفصيل: الموقع، التضاريس، الموارد المائية، والنبذة التاريخية لكل محافظة',
+    lessonsCount: 20,
+    questionsCount: 20,
+  },
+  {
+    id: 'eng-6',
+    gradeId: 'grade-6',
+    name: 'اللغة الإنجليزية (English for Iraq - وزاري)',
+    code: 'ENG_6',
+    icon: '🇬🇧',
+    themeColor: 'sky',
+    description: 'English for Iraq 6th Primary: Family, Jobs & Workplaces, Materials, Routine, Travel and Ministerial Grammar',
+    lessonsCount: 20,
+    questionsCount: 22,
+  },
+];
+
+
+const DEFAULT_EXTRA_QUESTIONS: Question[] = [
+  // Islamic Grade 5
+  {
+    id: 'q-isl5-1',
+    gradeId: 'grade-5',
+    subjectId: 'isl-5',
+    chapter: 'الوحدة الأولى: القرآن الكريم والعقيدة',
+    lessonName: 'سورة البلد وتفسيرها',
+    questionText: 'ما المعنى الإجمالي لقوله تعالى: ﴿لا أُقْسِمُ بِهَذَا الْبَلَدِ * وَأَنْتَ حِلٌّ بِهَذَا الْبَلَدِ﴾؟',
+    answerText: 'يقسم الله عز وجل بمكة المكرمة البلد الحرام تشريفاً وتعظيماً لها، وبياناً لفضل ومكانة النبي محمد (صلى الله عليه وآله وسلم) فيها.',
+    difficulty: 'medium',
+    isVipOnly: false,
+    options: ['يقسم بمكة المكرمة تشريفاً للنبي (ص)', 'يقسم بمدينة القدس الشريف', 'يقسم بجبل الطور', 'يقسم بالبحر المحيط'],
+    correctAnswerIndex: 0,
+    explanation: 'سورة البلد مكية، والمقصود بالبلد هو مكة المكرمة زادها الله شرفاً.',
+  },
+  {
+    id: 'q-isl5-2',
+    gradeId: 'grade-5',
+    subjectId: 'isl-5',
+    chapter: 'الوحدة الثانية: الحديث النبوي الشريف والأخلاق',
+    lessonName: 'صلة الرحم وبر الأهل',
+    questionText: 'ما هو الأجر العظيم الذي يناله المسلم الواصل لرحمه كما ورد في الحديث الشريف؟',
+    answerText: 'يبسط الله تعالى له في رزقه، ويبارك له في عمره وأثره في الدنيا والآخرة.',
+    difficulty: 'easy',
+    isVipOnly: false,
+  },
+  {
+    id: 'q-isl5-3',
+    gradeId: 'grade-5',
+    subjectId: 'isl-5',
+    chapter: 'الوحدة الثالثة: السيرة النبوية العطرة',
+    lessonName: 'معركة بدر الكبرى',
+    questionText: 'في أي سنة هجرية وقعت معركة بدر الكبرى؟ وما كانت نتيجتها؟',
+    answerText: 'وقعت في السنة الثانية للهجرة (2 هـ) في شهر رمضان المبارك، وانتصر فيها المسلمون نصراً مؤزراً على مشركي قريش.',
+    difficulty: 'medium',
+    isVipOnly: false,
+  },
+
+  // English Grade 5
+  {
+    id: 'q-eng5-1',
+    gradeId: 'grade-5',
+    subjectId: 'eng-5',
+    chapter: 'Unit 1: Countries & Nationalities',
+    lessonName: 'Where are you from?',
+    questionText: 'Choose the correct nationality: "Peter is from England. He is _______."',
+    answerText: 'English (إنجليزي)',
+    difficulty: 'easy',
+    isVipOnly: false,
+    options: ['English', 'Englandish', 'Englander', 'Englese'],
+    correctAnswerIndex: 0,
+    explanation: 'The nationality for someone from England is English.',
+  },
+  {
+    id: 'q-eng5-2',
+    gradeId: 'grade-5',
+    subjectId: 'eng-5',
+    chapter: 'Unit 2: Animals and Nature',
+    lessonName: 'Animal Habitats',
+    questionText: 'Which animal is friendly, intelligent and lives in the sea?',
+    answerText: 'The Dolphin (الدولفين)',
+    difficulty: 'easy',
+    isVipOnly: false,
+    options: ['Dolphin', 'Lion', 'Eagle', 'Snake'],
+    correctAnswerIndex: 0,
+  },
+  {
+    id: 'q-eng5-3',
+    gradeId: 'grade-5',
+    subjectId: 'eng-5',
+    chapter: 'Unit 6: Jobs and Workplaces',
+    lessonName: 'Professions',
+    questionText: 'Complete the sentence: "An IT Programmer works in an _______."',
+    answerText: 'office (مكتب برمجة)',
+    difficulty: 'medium',
+    isVipOnly: false,
+    options: ['office', 'oil refinery', 'hospital', 'farm'],
+    correctAnswerIndex: 0,
+  },
+
+  // English Grade 2
+  {
+    id: 'q-eng2-1',
+    gradeId: 'grade-2',
+    subjectId: 'eng-2',
+    chapter: 'Unit 1: Colors & School',
+    lessonName: 'Primary Colors',
+    questionText: 'What color is the sun? اختر لون الشمس بالإنجليزية:',
+    answerText: 'Yellow (أصفر ☀️)',
+    difficulty: 'easy',
+    isVipOnly: false,
+    options: ['Yellow', 'Blue', 'Green', 'Black'],
+    correctAnswerIndex: 0,
+  },
+  {
+    id: 'q-eng2-2',
+    gradeId: 'grade-2',
+    subjectId: 'eng-2',
+    chapter: 'Unit 2: Animals',
+    lessonName: 'Pets and Animals',
+    questionText: 'What is the English word for (قِطَّة)?',
+    answerText: 'Cat (قِطَّة 🐱)',
+    difficulty: 'easy',
+    isVipOnly: false,
+    options: ['Cat', 'Dog', 'Bird', 'Fish'],
+    correctAnswerIndex: 0,
+  },
+
+  // English Grade 3
+  {
+    id: 'q-eng3-1',
+    gradeId: 'grade-3',
+    subjectId: 'eng-3',
+    chapter: 'Unit 1: Numbers & Alphabet',
+    lessonName: 'Counting 1 to 20',
+    questionText: 'What comes after fourteen (14)? ما هو العدد الذي يلي 14؟',
+    answerText: 'Fifteen (15)',
+    difficulty: 'easy',
+    isVipOnly: false,
+    options: ['Fifteen (15)', 'Twelve (12)', 'Sixteen (16)', 'Twenty (20)'],
+    correctAnswerIndex: 0,
+  },
+  {
+    id: 'q-eng3-2',
+    gradeId: 'grade-3',
+    subjectId: 'eng-3',
+    chapter: 'Unit 3: Food & Drink',
+    lessonName: 'Healthy Food',
+    questionText: 'What is the English word for (حَلِيب)?',
+    answerText: 'Milk (حليب 🥛)',
+    difficulty: 'easy',
+    isVipOnly: false,
+    options: ['Milk', 'Water', 'Tea', 'Juice'],
+    correctAnswerIndex: 0,
+  },
+
+  // Islamic Grade 2
+  {
+    id: 'q-isl2-1',
+    gradeId: 'grade-2',
+    subjectId: 'isl-2',
+    chapter: 'الوحدة الأولى: القرآن الكريم والآداب',
+    lessonName: 'سورة الفيل المباركة',
+    questionText: 'من هو قائد الجيش الذي أراد هدم الكعبة المشرفة وحماها الله تعالى بطير أبابيل؟',
+    answerText: 'أبرهة الحبشي وجيشه وأصحابه أصحاب الفيل.',
+    difficulty: 'easy',
+    isVipOnly: false,
+  },
+
+  // Islamic Grade 3
+  {
+    id: 'q-isl3-1',
+    gradeId: 'grade-3',
+    subjectId: 'isl-3',
+    chapter: 'الوحدة الأولى: السور والآيات الكريمة',
+    lessonName: 'سورة القدر المباركة',
+    questionText: 'في أي ليلة مباركة نزل القرآن الكريم على نبينا محمد (ص)؟',
+    answerText: 'في ليلة القدر المباركة في شهر رمضان العظيم.',
+    difficulty: 'easy',
+    isVipOnly: false,
+  },
+];
 
 interface GradePortalProps {
   onStartQuiz: (subject: Subject, questions: Question[]) => void;
@@ -368,7 +914,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
   const gradeInfo = GRADES_DATA.find((g) => g.id === currentGradeId);
 
   // نضمن ظهور كافة المواد الرسمية (بما فيها الإنجليزي والإسلامية والاجتماعيات) لكل صف
-  const officialForGrade = DEFAULT_SUBJECTS.filter((s) => s.gradeId === currentGradeId);
+  const officialForGrade = ALL_IRAQI_OFFICIAL_SUBJECTS.filter((s) => s.gradeId === currentGradeId);
   const userSubjectsForGrade = subjects.filter((s) => s.gradeId === currentGradeId);
   const gradeSubjects = [...officialForGrade];
   for (const us of userSubjectsForGrade) {
@@ -386,7 +932,8 @@ export const GradePortal: React.FC<GradePortalProps> = ({
   const selectedSubject =
     gradeSubjects.find((s) => s.id === selectedSubjectId) || gradeSubjects[0];
 
-  const currentSubjectQuestions = questions
+  const allQuestions = [...questions, ...DEFAULT_EXTRA_QUESTIONS];
+  const currentSubjectQuestions = allQuestions
     .map(sanitizeQuestionSubject)
     .filter(
       (q) => q.gradeId === currentGradeId && q.subjectId === selectedSubject?.id
@@ -500,7 +1047,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                       playClickSound();
                       const ng = e.target.value as GradeId;
                       setActiveGradeId(ng);
-                      const firstSubj = DEFAULT_SUBJECTS.find((s) => s.gradeId === ng);
+                      const firstSubj = ALL_IRAQI_OFFICIAL_SUBJECTS.find((s) => s.gradeId === ng);
                       if (firstSubj) setSelectedSubjectId(firstSubj.id);
                     }}
                     className="bg-transparent font-black text-xs cursor-pointer outline-none border-none text-amber-950"
@@ -577,7 +1124,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
           {gradeSubjects.map((subj) => {
             const isSelected = selectedSubject?.id === subj.id;
-            const subjectQuestionsCount = questions
+            const subjectQuestionsCount = [...questions, ...DEFAULT_EXTRA_QUESTIONS]
               .map(sanitizeQuestionSubject)
               .filter((q) => q.gradeId === currentGradeId && q.subjectId === subj.id).length;
 
@@ -794,6 +1341,24 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                     </div>
                   );
                 })}
+              </div>
+            </details>
+          )}
+
+          {/* مجلد أصوات ونطق الحروف الإنجليزية للأول والثاني الابتدائي */}
+          {(currentGradeId === 'grade-1' || currentGradeId === 'grade-2') && isEnglishSubject && (
+            <details className="group bg-gradient-to-r from-sky-50 via-indigo-50 to-blue-50 rounded-3xl border-2 border-indigo-200 p-4 sm:p-5 transition-all shadow-xs" open>
+              <summary className="cursor-pointer font-black text-indigo-950 flex flex-col sm:flex-row items-center justify-between gap-2 text-sm sm:text-base select-none list-none text-center sm:text-right">
+                <span className="flex items-center gap-2">
+                  <span className="text-2xl">🔠</span>
+                  <span>مجلد أصوات ونطق الحروف الإنجليزية التفاعلية المبسطة ({currentGradeId === 'grade-1' ? 'الصف الأول' : 'الصف الثاني'})</span>
+                </span>
+                <span className="text-xs bg-indigo-200 text-indigo-900 px-3 py-1 rounded-full font-bold group-open:rotate-180 transition-transform">
+                  ▼ فتح / غلق المجلد
+                </span>
+              </summary>
+              <div className="mt-4 pt-4 border-t border-indigo-200/80">
+                <Grade1EnglishLetters />
               </div>
             </details>
           )}

@@ -1423,6 +1423,5 @@ export const AdminPanel: React.FC = () => {
     </div>
   );
 };
-
 export default AdminPanel;
                 

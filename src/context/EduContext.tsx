@@ -621,10 +621,14 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const logout = () => {
+ const logout = () => {
+    try {
+      localStorage.removeItem(STORAGE_KEYS.ACTIVE_STUDENT);
+    } catch {}
     if (currentStudent && currentStudent.id) {
+      const studentId = currentStudent.id;
       const nowIso = new Date().toISOString();
-      setDoc(doc(db, 'students', currentStudent.id), {
+      setDoc(doc(db, 'students', studentId), {
         isOnline: false,
         lastActiveAt: nowIso,
       }, { merge: true }).catch(() => {});

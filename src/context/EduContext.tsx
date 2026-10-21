@@ -27,7 +27,7 @@ import {
   onSnapshot,
 } from 'firebase/firestore';
 
-// أسئلة إضافية نموذجية للصف الرابع
+// Extra rich questions for Grade 4 so all subjects have ready questions
 const EXTRA_GRADE4_QUESTIONS: Question[] = [
   {
     id: 'q-g4-ar-2',
@@ -215,17 +215,17 @@ interface EduContextType {
 const EduContext = createContext<EduContextType | undefined>(undefined);
 
 const STORAGE_KEYS = {
-  STUDENTS: 'iraq_edu_students_v4',
-  QUESTIONS: 'iraq_edu_questions_v4',
+  STUDENTS: 'iraq_edu_students_v2',
+  QUESTIONS: 'iraq_edu_questions_v2',
   SUBJECTS: 'iraq_edu_subjects_v4',
-  ATTEMPTS: 'iraq_edu_quiz_attempts_v4',
-  ADMIN_USER: 'iraq_edu_admin_user_v4',
-  ADMIN_PASS: 'iraq_edu_admin_pass_v4',
-  ACTIVE_STUDENT: 'iraq_edu_active_student_v4',
-  IS_ADMIN: 'iraq_edu_is_admin_v4',
-  SOUND_ENABLED: 'iraq_edu_sound_v4',
-  SUB_CONFIG: 'iraq_edu_sub_config_v4',
-  SUB_REQUESTS: 'iraq_edu_sub_requests_v4',
+  ATTEMPTS: 'iraq_edu_quiz_attempts_v2',
+  ADMIN_USER: 'iraq_edu_admin_user_v2',
+  ADMIN_PASS: 'iraq_edu_admin_pass_v2',
+  ACTIVE_STUDENT: 'iraq_edu_active_student_v2',
+  IS_ADMIN: 'iraq_edu_is_admin_v2',
+  SOUND_ENABLED: 'iraq_edu_sound_v2',
+  SUB_CONFIG: 'iraq_edu_sub_config_v2',
+  SUB_REQUESTS: 'iraq_edu_sub_requests_v2',
 };
 
 function sanitizeQuestionSubject(q: Question): Question {
@@ -274,6 +274,7 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   });
 
+  // Always initialize with full curriculum questions
   const [questions, setQuestions] = useState<Question[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEYS.QUESTIONS);
@@ -295,6 +296,7 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
+          // Merge with DEFAULT_SUBJECTS so that any official curriculum subject is NEVER missing
           const merged = [...parsed];
           for (const ds of DEFAULT_SUBJECTS) {
             const idx = merged.findIndex((m) => m.id === ds.id);
@@ -369,7 +371,7 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   });
 
-  // مزامنة الطلبة وتحديث حالتهم بدون إعادة تسجيل الخروج تلقائياً
+  // Sync Students Collection
   useEffect(() => {
     try {
       const unsubscribe = onSnapshot(collection(db, 'students'), (snapshot) => {
@@ -394,7 +396,7 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, []);
 
-  // Sync Questions Collection
+  // Sync Questions Collection (safely merge so curriculum is never empty)
   useEffect(() => {
     try {
       const unsubscribe = onSnapshot(collection(db, 'questions'), (snapshot) => {
@@ -404,6 +406,7 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             ...docSnap.data(),
           })) as Question[];
 
+          // Merge custom questions with default curriculum questions so no subject is ever 0:
           const merged = [...remoteQuestions];
           for (const q of ALL_CURRICULUM_QUESTIONS) {
             if (!merged.some((m) => m.id === q.id)) {
@@ -501,7 +504,7 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.setItem(STORAGE_KEYS.QUESTIONS, JSON.stringify(questions));
   }, [questions]);
 
-  // ضمان تحميل وتثبيت جميع المواد الرسمية لكافة الصفوف
+    // Ensure all official Iraqi subjects for all 6 grades are loaded
   useEffect(() => {
     setSubjects((prev) => {
       let needsUpdate = false;
@@ -549,6 +552,37 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.setItem(STORAGE_KEYS.SOUND_ENABLED, soundOn ? 'true' : 'false');
     setSoundEnabled(soundOn);
   }, [soundOn]);
+
+  // Realtime Heartbeat Presence Tracker (كل دقيقة لتحديث التواجد أونلاين في فايربيس)
+  useEffect(() => {
+    if (!currentStudent || !currentStudent.id) return;
+
+    // Send immediate heartbeat on mount
+    const updatePresence = (onlineStatus: boolean) => {
+      const nowIso = new Date().toISOString();
+      setDoc(doc(db, 'students', currentStudent.id), {
+        lastActiveAt: nowIso,
+        isOnline: onlineStatus,
+      }, { merge: true }).catch(() => {});
+    };
+
+    updatePresence(true);
+
+    const interval = setInterval(() => {
+      updatePresence(true);
+    }, 60000);
+
+    const handleUnload = () => {
+      updatePresence(false);
+    };
+
+    window.addEventListener('beforeunload', handleUnload);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('beforeunload', handleUnload);
+    };
+  }, [currentStudent?.id]);
 
   const loginStudent = (username: string, password?: string) => {
     try {
@@ -622,7 +656,6 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  // تسجيل الخروج الفوري وإعادة التوجيه للرئيسية
   const logout = () => {
     try {
       localStorage.removeItem('iraq_edu_active_student_v2');
@@ -642,7 +675,6 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     window.location.href = '/';
   };
 
-  // تسجيل دخول الأدمن المباشر والمعتمد
   const loginAdmin = (usernameInput: string, passwordInput: string) => {
     try {
       const u = (usernameInput || '').trim().toLowerCase();
@@ -818,7 +850,7 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     deleteDoc(doc(db, 'students', studentId)).catch(console.error);
   };
 
-  // دالة تنظيف الحقول لتفادي خطأ فيربيس عند حفظ الأسئلة بدون صورة
+  // Utility to recursively strip undefined properties so Firestore setDoc never throws unsupported undefined error
   const sanitizeForFirestore = (obj: any): any => {
     if (obj === null || obj === undefined) return null;
     if (Array.isArray(obj)) return obj.map(sanitizeForFirestore).filter((v) => v !== undefined);

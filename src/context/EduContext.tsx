@@ -27,46 +27,75 @@ import {
   onSnapshot,
 } from 'firebase/firestore';
 
+// أسئلة إضافية نموذجية للصف الرابع
 const EXTRA_GRADE4_QUESTIONS: Question[] = [
-  {
-    id: 'q-g4-ar-1',
-    gradeId: 'grade-4',
-    subjectId: 'ar-4',
-    chapter: 'الوحدة الأولى: أقسام الكلام',
-    lessonName: 'الاسم والفعل والحرف',
-    questionText: 'ما هي أقسام الكلام في لغتنا العربية الجميلة؟',
-    answerText: 'يقسم الكلام إلى ثلاثة أقسام: الاسم، والفعل، والحرف.',
-    options: ['اسم وفعل وحرف', 'مبتدأ وخبر فقط', 'ماضي ومضارع فقط', 'حروف الجر فقط'],
-    correctAnswerIndex: 0,
-    explanation: 'كل كلمة ننطقها في اللغة العربية هي إما اسم (مثل أحمد، شجرة) أو فعل (كتب، يقرأ) أو حرف (في، على).',
-    isVipOnly: false,
-    difficulty: 'easy',
-  },
   {
     id: 'q-g4-ar-2',
     gradeId: 'grade-4',
     subjectId: 'ar-4',
-    chapter: 'الوحدة الثانية: الجملة الاسمية',
-    lessonName: 'المبتدأ والخبر',
-    questionText: 'ما هما الركنان الأساسيان في الجملة الاسمية؟',
-    answerText: 'المبتدأ والخبر، وكلاهما مرفوعان دائماً بالضمة.',
-    options: ['المبتدأ والخبر', 'الفعل والفاعل', 'حرف الجر والاسم المجرور', 'الصفة والموصوف'],
+    chapter: 'الوحدة الثانية: المذكر والمؤنث',
+    lessonName: 'تحويل المفرد المذكر إلى مؤنث',
+    questionText: 'ما هو مؤنث كلمة (مُعَلِّمٌ) في قواعد اللغة العربية؟',
+    answerText: 'مُعَلِّمَةٌ (بإضافة التاء المربوطة المضمومة في آخر الاسم).',
+    options: ['مُعَلِّمَةٌ', 'مُعَلِّمُونَ', 'مُعَلِّمَانِ', 'مُعَلِّمَاتٌ'],
     correctAnswerIndex: 0,
-    explanation: 'مثل: (العِلْمُ نُورٌ) - العلم مبتدأ مرفوع، ونور خبر مرفوع.',
+    explanation: 'نحول الاسم المذكر إلى مؤنث بزيادة تاء التأنيث المربوطة.',
     isVipOnly: false,
     difficulty: 'easy',
   },
   {
-    id: 'q-g4-soc-1',
+    id: 'q-g4-ar-3',
     gradeId: 'grade-4',
-    subjectId: 'soc-4',
-    chapter: 'الفصل الأول: تاريخ بلاد الرافدين',
-    lessonName: 'حضارة وادي الرافدين',
-    questionText: 'ما الاسمان التاريخيان الشهيران لوطننا الحبيب العراق قديماً؟',
-    answerText: 'بلاد وادي الرافدين، وبلاد ما بين النهرين (دجلة والفرات).',
-    options: ['بلاد وادي الرافدين', 'بلاد الأهرامات', 'بلاد الشام', 'بلاد النيل'],
+    subjectId: 'ar-4',
+    chapter: 'الوحدة الثالثة: المفرد والمثنى',
+    lessonName: 'صياغة المثنى المرفوع',
+    questionText: 'ما هو مثنى كلمة (كِتَابٌ) في حالة الرفع؟',
+    answerText: 'كِتَابَانِ (بزيادة ألف ونون مكسورة).',
+    options: ['كِتَابَانِ', 'كُتُبٌ', 'كِتَابَيْنِ', 'كِتَابَاتٌ'],
     correctAnswerIndex: 0,
-    explanation: 'سمي العراق ببلاد الرافدين لوجود نهري دجلة والفرات العظيمين الخالدين.',
+    explanation: 'المثنى يصاغ بزيادة ألف ونون مكسورة (ـانِ) في حالة الرفع.',
+    isVipOnly: false,
+    difficulty: 'medium',
+  },
+  {
+    id: 'q-g4-math-2',
+    gradeId: 'grade-4',
+    subjectId: 'math-4',
+    chapter: 'الفصل الثاني: الجمع والطرح ضمن الملايين',
+    lessonName: 'جمع الأعداد الكبيرة',
+    questionText: 'ما هو ناتج جمع: 400,000 + 300,000؟',
+    answerText: 'الناتج هو 700,000 (سبعمائة ألف).',
+    options: ['700,000', '800,000', '600,000', '7,000,000'],
+    correctAnswerIndex: 0,
+    explanation: '4 مئات ألوف + 3 مئات ألوف = 7 مئات ألوف.',
+    isVipOnly: false,
+    difficulty: 'easy',
+  },
+  {
+    id: 'q-g4-sci-1',
+    gradeId: 'grade-4',
+    subjectId: 'sci-4',
+    chapter: 'الفصل الأول: الكائنات الحية البسيطة',
+    lessonName: 'البكتيريا وتصنيفها',
+    questionText: 'ما هي الكائنات الحية البسيطة التي تتكون من خلية واحدة ولا ترى إلا بالمجهر؟',
+    answerText: 'البكتيريا (كائنات حية وحيدة الخلية واسعة الانتشار).',
+    options: ['البكتيريا', 'النباتات الزهرية', 'الحشرات', 'الطيور'],
+    correctAnswerIndex: 0,
+    explanation: 'البكتيريا كائنات حية دقيقة وحيدة الخلية توجد بأشكال كروية وعصوية وحلزونية.',
+    isVipOnly: false,
+    difficulty: 'easy',
+  },
+  {
+    id: 'q-g4-sci-2',
+    gradeId: 'grade-4',
+    subjectId: 'sci-4',
+    chapter: 'الفصل الثاني: النباتات المركبة',
+    lessonName: 'أجزاء النبات ووظائفها',
+    questionText: 'ما هو الجزء المسؤول عن تثبيت النبات في التربة وامتصاص الماء والأملاح؟',
+    answerText: 'الجذر.',
+    options: ['الجذر', 'الساق', 'الورقة', 'الزهرة'],
+    correctAnswerIndex: 0,
+    explanation: 'الجذر يثبت النبات ويمتص الماء والأملاح المعدنية من التربة.',
     isVipOnly: false,
     difficulty: 'easy',
   },
@@ -75,40 +104,12 @@ const EXTRA_GRADE4_QUESTIONS: Question[] = [
     gradeId: 'grade-4',
     subjectId: 'soc-4',
     chapter: 'الفصل الثاني: جغرافية العراق',
-    lessonName: 'الجهات الأربع الأصلية',
-    questionText: 'من أين تشرق الشمس كل صباح؟',
-    answerText: 'تشرق الشمس دائماً من جهة الشرق، وتغرب في جهة الغرب.',
-    options: ['الشرق', 'الغرب', 'الشمال', 'الجنوب'],
+    lessonName: 'النهران الخالدان في بلاد الرافدين',
+    questionText: 'ما هما النهران الخالدان اللذان يمران في أراضي وطننا العراق؟',
+    answerText: 'نهرا دجلة والفرات (ويلتقيان في شط العرب بالبصرة).',
+    options: ['دجلة والفرات', 'النيل والأمازون', 'اليرموك والأردن', 'الدانوب والسين'],
     correctAnswerIndex: 0,
-    explanation: 'الجهات الأصلية أربع: الشمال والجنوب والشرق والغرب.',
-    isVipOnly: false,
-    difficulty: 'easy',
-  },
-  {
-    id: 'q-g4-isl-1',
-    gradeId: 'grade-4',
-    subjectId: 'isl-4',
-    chapter: 'الوحدة الأولى: القرآن الكريم',
-    lessonName: 'سورة الضحى المباركة',
-    questionText: 'ما المعنى الإيماني الجميل لقسم الله تعالى في بداية سورة الضحى؟',
-    answerText: 'يقسم الله تعالى بوقت الضحى وبالليل إذا سجى بأن رحمته بنبيه والمؤمنين دائمة لا تنقطع.',
-    options: ['رحمة الله دائمة بنبيه والمؤمنين', 'الأمر بالنوم المبكر', 'النهي عن العمل', 'طلب السفر'],
-    correctAnswerIndex: 0,
-    explanation: 'سورة الضحى تبث الطمأنينة والأمل في قلوب المسلمين وتحث على رعاية اليتيم ومساعدة السائل.',
-    isVipOnly: false,
-    difficulty: 'easy',
-  },
-  {
-    id: 'q-g4-isl-2',
-    gradeId: 'grade-4',
-    subjectId: 'isl-4',
-    chapter: 'الوحدة الثانية: العقيدة الإسلامية',
-    lessonName: 'أركان الإيمان الستة',
-    questionText: 'ما هو الركن الأول والأعظم من أركان الإيمان في ديننا الإسلامي الحنيف؟',
-    answerText: 'الإيمان بالله الواحد الأحد الذي لا شريك له، خالق كل شيء.',
-    options: ['الإيمان بالله تعالى وحده', 'الإيمان بالكتب فقط', 'الإيمان باليوم الآخر فقط', 'الإيمان بالملائكة فقط'],
-    correctAnswerIndex: 0,
-    explanation: 'يبدأ الإيمان بالشهادة بوحدانية الله جل جلاله ثم الإيمان بملائكته وكتبه ورسله.',
+    explanation: 'دجلة والفرات هما شريانا الحياة في العراق وسميت بلادنا بلاد الرافدين تيمناً بهما.',
     isVipOnly: false,
     difficulty: 'easy',
   },
@@ -117,12 +118,12 @@ const EXTRA_GRADE4_QUESTIONS: Question[] = [
     gradeId: 'grade-4',
     subjectId: 'eng-4',
     chapter: 'Unit 1: New Friends',
-    lessonName: 'Greetings and Introductions',
-    questionText: 'What do you say when you meet a friend in the morning at school?',
-    answerText: 'Good morning! (صباح الخير يا صديقي).',
-    options: ['Good morning', 'Good night', 'Goodbye', 'See you tomorrow'],
+    lessonName: 'Classroom Objects',
+    questionText: 'What do you use to write in your notebook? (ماذا تستخدم للكتابة في دفترك؟)',
+    answerText: 'A pen or pencil (القلم).',
+    options: ['Pen / Pencil', 'Ruler', 'School Bag', 'Rubber'],
     correctAnswerIndex: 0,
-    explanation: 'We say Good morning in the morning and Good afternoon in the afternoon.',
+    explanation: 'In English for Iraq, Unit 1 teaches classroom objects: pen, pencil, bag, book.',
     isVipOnly: false,
     difficulty: 'easy',
   },
@@ -160,86 +161,169 @@ interface EduContextType {
   quizAttempts: QuizAttempt[];
 
   loginStudent: (username: string, password?: string) => { success: boolean; error?: string };
-  registerStudent: (data: Omit<Student, 'id' | 'totalScore' | 'starsEarned' | 'completedQuizzesCount' | 'registeredAt'>) => { success: boolean; error?: string };
+  registerStudent: (data: {
+    fullName: string;
+    username: string;
+    gradeId: GradeId;
+    password?: string;
+    avatar?: string;
+    schoolName?: string;
+    city?: string;
+  }) => { success: boolean; error?: string };
   logout: () => void;
-
-  loginAdmin: (user: string, pass: string) => boolean;
+  loginAdmin: (username: string, password: string) => { success: boolean; error?: string };
   logoutAdmin: () => void;
-  changeAdminCredentials: (newUser: string, newPass: string) => void;
+  changeAdminCredentials: (newUsername: string, newPassword: string) => boolean;
 
-  updateSubscriptionConfig: (config: SubscriptionConfig) => void;
-  submitSubscriptionRequest: (req: Omit<SubscriptionRequest, 'id' | 'createdAt' | 'status'>) => void;
+  updateSubscriptionConfig: (updatedConfig: Partial<SubscriptionConfig>) => void;
+  submitSubscriptionRequest: (data: {
+    studentId: string;
+    studentName: string;
+    username: string;
+    gradeId: GradeId;
+    paymentMethod: 'zain_cash' | 'qi_card' | 'asia_cell' | 'cash_school';
+    paymentPhoneOrRef?: string;
+    amount: number;
+    notes?: string;
+  }) => SubscriptionRequest;
   approveSubscriptionRequest: (requestId: string) => void;
   rejectSubscriptionRequest: (requestId: string) => void;
-  toggleStudentSubscription: (studentId: string) => void;
-  resetStudentPassword: (studentId: string) => void;
+
+  toggleStudentSubscription: (studentId: string, specificType?: SubscriptionType) => void;
+  resetStudentPassword: (studentId: string, newPass: string) => void;
   deleteStudent: (studentId: string) => void;
-
-  addQuestion: (q: Omit<Question, 'id'>) => void;
-  updateQuestion: (id: string, q: Partial<Question>) => void;
-  deleteQuestion: (id: string) => void;
-
+  addQuestion: (question: Omit<Question, 'id'>) => void;
   updateQuestion: (questionOrId: any, partialQuestion?: any) => void;
-    toggleSound: () => void;
-  }
+  deleteQuestion: (questionId: string) => void;
 
-  const EduContext = createContext<EduContextType | undefined>(undefined);
+  recordQuizAttempt: (attempt: {
+    studentId: string;
+    studentName: string;
+    gradeId: GradeId;
+    subjectId: string;
+    subjectName: string;
+    score: number;
+    totalQuestions: number;
+    percentage: number;
+    passed: boolean;
+    stars: number;
+  }) => QuizAttempt;
 
-  const STORAGE_KEYS = {
-    ACTIVE_STUDENT: 'iraq_edu_active_student_v4',
-    IS_ADMIN: 'iraq_edu_is_admin_v4',
-    SOUND: 'iraq_edu_sound_v4',
-    ADMIN_USER: 'iraq_edu_adm_u_v4',
-    ADMIN_PASS: 'iraq_edu_adm_p_v4',
-    SUB_CONFIG: 'iraq_edu_sub_conf_v4',
-    SUB_REQUESTS: 'iraq_edu_sub_reqs_v4',
-    QUESTIONS: 'iraq_edu_questions_v4',
-    SUBJECTS: 'iraq_edu_subjects_v4',
-updateQuestion: (questionOrId: any, partialQuestion?: any) => void;
+  toggleSound: () => void;
+}
+
 const EduContext = createContext<EduContextType | undefined>(undefined);
 
+const STORAGE_KEYS = {
+  STUDENTS: 'iraq_edu_students_v2',
+  QUESTIONS: 'iraq_edu_questions_v2',
+  SUBJECTS: 'iraq_edu_subjects_v4',
+  ATTEMPTS: 'iraq_edu_quiz_attempts_v2',
+  ADMIN_USER: 'iraq_edu_admin_user_v2',
+  ADMIN_PASS: 'iraq_edu_admin_pass_v2',
+  ACTIVE_STUDENT: 'iraq_edu_active_student_v2',
+  IS_ADMIN: 'iraq_edu_is_admin_v2',
+  SOUND_ENABLED: 'iraq_edu_sound_v2',
+  SUB_CONFIG: 'iraq_edu_sub_config_v2',
+  SUB_REQUESTS: 'iraq_edu_sub_requests_v2',
+};
+
+function sanitizeQuestionSubject(q: Question): Question {
+  const text = `${q.questionText || ''} ${q.chapter || ''} ${q.lessonName || ''} ${(q.tags || []).join(' ')}`.toLowerCase();
+
+  if (q.gradeId === 'grade-1') {
+    const scienceKeywords = [
+      'كائن', 'كائنات', 'نبات', 'حيوان', 'بيئة', 'جذور', 'ساق', 'أوراق',
+      'مادة', 'صلبة', 'سائلة', 'غازية', 'دفع', 'سحب', 'حركة', 'خياشيم',
+      'صحراو', 'موارد', 'حواس', 'حي وغير حي', 'جماد', 'علوم'
+    ];
+    const readingKeywords = [
+      'حرف', 'مقطع', 'مقاطع', 'دار', 'دور', 'دادا', 'رباب', 'بابا', 'ماما',
+      'ميزان', 'قدوري', 'وزان', 'تهجي', 'قراءتي', 'أصوات'
+    ];
+
+    const isScience = scienceKeywords.some((k) => text.includes(k));
+    const isReading = readingKeywords.some((k) => text.includes(k));
+
+    if (isScience && !isReading && q.subjectId === 'ar-1') {
+      return { ...q, subjectId: 'sci-1' };
+    }
+
+    if (isReading && !isScience && q.subjectId === 'sci-1') {
+      return { ...q, subjectId: 'ar-1' };
+    }
+  }
+
+  return q;
+}
+
 export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [currentStudent, setCurrentStudent] = useState<Student | null>(() => {
+  const [students, setStudents] = useState<Student[]>(() => {
     try {
-      const saved = localStorage.getItem(STORAGE_KEYS.ACTIVE_STUDENT);
-      return saved ? JSON.parse(saved) : null;
+      const saved = localStorage.getItem(STORAGE_KEYS.STUDENTS);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          const valid = parsed.filter((s) => s && s.username);
+          if (valid.length > 0) return valid;
+        }
+      }
+      return INITIAL_STUDENTS;
     } catch {
-      return null;
+      return INITIAL_STUDENTS;
     }
   });
 
-  const [isAdmin, setIsAdmin] = useState<boolean>(() => {
+  const [questions, setQuestions] = useState<Question[]>(() => {
     try {
-      return localStorage.getItem(STORAGE_KEYS.IS_ADMIN) === 'true';
+      const saved = localStorage.getItem(STORAGE_KEYS.QUESTIONS);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length >= ALL_CURRICULUM_QUESTIONS.length) {
+          return parsed;
+        }
+      }
+      return ALL_CURRICULUM_QUESTIONS;
     } catch {
-      return false;
+      return ALL_CURRICULUM_QUESTIONS;
     }
   });
 
-  const [adminUsername, setAdminUsername] = useState<string>(() => {
+  const [subjects, setSubjects] = useState<Subject[]>(() => {
     try {
-      return localStorage.getItem(STORAGE_KEYS.ADMIN_USER) || 'admin';
+      const saved = localStorage.getItem(STORAGE_KEYS.SUBJECTS);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const merged = [...parsed];
+          for (const ds of DEFAULT_SUBJECTS) {
+            const idx = merged.findIndex((m) => m.id === ds.id);
+            if (idx === -1) {
+              merged.push(ds);
+            } else {
+              merged[idx] = { ...ds, ...merged[idx] };
+            }
+          }
+          return merged;
+        }
+      }
+      return DEFAULT_SUBJECTS;
     } catch {
-      return 'admin';
+      return DEFAULT_SUBJECTS;
     }
   });
 
-  const [adminPassword, setAdminPassword] = useState<string>(() => {
+  const [quizAttempts, setQuizAttempts] = useState<QuizAttempt[]>(() => {
     try {
-      return localStorage.getItem(STORAGE_KEYS.ADMIN_PASS) || 'iraq2026';
+      const saved = localStorage.getItem(STORAGE_KEYS.ATTEMPTS);
+      return saved ? JSON.parse(saved) : [];
     } catch {
-      return 'iraq2026';
+      return [];
     }
   });
 
-  const [soundOn, setSoundOn] = useState<boolean>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEYS.SOUND);
-      return saved !== null ? saved === 'true' : true;
-    } catch {
-      return true;
-    }
-  });
+  const [adminUsername, setAdminUsername] = useState<string>('mohamedsky1986@gmail.com');
+  const [adminPassword, setAdminPassword] = useState<string>('admin123');
 
   const [subscriptionConfig, setSubscriptionConfig] = useState<SubscriptionConfig>(() => {
     try {
@@ -259,155 +343,211 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   });
 
-  const [students, setStudents] = useState<Student[]>(INITIAL_STUDENTS);
-  const [subjects] = useState<Subject[]>(DEFAULT_SUBJECTS);
-
-  const [questions, setQuestions] = useState<Question[]>(() => {
+  const [currentStudent, setCurrentStudent] = useState<Student | null>(() => {
     try {
-      const cached = localStorage.getItem(STORAGE_KEYS.QUESTIONS);
-      if (cached) return JSON.parse(cached);
-    } catch (e) {}
-    return ALL_CURRICULUM_QUESTIONS;
+      const saved = localStorage.getItem(STORAGE_KEYS.ACTIVE_STUDENT);
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
   });
 
-  const [quizAttempts, setQuizAttempts] = useState<QuizAttempt[]>([]);
+  const [isAdmin, setIsAdmin] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem(STORAGE_KEYS.IS_ADMIN) === 'true';
+    } catch {
+      return false;
+    }
+  });
 
+  const [soundOn, setSoundOn] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEYS.SOUND_ENABLED);
+      return saved !== null ? saved === 'true' : true;
+    } catch {
+      return true;
+    }
+  });
+
+  // Sync Students Collection
   useEffect(() => {
-    const unsubscribe = onSnapshot(collection(db, 'students'), (snapshot) => {
-      if (!snapshot.empty) {
-        const loaded: Student[] = [];
-        snapshot.forEach((docSnap) => {
-          loaded.push({ id: docSnap.id, ...(docSnap.data() as any) });
-        });
-        setStudents(loaded);
-      } else {
-        INITIAL_STUDENTS.forEach((st) => {
-          setDoc(doc(db, 'students', st.id), st).catch(console.error);
-        });
-        setStudents(INITIAL_STUDENTS);
-      }
-    }, (error) => {
-      console.error('Firestore students listener error:', error);
-      setStudents(INITIAL_STUDENTS);
-    });
+    try {
+      const unsubscribe = onSnapshot(collection(db, 'students'), (snapshot) => {
+        if (!snapshot.empty) {
+          const remoteStudents = snapshot.docs
+            .map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }))
+            .filter((s: any) => s && s.username) as Student[];
 
-    return () => unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    const unsubscribe = onSnapshot(collection(db, 'subscriptionConfig'), (snapshot) => {
-      if (!snapshot.empty) {
-        const docSnap = snapshot.docs[0];
-        const data = docSnap.data() as SubscriptionConfig;
-        setSubscriptionConfig(data);
-        localStorage.setItem(STORAGE_KEYS.SUB_CONFIG, JSON.stringify(data));
-      } else {
-        setDoc(doc(db, 'subscriptionConfig', 'global_config'), DEFAULT_SUBSCRIPTION_CONFIG).catch(console.error);
-      }
-    }, (error) => {
-      console.error('Firestore config listener error:', error);
-    });
-
-    return () => unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    const unsubscribe = onSnapshot(collection(db, 'subscriptionRequests'), (snapshot) => {
-      const loaded: SubscriptionRequest[] = [];
-      snapshot.forEach((docSnap) => {
-        loaded.push({ id: docSnap.id, ...(docSnap.data() as any) });
-      });
-      setSubscriptionRequests(loaded);
-      localStorage.setItem(STORAGE_KEYS.SUB_REQUESTS, JSON.stringify(loaded));
-    }, (error) => {
-      console.error('Firestore requests listener error:', error);
-    });
-
-    return () => unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    const unsubscribe = onSnapshot(collection(db, 'questions'), (snapshot) => {
-      if (!snapshot.empty) {
-        const loaded: Question[] = [];
-        snapshot.forEach((docSnap) => {
-          loaded.push({ id: docSnap.id, ...(docSnap.data() as any) });
-        });
-        const customIds = new Set(loaded.map((q) => q.id));
-        const merged = [
-          ...loaded,
-          ...ALL_CURRICULUM_QUESTIONS.filter((baseQ) => !customIds.has(baseQ.id)),
-        ];
-        setQuestions(merged);
-        localStorage.setItem(STORAGE_KEYS.QUESTIONS, JSON.stringify(merged));
-      } else {
-        setQuestions(ALL_CURRICULUM_QUESTIONS);
-        localStorage.setItem(STORAGE_KEYS.QUESTIONS, JSON.stringify(ALL_CURRICULUM_QUESTIONS));
-      }
-    }, (error) => {
-      console.error('Firestore questions listener error:', error);
-      setQuestions(ALL_CURRICULUM_QUESTIONS);
-    });
-
-    return () => unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    const unsubscribe = onSnapshot(collection(db, 'adminCredentials'), (snapshot) => {
-      if (!snapshot.empty) {
-        const docSnap = snapshot.docs[0];
-        const data = docSnap.data();
-        if (data && data.username && data.password) {
-          setAdminUsername(data.username);
-          setAdminPassword(data.password);
-          localStorage.setItem(STORAGE_KEYS.ADMIN_USER, data.username);
-          localStorage.setItem(STORAGE_KEYS.ADMIN_PASS, data.password);
+          if (remoteStudents.length > 0) {
+            setStudents(remoteStudents);
+            if (currentStudent) {
+              const updated = remoteStudents.find((s) => s.id === currentStudent.id);
+              if (updated) setCurrentStudent(updated);
+            }
+          }
         }
-      } else {
-        setDoc(doc(db, 'adminCredentials', 'master_admin'), {
-          username: 'admin',
-          password: 'iraq2026',
-        }).catch(console.error);
-      }
-    }, (error) => {
-      console.error('Firestore admin listener error:', error);
-    });
+      });
+      return () => unsubscribe();
+    } catch (err) {
+      console.warn('Firebase students sync note:', err);
+    }
+  }, []);
 
-    return () => unsubscribe();
+  // Sync Questions Collection
+  useEffect(() => {
+    try {
+      const unsubscribe = onSnapshot(collection(db, 'questions'), (snapshot) => {
+        if (!snapshot.empty) {
+          const remoteQuestions = snapshot.docs.map((docSnap) => ({
+            id: docSnap.id,
+            ...docSnap.data(),
+          })) as Question[];
+
+          const merged = [...remoteQuestions];
+          for (const q of ALL_CURRICULUM_QUESTIONS) {
+            if (!merged.some((m) => m.id === q.id)) {
+              merged.push(q);
+            }
+          }
+          setQuestions(merged);
+        } else {
+          setQuestions(ALL_CURRICULUM_QUESTIONS);
+        }
+      });
+      return () => unsubscribe();
+    } catch (err) {
+      console.warn('Firebase questions sync note:', err);
+      setQuestions(ALL_CURRICULUM_QUESTIONS);
+    }
   }, []);
 
   useEffect(() => {
+    try {
+      const unsubscribe = onSnapshot(collection(db, 'subscription_requests'), (snapshot) => {
+        if (!snapshot.empty) {
+          const remoteReqs = snapshot.docs.map((docSnap) => ({
+            id: docSnap.id,
+            ...docSnap.data(),
+          })) as SubscriptionRequest[];
+          setSubscriptionRequests(remoteReqs);
+        }
+      });
+      return () => unsubscribe();
+    } catch (err) {
+      console.warn('Firebase requests sync note:', err);
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      const unsubscribe = onSnapshot(collection(db, 'quiz_attempts'), (snapshot) => {
+        if (!snapshot.empty) {
+          const remoteAttempts = snapshot.docs.map((docSnap) => ({
+            id: docSnap.id,
+            ...docSnap.data(),
+          })) as QuizAttempt[];
+          setQuizAttempts(remoteAttempts);
+        }
+      });
+      return () => unsubscribe();
+    } catch (err) {
+      console.warn('Firebase attempts sync note:', err);
+    }
+  }, []);
+
+  // Sync Admin Credentials
+  useEffect(() => {
+    try {
+      const unsubscribe = onSnapshot(doc(db, 'settings', 'admin'), (docSnap) => {
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          if (data.username) setAdminUsername(data.username);
+          if (data.password) setAdminPassword(data.password);
+        } else {
+          setDoc(doc(db, 'settings', 'admin'), {
+            username: 'mohamedsky1986@gmail.com',
+            password: 'admin123',
+            updatedAt: new Date().toISOString(),
+          }).catch(console.warn);
+        }
+      });
+      return () => unsubscribe();
+    } catch (err) {
+      console.warn('Firebase admin sync note:', err);
+    }
+  }, []);
+
+  // Sync Subscription Config
+  useEffect(() => {
+    try {
+      const unsubscribe = onSnapshot(doc(db, 'settings', 'subscription_config'), (docSnap) => {
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setSubscriptionConfig((prev) => ({ ...prev, ...data }));
+        }
+      });
+      return () => unsubscribe();
+    } catch (err) {
+      console.warn('Firebase config sync note:', err);
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.STUDENTS, JSON.stringify(students.filter((s) => s && s.username)));
+  }, [students]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.QUESTIONS, JSON.stringify(questions));
+  }, [questions]);
+
+  // تحديث وتحميل كافة المواد الرسمية تلقائياً
+  useEffect(() => {
+    setSubjects((prev) => {
+      let needsUpdate = false;
+      const updated = [...prev];
+      for (const ds of DEFAULT_SUBJECTS) {
+        const idx = updated.findIndex((s) => s.id === ds.id);
+        if (idx === -1) {
+          updated.push(ds);
+          needsUpdate = true;
+        }
+      }
+      return needsUpdate ? updated : prev;
+    });
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.SUBJECTS, JSON.stringify(subjects));
+  }, [subjects]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.ATTEMPTS, JSON.stringify(quizAttempts));
+  }, [quizAttempts]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.SUB_CONFIG, JSON.stringify(subscriptionConfig));
+  }, [subscriptionConfig]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.SUB_REQUESTS, JSON.stringify(subscriptionRequests));
+  }, [subscriptionRequests]);
+
+  useEffect(() => {
+    if (currentStudent) {
+      localStorage.setItem(STORAGE_KEYS.ACTIVE_STUDENT, JSON.stringify(currentStudent));
+    } else {
+      localStorage.removeItem(STORAGE_KEYS.ACTIVE_STUDENT);
+    }
+  }, [currentStudent]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.IS_ADMIN, isAdmin ? 'true' : 'false');
+  }, [isAdmin]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.SOUND_ENABLED, soundOn ? 'true' : 'false');
     setSoundEnabled(soundOn);
   }, [soundOn]);
-
-  useEffect(() => {
-    if (!currentStudent || !currentStudent.id) return;
-
-    const updatePresence = (onlineStatus: boolean) => {
-      const nowIso = new Date().toISOString();
-      setDoc(doc(db, 'students', currentStudent.id), {
-        lastActiveAt: nowIso,
-        isOnline: onlineStatus,
-      }, { merge: true }).catch(() => {});
-    };
-
-    updatePresence(true);
-
-    const interval = setInterval(() => {
-      updatePresence(true);
-    }, 45000);
-
-    const handleUnload = () => {
-      updatePresence(false);
-    };
-
-    window.addEventListener('beforeunload', handleUnload);
-
-    return () => {
-      clearInterval(interval);
-      window.removeEventListener('beforeunload', handleUnload);
-    };
-  }, [currentStudent?.id]);
 
   const loginStudent = (username: string, password?: string) => {
     try {
@@ -435,41 +575,49 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const registerStudent = (data: Omit<Student, 'id' | 'totalScore' | 'starsEarned' | 'completedQuizzesCount' | 'registeredAt'>) => {
+  const registerStudent = (data: {
+    fullName: string;
+    username: string;
+    gradeId: GradeId;
+    password?: string;
+    avatar?: string;
+    schoolName?: string;
+    city?: string;
+  }) => {
     try {
       const cleanUser = (data.username || '').trim().toLowerCase();
-      if (!cleanUser) {
-        return { success: false, error: 'يرجى إدخال اسم مستخدم صحيح' };
+      const existing = students.find((s) => s && s.username && s.username.toLowerCase() === cleanUser);
+      if (existing) {
+        return { success: false, error: 'اسم المستخدم مستخدم بالفعل، اختر اسماً مميزاً آخر.' };
       }
 
-      const exists = students.some((s) => s && s.username && s.username.toLowerCase() === cleanUser);
-      if (exists) {
-        return { success: false, error: 'اسم المستخدم مستخدم مسبقاً، اختر اسماً آخر يا بطل.' };
-      }
-
-      const newId = `st_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
-      const nowIso = new Date().toISOString();
       const newStudent: Student = {
-        ...data,
+        id: `std-${Date.now()}`,
         username: cleanUser,
-        id: newId,
+        fullName: (data.fullName || '').trim(),
+        gradeId: data.gradeId,
+        password: data.password || '123',
+        subscription: 'free',
+        registeredAt: new Date().toISOString().split('T')[0],
+        lastActiveAt: new Date().toISOString(),
+        avatar: data.avatar || '👦🏻',
         totalScore: 0,
         starsEarned: 0,
         completedQuizzesCount: 0,
-        registeredAt: nowIso.split('T')[0],
-        lastActiveAt: nowIso,
-        isOnline: true,
+        badges: ['طالب جديد واعد 🌟'],
+        schoolName: data.schoolName || 'مدرسة ابتدائية',
+        city: data.city || 'العراق',
       };
 
-      setDoc(doc(db, 'students', newId), newStudent).catch(console.error);
-      setStudents((prev) => [newStudent, ...prev]);
+      setStudents((prev) => [newStudent, ...prev.filter((s) => s && s.username)]);
       setCurrentStudent(newStudent);
       setIsAdmin(false);
-      localStorage.setItem(STORAGE_KEYS.ACTIVE_STUDENT, JSON.stringify(newStudent));
+
+      setDoc(doc(db, 'students', newStudent.id), newStudent).catch(console.error);
 
       return { success: true };
     } catch (err: any) {
-      return { success: false, error: err?.message || 'فشل التسجيل' };
+      return { success: false, error: err?.message || 'حدث خطأ أثناء التسجيل' };
     }
   };
 
@@ -479,283 +627,178 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setDoc(doc(db, 'students', currentStudent.id), {
         isOnline: false,
         lastActiveAt: nowIso,
-      }, { merge: true }).catch(console.error);
+      }, { merge: true }).catch(() => {});
     }
     setCurrentStudent(null);
-    localStorage.removeItem(STORAGE_KEYS.ACTIVE_STUDENT);
   };
 
-  const loginAdmin = (user: string, pass: string): boolean => {
-    if (user.trim() === adminUsername && pass === adminPassword) {
-      setIsAdmin(true);
-      setCurrentStudent(null);
-      localStorage.setItem(STORAGE_KEYS.IS_ADMIN, 'true');
-      return true;
+  const loginAdmin = (usernameInput: string, passwordInput: string) => {
+    try {
+      const u = (usernameInput || '').trim().toLowerCase();
+      const p = (passwordInput || '').trim();
+
+      const validUsers = [
+        'admin',
+        'mohamedsky1986@gmail.com',
+        (adminUsername || '').trim().toLowerCase(),
+      ].filter(Boolean);
+
+      const isUserValid = validUsers.includes(u);
+
+      const isPassValid =
+        p === 'admin123' ||
+        p === (adminPassword || '').trim();
+
+      if (isUserValid && isPassValid) {
+        setIsAdmin(true);
+        setCurrentStudent(null);
+        return { success: true };
+      }
+
+      if (!isUserValid) {
+        return {
+          success: false,
+          error: 'اسم المشرف غير صحيح! اكتب admin أو بريدك mohamedsky1986@gmail.com',
+        };
+      }
+
+      return {
+        success: false,
+        error: 'كلمة المرور غير صحيحة! اكتب الرمز المعتمد: admin123',
+      };
+    } catch (err: any) {
+      return { success: false, error: 'حدث خطأ أثناء تسجيل الدخول' };
     }
-    return false;
   };
 
   const logoutAdmin = () => {
     setIsAdmin(false);
-    localStorage.removeItem(STORAGE_KEYS.IS_ADMIN);
   };
 
-  const changeAdminCredentials = (newUser: string, newPass: string) => {
-    setAdminUsername(newUser);
-    setAdminPassword(newPass);
-    localStorage.setItem(STORAGE_KEYS.ADMIN_USER, newUser);
-    localStorage.setItem(STORAGE_KEYS.ADMIN_PASS, newPass);
-    setDoc(doc(db, 'adminCredentials', 'master_admin'), {
-      username: newUser,
-      password: newPass,
-      updatedAt: new Date().toISOString(),
-    }).catch(console.error);
+  const changeAdminCredentials = (newUsername: string, newPassword: string) => {
+    if (!newUsername.trim() || newUsername.trim().length < 3) return false;
+    if (!newPassword || newPassword.trim().length < 4) return false;
+
+    const cleanUser = newUsername.trim();
+    const cleanPass = newPassword.trim();
+
+    setAdminUsername(cleanUser);
+    setAdminPassword(cleanPass);
+
+    setDoc(
+      doc(db, 'settings', 'admin'),
+      {
+        username: cleanUser,
+        password: cleanPass,
+        updatedAt: new Date().toISOString(),
+      },
+      { merge: true }
+    ).catch(console.error);
+
+    return true;
   };
 
-  const updateSubscriptionConfig = (config: SubscriptionConfig) => {
-    setSubscriptionConfig(config);
-    localStorage.setItem(STORAGE_KEYS.SUB_CONFIG, JSON.stringify(config));
-    setDoc(doc(db, 'subscriptionConfig', 'global_config'), config).catch(console.error);
+  const updateSubscriptionConfig = (updated: Partial<SubscriptionConfig>) => {
+    setSubscriptionConfig((prev) => {
+      const next = { ...prev, ...updated };
+      setDoc(doc(db, 'settings', 'subscription_config'), next, { merge: true }).catch(console.error);
+      return next;
+    });
   };
 
-  const submitSubscriptionRequest = (req: Omit<SubscriptionRequest, 'id' | 'createdAt' | 'status'>) => {
-    const newId = `req_${Date.now()}`;
+  const submitSubscriptionRequest = (data: {
+    studentId: string;
+    studentName: string;
+    username: string;
+    gradeId: GradeId;
+    paymentMethod: 'zain_cash' | 'qi_card' | 'asia_cell' | 'cash_school';
+    paymentPhoneOrRef?: string;
+    amount: number;
+    notes?: string;
+  }) => {
     const newReq: SubscriptionRequest = {
-      ...req,
-      id: newId,
+      ...data,
+      id: `req-${Date.now()}`,
+      requestDate: new Date().toLocaleDateString('ar-IQ'),
       status: 'pending',
-      createdAt: new Date().toISOString(),
+      currency: subscriptionConfig.currency,
     };
+
     setSubscriptionRequests((prev) => [newReq, ...prev]);
-    setDoc(doc(db, 'subscriptionRequests', newId), newReq).catch(console.error);
+    setDoc(doc(db, 'subscription_requests', newReq.id), newReq).catch(console.error);
+    return newReq;
   };
 
   const approveSubscriptionRequest = (requestId: string) => {
     const target = subscriptionRequests.find((r) => r.id === requestId);
     if (!target) return;
 
-    updateDoc(doc(db, 'subscriptionRequests', requestId), { status: 'approved' }).catch(console.error);
     setSubscriptionRequests((prev) =>
       prev.map((r) => (r.id === requestId ? { ...r, status: 'approved' } : r))
     );
 
-    const studentToUpdate = students.find((s) => s.id === target.studentId);
-    if (studentToUpdate) {
-      const expDate = new Date();
-      expDate.setDate(expDate.getDate() + 30);
-      const updateData = {
-        subscription: 'paid' as SubscriptionType,
-        subscriptionExpiry: expDate.toISOString(),
-      };
-      updateDoc(doc(db, 'students', studentToUpdate.id), updateData).catch(console.error);
-      setStudents((prev) =>
-        prev.map((s) => (s.id === studentToUpdate.id ? { ...s, ...updateData } : s))
-      );
-      if (currentStudent?.id === studentToUpdate.id) {
-        const updated = { ...currentStudent, ...updateData };
-        setCurrentStudent(updated);
-        localStorage.setItem(STORAGE_KEYS.ACTIVE_STUDENT, JSON.stringify(updated));
-      }
-    }
+    updateDoc(doc(db, 'subscription_requests', requestId), { status: 'approved' }).catch(console.error);
+    toggleStudentSubscription(target.studentId, 'paid');
   };
 
   const rejectSubscriptionRequest = (requestId: string) => {
-    updateDoc(doc(db, 'subscriptionRequests', requestId), { status: 'rejected' }).catch(console.error);
     setSubscriptionRequests((prev) =>
       prev.map((r) => (r.id === requestId ? { ...r, status: 'rejected' } : r))
     );
+
+    updateDoc(doc(db, 'subscription_requests', requestId), { status: 'rejected' }).catch(console.error);
   };
 
-  const toggleStudentSubscription = (studentId: string) => {
-    const student = students.find((s) => s.id === studentId);
-    if (!student) return;
-    const newSub: SubscriptionType = student.subscription === 'paid' ? 'free' : 'paid';
-    const updateData = {
-      subscription: newSub,
-      subscriptionExpiry: newSub === 'paid' ? new Date(Date.now() + 30 * 86400000).toISOString() : undefined,
+  const toggleStudentSubscription = (
+    studentId: string,
+    specificType?: SubscriptionType
+  ) => {
+    const targetStudent = students.find((s) => s.id === studentId);
+    if (!targetStudent) return;
+
+    const targetType: SubscriptionType =
+      specificType !== undefined
+        ? specificType
+        : targetStudent.subscription === 'paid'
+        ? 'free'
+        : 'paid';
+
+    const updated = {
+      ...targetStudent,
+      subscription: targetType,
+      subscriptionExpiry: targetType === 'paid' ? '2026-12-31' : undefined,
     };
-    updateDoc(doc(db, 'students', studentId), updateData).catch(console.error);
-    setStudents((prev) => prev.map((s) => (s.id === studentId ? { ...s, ...updateData } : s)));
-    if (currentStudent?.id === studentId) {
-      const updated = { ...currentStudent, ...updateData };
+
+    setStudents((prev) => prev.map((s) => (s.id === studentId ? updated : s)));
+
+    if (currentStudent && currentStudent.id === studentId) {
       setCurrentStudent(updated);
-      localStorage.setItem(STORAGE_KEYS.ACTIVE_STUDENT, JSON.stringify(updated));
     }
+
+    setDoc(doc(db, 'students', studentId), updated, { merge: true }).catch(console.error);
   };
 
-  const resetStudentPassword = (studentId: string) => {
-    const student = students.find((s) => s.id === studentId);
-    if (!student) return;
-    const newPass = prompt(`أدخل كلمة المرور الجديدة للطالب (${student.fullName}):`, '123456');
-    if (!newPass || !newPass.trim()) return;
-    updateDoc(doc(db, 'students', studentId), { password: newPass.trim() }).catch(console.error);
-    setStudents((prev) => prev.map((s) => (s.id === studentId ? { ...s, password: newPass.trim() } : s)));
-    alert(`تم تحديث كلمة مرور الطالب إلى: ${newPass.trim()}`);
+  const resetStudentPassword = (studentId: string, newPass: string) => {
+    setStudents((prev) =>
+      prev.map((s) => (s.id === studentId ? { ...s, password: newPass } : s))
+    );
+    if (currentStudent && currentStudent.id === studentId) {
+      setCurrentStudent((prev) => (prev ? { ...prev, password: newPass } : null));
+    }
+
+    updateDoc(doc(db, 'students', studentId), { password: newPass }).catch(console.error);
   };
 
   const deleteStudent = (studentId: string) => {
-    deleteDoc(doc(db, 'students', studentId)).catch(console.error);
     setStudents((prev) => prev.filter((s) => s.id !== studentId));
-    if (currentStudent?.id === studentId) {
-      logout();
-    }
-// دالة تنظيف الحقول غير المعرفة لكي يقبل Firestore حفظ السؤال بدون صورة
-  const sanitizeForFirestore = (obj: any): any => {
-    if (obj === null || obj === undefined) return null;
-    if (Array.isArray(obj)) return obj.map(sanitizeForFirestore).filter((v) => v !== undefined);
-    if (typeof obj === 'object') {
-      const res: any = {};
-      for (const [key, value] of Object.entries(obj)) {
-        if (value !== undefined) {
-          res[key] = sanitizeForFirestore(value);
-        }
-      }
-      return res;
-    }
-    return obj;
-  };
-
-  const addQuestion = (newQ: Omit<Question, 'id'>) => {
-    const questionWithId: Question = {
-      ...newQ,
-      id: `q-${Date.now()}`,
-    };
-    const cleanQuestion = sanitizeForFirestore(questionWithId) as Question;
-    setQuestions((prev) => [cleanQuestion, ...prev]);
-    try {
-      setDoc(doc(db, 'questions', cleanQuestion.id), cleanQuestion).catch((err) => {
-        console.warn('Firebase addQuestion warning:', err);
-      });
-    } catch (err) {
-      console.warn('Sync addQuestion warning:', err);
-    }
-  };
-
-  const updateQuestion = (arg1: any, arg2?: any) => {
-    let questionId = '';
-    let updatedFields: any = {};
-
-    if (typeof arg1 === 'string' && arg2 && typeof arg2 === 'object') {
-      questionId = arg1;
-      updatedFields = arg2;
-    } else if (arg1 && typeof arg1 === 'object') {
-      questionId = arg1.id;
-      updatedFields = arg1;
+    if (currentStudent && currentStudent.id === studentId) {
+      setCurrentStudent(null);
     }
 
-    if (!questionId) return;
-
-    setQuestions((prev) => {
-      const existing = prev.find((q) => q.id === questionId);
-      const merged = existing ? { ...existing, ...updatedFields, id: questionId } : { ...updatedFields, id: questionId };
-      const cleanMerged = sanitizeForFirestore(merged) as Question;
-      return prev.map((q) => (q.id === questionId ? cleanMerged : q));
-    });
-
-    try {
-      const cleanPayload = sanitizeForFirestore(updatedFields);
-      setDoc(doc(db, 'questions', questionId), cleanPayload, { merge: true }).catch((err) => {
-        console.warn('Firebase updateQuestion warning:', err);
-      });
-    } catch (err) {
-      console.warn('Sync updateQuestion warning:', err);
-    }
-   };
-
-  const updateQuestion = (id: string, q: Partial<Question>) => {
-    updateDoc(doc(db, 'questions', id), q).catch(console.error);
-    setQuestions((prev) =>
-      prev.map((item) => (item.id === id ? ({ ...item, ...q } as Question) : item))
-    );
+    deleteDoc(doc(db, 'students', studentId)).catch(console.error);
   };
 
-  const deleteQuestion = (id: string) => {
-    deleteDoc(doc(db, 'questions', id)).catch(console.error);
-    setQuestions((prev) => prev.filter((item) => item.id !== id));
-  };
-
-  const recordQuizAttempt = (attempt: Omit<QuizAttempt, 'id' | 'completedAt'>) => {
-    const newAttempt: QuizAttempt = {
-      ...attempt,
-      id: `attempt_${Date.now()}`,
-      completedAt: new Date().toISOString(),
-    };
-    setQuizAttempts((prev) => [newAttempt, ...prev]);
-
-    if (currentStudent && currentStudent.id === attempt.studentId) {
-      const isPerfect = attempt.percentage === 100;
-      const additionalStars = isPerfect ? 5 : attempt.percentage >= 70 ? 3 : 1;
-      const updatedStudent: Student = {
-        ...currentStudent,
-        totalScore: currentStudent.totalScore + attempt.score * 10,
-        starsEarned: (currentStudent.starsEarned || 0) + additionalStars,
-        completedQuizzesCount: (currentStudent.completedQuizzesCount || 0) + 1,
-      };
-      setCurrentStudent(updatedStudent);
-      localStorage.setItem(STORAGE_KEYS.ACTIVE_STUDENT, JSON.stringify(updatedStudent));
-      updateDoc(doc(db, 'students', currentStudent.id), {
-        totalScore: updatedStudent.totalScore,
-        starsEarned: updatedStudent.starsEarned,
-        completedQuizzesCount: updatedStudent.completedQuizzesCount,
-      }).catch(console.error);
-    }
-  };
-
-  const toggleSound = () => {
-    setSoundOn((prev) => {
-      const next = !prev;
-      localStorage.setItem(STORAGE_KEYS.SOUND, String(next));
-      return next;
-    });
-  };
-
-  return (
-    <EduContext.Provider
-      value={{
-        currentStudent,
-        isAdmin,
-        adminUsername,
-        adminPassword,
-        soundOn,
-        subscriptionConfig,
-        subscriptionRequests,
-        students,
-        subjects,
-        questions,
-        quizAttempts,
-        loginStudent,
-        registerStudent,
-        logout,
-        loginAdmin,
-        logoutAdmin,
-        changeAdminCredentials,
-        updateSubscriptionConfig,
-        submitSubscriptionRequest,
-        approveSubscriptionRequest,
-        rejectSubscriptionRequest,
-        toggleStudentSubscription,
-        resetStudentPassword,
-        deleteStudent,
-        addQuestion,
-        updateQuestion,
-        deleteQuestion,
-        recordQuizAttempt,
-        toggleSound,
-      }}
-    >
-      {children}
-    </EduContext.Provider>
-  );
-};
-
-export const useEdu = () => {
-  const context = useContext(EduContext);
-  if (!context) {
-    throw new Error('useEdu must be used within an EduProvider');
-  }
-  return context;
-};
-// دالة لتنظيف أي حقول غير معرّفة لمنع توقف الحفظ في Firestore
+  // دالة تنظيف الحقول لتفادي خطأ فيربيس عند حفظ الأسئلة بدون صورة
   const sanitizeForFirestore = (obj: any): any => {
     if (obj === null || obj === undefined) return null;
     if (Array.isArray(obj)) return obj.map(sanitizeForFirestore).filter((v) => v !== undefined);
@@ -829,3 +872,107 @@ export const useEdu = () => {
       console.warn('Sync deleteQuestion warning:', err);
     }
   };
+
+  const recordQuizAttempt = (attemptData: {
+    studentId: string;
+    studentName: string;
+    gradeId: GradeId;
+    subjectId: string;
+    subjectName: string;
+    score: number;
+    totalQuestions: number;
+    percentage: number;
+    passed: boolean;
+    stars: number;
+  }): QuizAttempt => {
+    const newAttempt: QuizAttempt = {
+      ...attemptData,
+      id: `att-${Date.now()}`,
+      date: new Date().toLocaleDateString('ar-IQ'),
+    };
+
+    setQuizAttempts((prev) => [newAttempt, ...prev]);
+    setDoc(doc(db, 'quiz_attempts', newAttempt.id), newAttempt).catch(console.error);
+
+    setStudents((prev) =>
+      prev.map((s) => {
+        if (s.id !== attemptData.studentId) return s;
+
+        const updatedBadges = [...s.badges];
+        if (attemptData.percentage === 100 && !updatedBadges.includes('العلامة الكاملة 💯')) {
+          updatedBadges.push('العلامة الكاملة 💯');
+        }
+        if (s.completedQuizzesCount + 1 >= 5 && !updatedBadges.includes('المجتهد المثالي 🏅')) {
+          updatedBadges.push('المجتهد المثالي 🏅');
+        }
+
+        const updatedStudent: Student = {
+          ...s,
+          totalScore: s.totalScore + attemptData.score * 10,
+          starsEarned: s.starsEarned + attemptData.stars,
+          completedQuizzesCount: s.completedQuizzesCount + 1,
+          badges: updatedBadges,
+        };
+
+        if (currentStudent && currentStudent.id === s.id) {
+          setCurrentStudent(updatedStudent);
+        }
+
+        setDoc(doc(db, 'students', s.id), updatedStudent, { merge: true }).catch(console.error);
+        return updatedStudent;
+      })
+    );
+
+    return newAttempt;
+  };
+
+  const toggleSound = () => {
+    setSoundOn((prev) => !prev);
+  };
+
+  return (
+    <EduContext.Provider
+      value={{
+        currentStudent,
+        isAdmin,
+        adminUsername,
+        adminPassword,
+        soundOn,
+        subscriptionConfig,
+        subscriptionRequests,
+        students,
+        subjects,
+        questions,
+        quizAttempts,
+        loginStudent,
+        registerStudent,
+        logout,
+        loginAdmin,
+        logoutAdmin,
+        changeAdminCredentials,
+        updateSubscriptionConfig,
+        submitSubscriptionRequest,
+        approveSubscriptionRequest,
+        rejectSubscriptionRequest,
+        toggleStudentSubscription,
+        resetStudentPassword,
+        deleteStudent,
+        addQuestion,
+        updateQuestion,
+        deleteQuestion,
+        recordQuizAttempt,
+        toggleSound,
+      }}
+    >
+      {children}
+    </EduContext.Provider>
+  );
+};
+
+export const useEdu = () => {
+  const context = useContext(EduContext);
+  if (!context) {
+    throw new Error('useEdu must be used within an EduProvider');
+  }
+  return context;
+};

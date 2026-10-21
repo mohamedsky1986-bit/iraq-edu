@@ -1280,8 +1280,7 @@ export const AdminPanel: React.FC = () => {
                   required
                 />
               </div>
-
-              {/* حقل رابط الصورة التوضيحية (اختياري) مع معاينة وزر حذف */}
+{/* حقل رابط الصورة التوضيحية (اختياري) مع معاينة وزر حذف */}
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <label className="block text-xs font-bold text-slate-700 flex items-center gap-1.5">
@@ -1304,5 +1303,127 @@ export const AdminPanel: React.FC = () => {
                   <div className="mt-2 p-2 bg-slate-50 rounded-xl border border-slate-200 max-w-xs mx-auto flex flex-col items-center gap-1.5">
                     <img
                       src={formImageUrl}
+                      alt="معاينة الصورة"
+                      className="w-full h-auto max-h-32 object-contain rounded-lg"
+                      onError={() => {}}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setFormImageUrl('')}
+                      className="text-[10px] text-rose-600 font-bold hover:underline cursor-pointer"
+                    >
+                      إلغاء الصورة وحذف الرابط ✕
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  {formQuestionType === 'fill_in_the_blank'
+                    ? 'الكلمة أو العبارة الصحيحة لملء الفراغ:'
+                    : 'الجواب النموذجي المعتمد (يظهر للطالب عند المراجعة):'}
+                </label>
+                <textarea
+                  value={formAnswerText}
+                  onChange={(e) => setFormAnswerText(e.target.value)}
+                  placeholder={
+                    formQuestionType === 'fill_in_the_blank'
+                      ? 'مثال: بغداد'
+                      : 'اكتب الإجابة الكاملة النموذجية التي تظهر للتلميذ...'
+                  }
+                  rows={2}
+                  className="w-full p-3 rounded-xl border border-slate-200 text-xs font-medium"
+                  required
+                />
+              </div>
+
+              {formQuestionType === 'multiple_choice' && (
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    خيارات الاختبار التفاعلي (حدد الإجابة الصحيحة بالضغط على الدائرة):
+                  </label>
+                  <div className="space-y-2">
+                    {formOptions.map((opt, idx) => (
+                      <div key={idx} className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setFormCorrectIndex(idx)}
+                          className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold cursor-pointer ${
+                            formCorrectIndex === idx
+                              ? 'bg-emerald-600 text-white'
+                              : 'bg-slate-200 text-slate-600'
+                          }`}
+                          title="تحديد كإجابة صحيحة"
+                        >
+                          {formCorrectIndex === idx ? '✓' : idx + 1}
+                        </button>
+                        <input
+                          type="text"
+                          value={opt}
+                          onChange={(e) => {
+                            const updated = [...formOptions];
+                            updated[idx] = e.target.value;
+                            setFormOptions(updated);
+                          }}
+                          placeholder={`الخيار ${idx + 1}`}
+                          className="flex-1 p-2 rounded-xl border border-slate-200 text-xs"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  شرح المعلم / نصيحة للتلميذ (اختياري)
+                </label>
+                <input
+                  type="text"
+                  value={formExplanation}
+                  onChange={(e) => setFormExplanation(e.target.value)}
+                  placeholder="ملاحظة توضيحية لتبسيط الفهم..."
+                  className="w-full p-2.5 rounded-xl border border-slate-200 text-xs"
+                />
+              </div>
+
+              <div className="flex items-center gap-2 p-3 rounded-xl bg-amber-50 border border-amber-200">
+                <input
+                  type="checkbox"
+                  id="vipCheck"
+                  checked={formIsVipOnly}
+                  onChange={(e) => setFormIsVipOnly(e.target.checked)}
+                  className="w-4 h-4 text-amber-600 rounded-sm cursor-pointer"
+                />
+                <label htmlFor="vipCheck" className="text-xs font-bold text-amber-900 cursor-pointer">
+                  مخصص فقط للاشتراكات المفعلة (VIP)
+                </label>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsQuestionModalOpen(false)}
+                  className="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold cursor-pointer"
+                >
+                  إلغاء
+                </button>
+                <button
+                  type="submit"
+                  className="px-6 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs cursor-pointer"
+                >
+                  حفظ وتثبيت السؤال ✓
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default AdminPanel;
                       alt="معاينة الصورة"
                       className="w-full h-auto max-h-32 object-contain

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useEdu } from '../context/EduContext';
 import { Subject, Question } from '../types/index';
-import { GRADES_DATA, DEFAULT_SUBJECTS } from '../data/initialData';
+import { GRADES_DATA } from '../data/initialData';
 import { getIraqiGradeName } from '../utils/edu-logic';
 import { QuestionCard } from './QuestionCard';
 import { Grade1ArabicReading } from './Grade1ArabicReading';
@@ -31,8 +31,554 @@ import {
   Music,
   Bookmark,
   Home,
-  LogOut,
+  LogOut
 } from 'lucide-react';
+
+
+export const ALL_IRAQI_OFFICIAL_SUBJECTS: Subject[] = [
+  // ================= الصف الأول الابتدائي =================
+  {
+    id: 'ar-1',
+    gradeId: 'grade-1',
+    name: 'قراءتي (الحروف والأصوات والمقاطع)',
+    code: 'ARABIC_1',
+    icon: '🔤',
+    themeColor: 'emerald',
+    description: 'منهج قراءتي التفاعلي: الحركات، الحروف الهجائية، المقاطع الصوتية ونطق دار ودور وبابا وماما',
+    lessonsCount: 16,
+    questionsCount: 15,
+    isSpecialInteractive: true,
+  },
+  {
+    id: 'eng-1',
+    gradeId: 'grade-1',
+    name: 'اللغة الإنجليزية (English Letters)',
+    code: 'ENG_1',
+    icon: '🔠',
+    themeColor: 'sky',
+    description: 'English for Iraq: Letters A to Z, Phonics, Sounds, Numbers and Words with interactive audio',
+    lessonsCount: 12,
+    questionsCount: 12,
+    isSpecialInteractive: true,
+  },
+  {
+    id: 'sci-1',
+    gradeId: 'grade-1',
+    name: 'العلوم (الكائنات الحية والبيئة)',
+    code: 'SCIENCE_1',
+    icon: '🌿',
+    themeColor: 'lime',
+    description: 'العلوم للصف الأول: الكائنات الحية، أجزاء النبات، الحواس الخمسة، والبيئة العراقية',
+    lessonsCount: 10,
+    questionsCount: 12,
+    isSpecialInteractive: true,
+  },
+  {
+    id: 'math-1',
+    gradeId: 'grade-1',
+    name: 'الرياضيات',
+    code: 'MATH_1',
+    icon: '🔢',
+    themeColor: 'teal',
+    description: 'الأعداد من 1 إلى 20، الجمع والطرح البسيط والمقارنة بين الأشياء',
+    lessonsCount: 10,
+    questionsCount: 10,
+  },
+  {
+    id: 'isl-1',
+    gradeId: 'grade-1',
+    name: 'التربية الإسلامية',
+    code: 'ISLAMIC_1',
+    icon: '🕌',
+    themeColor: 'green',
+    description: 'السور القرآنية القصيرة، أركان الإيمان، والآداب الإسلامية الحميدة',
+    lessonsCount: 8,
+    questionsCount: 8,
+  },
+
+  // ================= الصف الثاني الابتدائي =================
+  {
+    id: 'ar-2',
+    gradeId: 'grade-2',
+    name: 'قراءتي (اللغة العربية)',
+    code: 'ARABIC_2',
+    icon: '📖',
+    themeColor: 'sky',
+    description: 'قصص قصيرة مشوقة، التعبير الشفهي، والتدريب على الإملاء السليم',
+    lessonsCount: 16,
+    questionsCount: 14,
+  },
+  {
+    id: 'math-2',
+    gradeId: 'grade-2',
+    name: 'الرياضيات',
+    code: 'MATH_2',
+    icon: '➕',
+    themeColor: 'indigo',
+    description: 'الأعداد حتى 999، القيمة المكانية، والجمع والطرح مع إعادة التسمية',
+    lessonsCount: 14,
+    questionsCount: 12,
+  },
+  {
+    id: 'sci-2',
+    gradeId: 'grade-2',
+    name: 'العلوم',
+    code: 'SCIENCE_2',
+    icon: '🔬',
+    themeColor: 'emerald',
+    description: 'أعضاء جسم الإنسان، صحة الغذاء، وتنوع البيئات الطبيعية',
+    lessonsCount: 12,
+    questionsCount: 10,
+  },
+  {
+    id: 'isl-2',
+    gradeId: 'grade-2',
+    name: 'التربية الإسلامية',
+    code: 'ISLAMIC_2',
+    icon: '🕌',
+    themeColor: 'amber',
+    description: 'سور الفيل وقريش والماعون، سيرة النبي محمد (ص) في طفولته',
+    lessonsCount: 10,
+    questionsCount: 10,
+  },
+  {
+    id: 'eng-2',
+    gradeId: 'grade-2',
+    name: 'اللغة الإنجليزية (English for Iraq)',
+    code: 'ENG_2',
+    icon: '🇬🇧',
+    themeColor: 'blue',
+    description: 'My School, My Body, Colors and Animals with interactive vocabulary',
+    lessonsCount: 12,
+    questionsCount: 10,
+  },
+
+  // ================= الصف الثالث الابتدائي =================
+  {
+    id: 'ar-3',
+    gradeId: 'grade-3',
+    name: 'قراءتي (اللغة العربية)',
+    code: 'ARABIC_3',
+    icon: '📚',
+    themeColor: 'violet',
+    description: 'نصوص أدبية مختارة، التدريبات اللغوية، وعلامات الترقيم',
+    lessonsCount: 18,
+    questionsCount: 15,
+  },
+  {
+    id: 'math-3',
+    gradeId: 'grade-3',
+    name: 'الرياضيات',
+    code: 'MATH_3',
+    icon: '✖️',
+    themeColor: 'cyan',
+    description: 'الأعداد حتى 9999، جدول الضرب كاملاً، ومبادئ القسمة والهندسة',
+    lessonsCount: 16,
+    questionsCount: 14,
+  },
+  {
+    id: 'sci-3',
+    gradeId: 'grade-3',
+    name: 'العلوم',
+    code: 'SCIENCE_3',
+    icon: '🌱',
+    themeColor: 'teal',
+    description: 'دورة حياة النباتات والحيوانات، مصادر الطاقة، والصخور والمعادن',
+    lessonsCount: 14,
+    questionsCount: 12,
+  },
+  {
+    id: 'isl-3',
+    gradeId: 'grade-3',
+    name: 'التربية الإسلامية',
+    code: 'ISLAMIC_3',
+    icon: '🕌',
+    themeColor: 'emerald',
+    description: 'سور التين والعلق والقدر، معجزات الرسل، والآداب الاجتماعية',
+    lessonsCount: 12,
+    questionsCount: 12,
+  },
+  {
+    id: 'eng-3',
+    gradeId: 'grade-3',
+    name: 'اللغة الإنجليزية (English for Iraq)',
+    code: 'ENG_3',
+    icon: '🇬🇧',
+    themeColor: 'blue',
+    description: 'Numbers, Alphabet Phonics, Clothes, Food and Daily Routines',
+    lessonsCount: 12,
+    questionsCount: 12,
+  },
+
+  // ================= الصف الرابع الابتدائي =================
+  {
+    id: 'ar-4',
+    gradeId: 'grade-4',
+    name: 'قواعد اللغة العربية والمطالعة',
+    code: 'ARABIC_4',
+    icon: '📜',
+    themeColor: 'rose',
+    description: 'المفرد والمثنى والجمع، أسماء الإشارة، الأسماء الموصولة والضمائر',
+    lessonsCount: 20,
+    questionsCount: 20,
+  },
+  {
+    id: 'math-4',
+    gradeId: 'grade-4',
+    name: 'الرياضيات',
+    code: 'MATH_4',
+    icon: '📐',
+    themeColor: 'blue',
+    description: 'الأعداد ضمن الملايين، الضرب في مرتبتين، القسمة على مرتبة، والكسور الاعتيادية والعشرية',
+    lessonsCount: 20,
+    questionsCount: 18,
+  },
+  {
+    id: 'sci-4',
+    gradeId: 'grade-4',
+    name: 'العلوم',
+    code: 'SCIENCE_4',
+    icon: '🪐',
+    themeColor: 'emerald',
+    description: 'البكتيريا والفطريات، النباتات الزهرية واللازهرية، ودورات حياة الحيوانات الفقرية واللافقرية',
+    lessonsCount: 18,
+    questionsCount: 16,
+  },
+  {
+    id: 'soc-4',
+    gradeId: 'grade-4',
+    name: 'الاجتماعيات',
+    code: 'SOC_4',
+    icon: '🏛️',
+    themeColor: 'amber',
+    description: 'جغرافية العراق: الجهات، البيئات، مدن العراق التاريخية وحضارات بلاد الرافدين',
+    lessonsCount: 15,
+    questionsCount: 15,
+  },
+  {
+    id: 'isl-4',
+    gradeId: 'grade-4',
+    name: 'التربية الإسلامية',
+    code: 'ISLAMIC_4',
+    icon: '🕌',
+    themeColor: 'green',
+    description: 'سورة الضحى وسورة الزلزلة، سيرة النبي محمد (ص) في مكة، والآداب الإسلامية',
+    lessonsCount: 14,
+    questionsCount: 12,
+  },
+  {
+    id: 'eng-4',
+    gradeId: 'grade-4',
+    name: 'اللغة الإنجليزية (English for Iraq)',
+    code: 'ENG_4',
+    icon: '🇬🇧',
+    themeColor: 'sky',
+    description: 'English for Iraq 4th Primary: Countries, Family, Time, School subjects and Vocabulary',
+    lessonsCount: 14,
+    questionsCount: 14,
+  },
+
+  // ================= الصف الخامس الابتدائي =================
+  {
+    id: 'ar-5',
+    gradeId: 'grade-5',
+    name: 'قواعد اللغة العربية والمطالعة',
+    code: 'ARABIC_5',
+    icon: '📖',
+    themeColor: 'emerald',
+    description: 'أقسام الفعل: الماضي والمضارع والأمر، الفاعل والمفعول به، المبتدأ والخبر، وكان وأخواتها وإن وأخواتها',
+    lessonsCount: 20,
+    questionsCount: 20,
+  },
+  {
+    id: 'math-5',
+    gradeId: 'grade-5',
+    name: 'الرياضيات',
+    code: 'MATH_5',
+    icon: '📊',
+    themeColor: 'teal',
+    description: 'الأعداد ضمن المليارات، الضرب والقسمة، جمع وطرح الكسور الاعتيادية والعشرية، ومساحة المثلث والمربع',
+    lessonsCount: 20,
+    questionsCount: 18,
+  },
+  {
+    id: 'sci-5',
+    gradeId: 'grade-5',
+    name: 'العلوم',
+    code: 'SCIENCE_5',
+    icon: '🔬',
+    themeColor: 'cyan',
+    description: 'جهاز الدوران والتنفس والهضم عند الإنسان، الكهربائية والمغناطيس، والمركبات والمخاليط في الطبيعة',
+    lessonsCount: 16,
+    questionsCount: 16,
+  },
+  {
+    id: 'soc-5',
+    gradeId: 'grade-5',
+    name: 'الاجتماعيات',
+    code: 'SOC_5',
+    icon: '🏛️',
+    themeColor: 'amber',
+    description: 'تضاريس العراق، مناخ وموارد العراق المائية، والتاريخ الإسلامي وحضارة بابل وآشور وسومر',
+    lessonsCount: 14,
+    questionsCount: 14,
+  },
+  {
+    id: 'isl-5',
+    gradeId: 'grade-5',
+    name: 'التربية الإسلامية',
+    code: 'ISLAMIC_5',
+    icon: '🕌',
+    themeColor: 'green',
+    description: 'سورة البلد والماعون والملك المقررة، أركان الإيمان، معركة بدر وسيرة الرسول (ص)، وآداب صلة الرحم',
+    lessonsCount: 16,
+    questionsCount: 14,
+  },
+  {
+    id: 'eng-5',
+    gradeId: 'grade-5',
+    name: 'اللغة الإنجليزية (English for Iraq)',
+    code: 'ENG_5',
+    icon: '🇬🇧',
+    themeColor: 'blue',
+    description: 'English for Iraq 5th Primary: Countries & Nationalities, Animals, Sports, Food & Jobs',
+    lessonsCount: 16,
+    questionsCount: 16,
+  },
+
+  // ================= الصف السادس الابتدائي =================
+  {
+    id: 'ar-6',
+    gradeId: 'grade-6',
+    name: 'قواعد اللغة العربية (وزاري)',
+    code: 'ARABIC_6',
+    icon: '🏆',
+    themeColor: 'amber',
+    description: 'النكرة والمعرفة، المعرف بالإضافة، المفاعيل (المطلق وفيه)، إعراب الفعل المضارع، والأسماء الخمسة',
+    lessonsCount: 24,
+    questionsCount: 25,
+  },
+  {
+    id: 'math-6',
+    gradeId: 'grade-6',
+    name: 'الرياضيات (وزاري)',
+    code: 'MATH_6',
+    icon: '📐',
+    themeColor: 'indigo',
+    description: 'الأعداد الصحيحة، العمليات على الكسور، النسبة والتناسب ومقياس الرسم، والدائرة والمجسمات',
+    lessonsCount: 24,
+    questionsCount: 24,
+  },
+  {
+    id: 'sci-6',
+    gradeId: 'grade-6',
+    name: 'العلوم (وزاري)',
+    code: 'SCIENCE_6',
+    icon: '🧬',
+    themeColor: 'rose',
+    description: 'التكاثر في النباتات (بذور، درنات، أبصال)، الجهاز العصبي والهيكلي، الذرة، والموجات الصوتية والضوئية',
+    lessonsCount: 22,
+    questionsCount: 22,
+  },
+  {
+    id: 'isl-6',
+    gradeId: 'grade-6',
+    name: 'التربية الإسلامية (وزاري)',
+    code: 'ISLAMIC_6',
+    icon: '🕌',
+    themeColor: 'emerald',
+    description: 'سورة النجم ولقمان والرحمن، أحكام اللام، سيرة أولي العزم والجهاد في الإسلام، والأخلاق الفاضلة',
+    lessonsCount: 18,
+    questionsCount: 20,
+  },
+  {
+    id: 'soc-6',
+    gradeId: 'grade-6',
+    name: 'الاجتماعيات (وزاري)',
+    code: 'SOC_6',
+    icon: '🗺️',
+    themeColor: 'orange',
+    description: 'دراسة محافظات العراق الـ 18 بالتفصيل: الموقع، التضاريس، الموارد المائية، والنبذة التاريخية لكل محافظة',
+    lessonsCount: 20,
+    questionsCount: 20,
+  },
+  {
+    id: 'eng-6',
+    gradeId: 'grade-6',
+    name: 'اللغة الإنجليزية (English for Iraq - وزاري)',
+    code: 'ENG_6',
+    icon: '🇬🇧',
+    themeColor: 'sky',
+    description: 'English for Iraq 6th Primary: Family, Jobs & Workplaces, Materials, Routine, Travel and Ministerial Grammar',
+    lessonsCount: 20,
+    questionsCount: 22,
+  },
+];
+
+
+const DEFAULT_EXTRA_QUESTIONS: Question[] = [
+  // Islamic Grade 5
+  {
+    id: 'q-isl5-1',
+    gradeId: 'grade-5',
+    subjectId: 'isl-5',
+    chapter: 'الوحدة الأولى: القرآن الكريم والعقيدة',
+    lessonName: 'سورة البلد وتفسيرها',
+    questionText: 'ما المعنى الإجمالي لقوله تعالى: ﴿لا أُقْسِمُ بِهَذَا الْبَلَدِ * وَأَنْتَ حِلٌّ بِهَذَا الْبَلَدِ﴾؟',
+    answerText: 'يقسم الله عز وجل بمكة المكرمة البلد الحرام تشريفاً وتعظيماً لها، وبياناً لفضل ومكانة النبي محمد (صلى الله عليه وآله وسلم) فيها.',
+    difficulty: 'medium',
+    isVipOnly: false,
+    options: ['يقسم بمكة المكرمة تشريفاً للنبي (ص)', 'يقسم بمدينة القدس الشريف', 'يقسم بجبل الطور', 'يقسم بالبحر المحيط'],
+    correctAnswerIndex: 0,
+    explanation: 'سورة البلد مكية، والمقصود بالبلد هو مكة المكرمة زادها الله شرفاً.',
+  },
+  {
+    id: 'q-isl5-2',
+    gradeId: 'grade-5',
+    subjectId: 'isl-5',
+    chapter: 'الوحدة الثانية: الحديث النبوي الشريف والأخلاق',
+    lessonName: 'صلة الرحم وبر الأهل',
+    questionText: 'ما هو الأجر العظيم الذي يناله المسلم الواصل لرحمه كما ورد في الحديث الشريف؟',
+    answerText: 'يبسط الله تعالى له في رزقه، ويبارك له في عمره وأثره في الدنيا والآخرة.',
+    difficulty: 'easy',
+    isVipOnly: false,
+  },
+  {
+    id: 'q-isl5-3',
+    gradeId: 'grade-5',
+    subjectId: 'isl-5',
+    chapter: 'الوحدة الثالثة: السيرة النبوية العطرة',
+    lessonName: 'معركة بدر الكبرى',
+    questionText: 'في أي سنة هجرية وقعت معركة بدر الكبرى؟ وما كانت نتيجتها؟',
+    answerText: 'وقعت في السنة الثانية للهجرة (2 هـ) في شهر رمضان المبارك، وانتصر فيها المسلمون نصراً مؤزراً على مشركي قريش.',
+    difficulty: 'medium',
+    isVipOnly: false,
+  },
+
+  // English Grade 5
+  {
+    id: 'q-eng5-1',
+    gradeId: 'grade-5',
+    subjectId: 'eng-5',
+    chapter: 'Unit 1: Countries & Nationalities',
+    lessonName: 'Where are you from?',
+    questionText: 'Choose the correct nationality: "Peter is from England. He is _______."',
+    answerText: 'English (إنجليزي)',
+    difficulty: 'easy',
+    isVipOnly: false,
+    options: ['English', 'Englandish', 'Englander', 'Englese'],
+    correctAnswerIndex: 0,
+    explanation: 'The nationality for someone from England is English.',
+  },
+  {
+    id: 'q-eng5-2',
+    gradeId: 'grade-5',
+    subjectId: 'eng-5',
+    chapter: 'Unit 2: Animals and Nature',
+    lessonName: 'Animal Habitats',
+    questionText: 'Which animal is friendly, intelligent and lives in the sea?',
+    answerText: 'The Dolphin (الدولفين)',
+    difficulty: 'easy',
+    isVipOnly: false,
+    options: ['Dolphin', 'Lion', 'Eagle', 'Snake'],
+    correctAnswerIndex: 0,
+  },
+  {
+    id: 'q-eng5-3',
+    gradeId: 'grade-5',
+    subjectId: 'eng-5',
+    chapter: 'Unit 6: Jobs and Workplaces',
+    lessonName: 'Professions',
+    questionText: 'Complete the sentence: "An IT Programmer works in an _______."',
+    answerText: 'office (مكتب برمجة)',
+    difficulty: 'medium',
+    isVipOnly: false,
+    options: ['office', 'oil refinery', 'hospital', 'farm'],
+    correctAnswerIndex: 0,
+  },
+
+  // English Grade 2
+  {
+    id: 'q-eng2-1',
+    gradeId: 'grade-2',
+    subjectId: 'eng-2',
+    chapter: 'Unit 1: Colors & School',
+    lessonName: 'Primary Colors',
+    questionText: 'What color is the sun? اختر لون الشمس بالإنجليزية:',
+    answerText: 'Yellow (أصفر ☀️)',
+    difficulty: 'easy',
+    isVipOnly: false,
+    options: ['Yellow', 'Blue', 'Green', 'Black'],
+    correctAnswerIndex: 0,
+  },
+  {
+    id: 'q-eng2-2',
+    gradeId: 'grade-2',
+    subjectId: 'eng-2',
+    chapter: 'Unit 2: Animals',
+    lessonName: 'Pets and Animals',
+    questionText: 'What is the English word for (قِطَّة)?',
+    answerText: 'Cat (قِطَّة 🐱)',
+    difficulty: 'easy',
+    isVipOnly: false,
+    options: ['Cat', 'Dog', 'Bird', 'Fish'],
+    correctAnswerIndex: 0,
+  },
+
+  // English Grade 3
+  {
+    id: 'q-eng3-1',
+    gradeId: 'grade-3',
+    subjectId: 'eng-3',
+    chapter: 'Unit 1: Numbers & Alphabet',
+    lessonName: 'Counting 1 to 20',
+    questionText: 'What comes after fourteen (14)? ما هو العدد الذي يلي 14؟',
+    answerText: 'Fifteen (15)',
+    difficulty: 'easy',
+    isVipOnly: false,
+    options: ['Fifteen (15)', 'Twelve (12)', 'Sixteen (16)', 'Twenty (20)'],
+    correctAnswerIndex: 0,
+  },
+  {
+    id: 'q-eng3-2',
+    gradeId: 'grade-3',
+    subjectId: 'eng-3',
+    chapter: 'Unit 3: Food & Drink',
+    lessonName: 'Healthy Food',
+    questionText: 'What is the English word for (حَلِيب)?',
+    answerText: 'Milk (حليب 🥛)',
+    difficulty: 'easy',
+    isVipOnly: false,
+    options: ['Milk', 'Water', 'Tea', 'Juice'],
+    correctAnswerIndex: 0,
+  },
+
+  // Islamic Grade 2
+  {
+    id: 'q-isl2-1',
+    gradeId: 'grade-2',
+    subjectId: 'isl-2',
+    chapter: 'الوحدة الأولى: القرآن الكريم والآداب',
+    lessonName: 'سورة الفيل المباركة',
+    questionText: 'من هو قائد الجيش الذي أراد هدم الكعبة المشرفة وحماها الله تعالى بطير أبابيل؟',
+    answerText: 'أبرهة الحبشي وجيشه وأصحابه أصحاب الفيل.',
+    difficulty: 'easy',
+    isVipOnly: false,
+  },
+
+  // Islamic Grade 3
+  {
+    id: 'q-isl3-1',
+    gradeId: 'grade-3',
+    subjectId: 'isl-3',
+    chapter: 'الوحدة الأولى: السور والآيات الكريمة',
+    lessonName: 'سورة القدر المباركة',
+    questionText: 'في أي ليلة مباركة نزل القرآن الكريم على نبينا محمد (ص)؟',
+    answerText: 'في ليلة القدر المباركة في شهر رمضان العظيم.',
+    difficulty: 'easy',
+    isVipOnly: false,
+  },
+];
 
 interface GradePortalProps {
   onStartQuiz: (subject: Subject, questions: Question[]) => void;
@@ -40,170 +586,288 @@ interface GradePortalProps {
   onOpenUpgradeModal: () => void;
 }
 
-// نصوص وقصائد المحفوظات الشعرية العراقية للمراحل الابتدائية
-const IRAQI_POEMS_DATA: Record<string, { title: string; poet: string; lines: string[]; audioText: string }[]> = {
+const DEFAULT_IRAQI_CHAPTERS: Record<string, string[]> = {
+  // ================= الصف الأول الابتدائي =================
+  'sci-1': [
+    'الفصل الأول: الكائنات الحية وأجزاؤها',
+    'الفصل الثاني: البيئة الطبيعية ومكوناتها',
+    'الفصل الثالث: المادة وخصائصها',
+    'الفصل الرابع: الحركة والقوة',
+    'الفصل الخامس: الأرض والموارد الطبيعية',
+  ],
+  'ar-1': [
+    'الفصل الأول: الحروف والمقاطع بالحركات',
+    'الفصل الثاني: الكلمات والجمل البسيطة',
+    'الفصل الثالث: القصص والمطالعة',
+  ],
+  'math-1': [
+    'الفصل الأول: الأعداد من (1 إلى 9) ومفهوم الصفر',
+    'الفصل الثاني: الجمع حتى العدد 9',
+    'الفصل الثالث: الطرح حتى العدد 9',
+    'الفصل الرابع: الأعداد حتى 20',
+    'الفصل الخامس: الأشكال الهندسية والقياس',
+  ],
+  'eng-1': [
+    'Unit 1: Hello & Alphabet Phonics',
+    'Unit 2: Numbers & Colors',
+    'Unit 3: Family & Classroom Objects',
+  ],
+  'isl-1': [
+    'الفصل الأول: السور القرآنية والآداب الإسلامية',
+    'الفصل الثاني: العقيدة وسيرة النبي محمد (ص)',
+    'الفصل الثالث: الأخلاق والأدعية والحديث الشريف',
+  ],
+
+  // ================= الصف الثاني الابتدائي =================
+  'math-2': [
+    'الفصل الأول: الأعداد حتى 999 والقيمة المكانية',
+    'الفصل الثاني: مقارنة الأعداد وترتيبها',
+    'الفصل الثالث: جمع الأعداد حتى 999',
+    'الفصل الرابع: طرح الأعداد حتى 999',
+    'الفصل الخامس: الهندسة والقياس والوقت',
+  ],
+  'ar-2': [
+    'الفصل الأول: الأرنب الوفي ومدرستي',
+    'الفصل الثاني: اللام الشمسية والقمرية وحركات التنوين',
+    'الفصل الثالث: المحفوظات والأناشيد والمطالعة',
+  ],
+  'sci-2': [
+    'الفصل الأول: أعضاء جسم الإنسان',
+    'الفصل الثاني: الحفاظ على صحة الجسم',
+    'الفصل الثالث: البيئة اليابسة والبيئة المائية',
+    'الفصل الرابع: الغذاء والتغذية',
+  ],
+
+  // ================= الصف الثالث الابتدائي =================
+  'math-3': [
+    'الفصل الأول: الأعداد حتى 9999 والقيمة المكانية',
+    'الفصل الثاني: جمع وطرح الأعداد المكونة من 4 مراتب',
+    'الفصل الثالث: جدول الضرب وحقائق الضرب الأساسية',
+    'الفصل الرابع: القسمة وعلاقتها بالضرب',
+    'الفصل الخامس: الكسور والقياس والأشكال الهندسية',
+  ],
+
+  // ================= الصف الرابع الابتدائي =================
+  'math-4': [
+    'الفصل الأول: الأعداد ضمن الملايين والقيمة المكانية',
+    'الفصل الثاني: الجمع والطرح ضمن الملايين',
+    'الفصل الثالث: ضرب الأعداد (ضرب في عدد من مرتبتين)',
+    'الفصل الرابع: القسمة على عدد من مرتبة واحدة',
+    'الفصل الخامس: الكسور الاعتيادية والكسور العشرية',
+    'الفصل السادس: الهندسة والزوايا والقياس',
+  ],
+
+  // ================= الصف الخامس الابتدائي =================
+  'math-5': [
+    'الفصل الأول: الأعداد ضمن المليارات والقيمة المكانية',
+    'الفصل الثاني: الضرب في عدد من ثلاث مراتب والقسمة على مرتبتين',
+    'الفصل الثالث: جمع وطرح الكسور الاعتيادية والأعداد الكسرية',
+    'الفصل الرابع: الكسور العشرية والعمليات عليها',
+    'الفصل الخامس: المساحة والمحيط والدائرة',
+  ],
+
+  // ================= الصف السادس الابتدائي (الوزاري المعتمد) =================
+  'math-6': [
+    'الفصل الأول: الأعداد الصحيحة وتمثيلها على خط الأعداد والعمليات عليها',
+    'الفصل الثاني: العبارات الجبرية والمعادلات',
+    'الفصل الثالث: العمليات على الكسور الاعتيادية والأعداد الكسرية',
+    'الفصل الرابع: العمليات على الكسور العشرية',
+    'الفصل الخامس: النسبة والتناسب ومقياس الرسم والتقسيم التناسبي',
+    'الفصل السادس: الدائرة ومحيطها ومساحتها والرسم الهندسي',
+    'الفصل السابع: الإحصاء والاحتمال (الوسط الحسابي والوسيط والمنوال)',
+  ],
+  'ar-6': [
+    'الوحدة الأولى: أنواع المعارف (وزاري)',
+    'الوحدة الثانية: المبتدأ والخبر وكان وأخواتها (وزاري)',
+    'الوحدة الثالثة: نائب الفاعل (وزاري)',
+    'الوحدة الرابعة: المفعول المطلق والمفعول فيه (وزاري)',
+  ],
+};
+
+// ================= مكتبة قصائد المحفوظات والأناشيد المقررة للحفظ =================
+const IRAQI_POEMS_DATA: Record<string, { title: string; author: string; verses: { l1: string; l2: string }[] }[]> = {
   'grade-1': [
     {
-      title: 'محفوظة (أُمّي وَأَبي)',
-      poet: 'أناشيد القراءة للصف الأول',
-      lines: [
-        'أُمِّي أُمِّي مـا أَحْـلاها',
-        'نَـوْرُ حَيـاتي مـا أَبْهاها',
-        'تَسْعى دَوْماً في إِسْعـادي',
-        'تَرْعـاني في يَـوْمِ مِعـادي',
-        'وَأَبِي الغـالي يَشْقى عَنّي',
-        'يَبْني مُسْتَقْبَلي وَيَبْني',
+      title: 'نشيد مدرستي',
+      author: 'منهج قراءتي للصف الأول',
+      verses: [
+        { l1: 'أَهْلاً أَهْلاً يَا مَدْرَسَتِي', l2: 'أَهْلاً أَهْلاً يَا بَيْتِي الثَّانِي' },
+        { l1: 'فِيكِ أَقْضِي أَحْلَى وَقْتِي', l2: 'مَعَ أَحْبَابِي وَخِلَّانِي' },
+        { l1: 'فِيكِ أَتَعَلَّمُ قِرَاءَتِي', l2: 'وَكِتَابَةَ كُلِّ عُنْوَانِ' },
       ],
-      audioText: 'محفوظة أمي وأبي: أمي أمي ما أحلاها، نور حياتي ما أبهاها، تسعى دوماً في إسعادي، ترعاني في يوم معادي، وأبي الغالي يشقى عني، يبني مستقبلي ويبني.',
-    },
-    {
-      title: 'نشيد (مَدْرَسَتي الحَبيبَة)',
-      poet: 'أناشيد الصف الأول',
-      lines: [
-        'أَهْلاً أَهْلاً مَدْرَسَتي',
-        'يا بَيْتَ العِلْمِ وَمَعْرِفَتي',
-        'فيها كُتُبي فيها صَحْبي',
-        'أَمْضي فَرَحـاً نَحْوَ الدَّرْبِ',
-      ],
-      audioText: 'نشيد مدرستي الحبيبة: أهلاً أهلاً مدرستي، يا بيت العلم ومعرفتي، فيها كتبي فيها صحبي، أمضي فرحاً نحو الدرب.',
     },
   ],
   'grade-2': [
     {
-      title: 'محفوظة (هَيّا نَقْرَأ)',
-      poet: 'منهاج قراءتي للصف الثاني',
-      lines: [
-        'أَنَا تِلْمِيذٌ ذا أَدَبِ',
-        'أَقْرَأُ في خَيْرِ الكُتُبِ',
-        'أَتَعَلَّمُ عِلْماً يَنْفَعُني',
-        'يَرْفَعُ قَدْري وَيُشَرِّفُني',
+      title: 'نشيد النَّحْلَةُ العَامِلَةُ',
+      author: 'محفوظات الصف الثاني',
+      verses: [
+        { l1: 'مَنْ ذَا الَّذِي يَعْمَلُ دَوْماً', l2: 'بِجِدٍّ وَنَشَاطٍ كَبِيرْ؟' },
+        { l1: 'إِنَّهَا النَّحْلَةُ تَسْعَى', l2: 'تَجْنِي شَهْدَ الزَّهْرِ النَّضِيرْ' },
+        { l1: 'تَصْنَعُ عَسَلاً فِيهِ شِفَاءٌ', l2: 'يَسُرُّ الصَّغِيرَ وَالْكَبِيرْ' },
       ],
-      audioText: 'محفوظة هيا نقرأ: أنا تلميذ ذا أدب، أقرأ في خير الكتب، أتعلم علماً ينفعني، يرفع قدري ويشرفني.',
     },
   ],
   'grade-3': [
     {
-      title: 'محفوظة (العِراقُ وَطَني)',
-      poet: 'منهاج قراءتي للصف الثالث',
-      lines: [
-        'عِراقُنا بِلادُنا',
-        'مَهْدُ العُلا وَمَجْدُنا',
-        'دِجْلَةُ فيهِ تَجْري',
-        'وَالخَيْرُ فيهِ يَسْري',
-        'نَفْديهِ بِالأَرْواحِ',
-        'في الغُدُوِّ وَالرَّواحِ',
+      title: 'محفوظات العِلْمُ وَالعَمَلُ',
+      author: 'قراءتي للصف الثالث',
+      verses: [
+        { l1: 'أَيُّهَا الطَّالِبُ اجْتَهِدْ', l2: 'تَنَلِ الرِّفْعَةَ وَالأَمَلَ' },
+        { l1: 'لَيْسَ العِلْمُ بِمَا حُفِظَ', l2: 'إِنَّمَا العِلْمُ بِمَا عُمِلَ' },
+        { l1: 'فَانْهَضْ يَا بُنَيَّ لِغَدٍ', l2: 'تُنِرِ الدَّرْبَ وَالمُسْتَقْبَلَ' },
       ],
-      audioText: 'محفوظة العراق وطني: عراقنا بلادنا، مهد العلا ومجدنا، دجلة فيه تجري، والخير فيه يسري، نفديه بالأرواح، في الغدو والرواح.',
     },
   ],
   'grade-4': [
     {
-      title: 'محفوظة (مَوطِني)',
-      poet: 'الشاعر إبراهيم طوقان',
-      lines: [
-        'مَوْطِني مَوْطِني',
-        'الجَلالُ وَالجَمالُ وَالسَّناءُ وَالبَهاءُ في رُباكْ',
-        'وَالحَياةُ وَالنَّجاةُ وَالهَناءُ وَالرَّجاءُ في هَواكْ',
-        'هَلْ أَراكْ هَلْ أَراكْ',
-        'سالِماً مُنَعَّماً وَغانِماً مُكَرَّماً',
-        'هَلْ أَراكْ في عُلاكْ.. تَبْلُغُ السِّماكْ.. مَوْطِني',
+      title: 'محفوظات أُمِّي الحَبِيبَة',
+      author: 'اللغة العربية للصف الرابع',
+      verses: [
+        { l1: 'أُمِّي يَا نَبْعَ الحَنَانِ', l2: 'يَا بَسْمَةً فَوْقَ الزَّمَانِ' },
+        { l1: 'كَمْ سَهِرْتِ اللَّيْلَ عِنْدِي', l2: 'حِينَ أَشْكُو مِنْ هَوَانِ' },
+        { l1: 'جَزَاكِ اللهُ يَا أُمِّي', l2: 'رِضَاهُ وَجَنَّةَ الرِّضْوَانِ' },
       ],
-      audioText: 'محفوظة موطني: موطني موطني، الجلال والجمال والسناء والبهاء في رباك، والحياة والنجاة والهناء والرجاء في هواك، هل أراك هل أراك، سالماً منعماً وغانماً مكرماً، هل أراك في علاك تبلغ السماك، موطني.',
     },
   ],
   'grade-5': [
     {
-      title: 'محفوظة (تُرابُ الوَطَن)',
-      poet: 'منهاج القراءة للصف الخامس',
-      lines: [
-        'وَطَني حَبيبي يا عِراقْ',
-        'إِلَيْكَ يَحْلُو لِي العِناقْ',
-        'شَمْسُكَ نُورٌ لِلدُّنى',
-        'وَأَرْضُكَ الطَّيْبُ هُنا',
-        'سَأَبْذُلُ النَّفْسَ لَهُ',
-        'أَحْميهِ مِنْ كُلِّ عَناءْ',
+      title: 'محفوظات الجَنَّةُ تَحْتَ أَقْدَامِ الأُمَّهَاتِ',
+      author: 'اللغة العربية للصف الخامس',
+      verses: [
+        { l1: 'قَدْ جَاءَ فِي القُرْآنِ ذِكْرُ حَقِّهَا', l2: 'وَفِي حَدِيثِ المُصْطَفَى بَيَانُهُ' },
+        { l1: 'الجَنَّةُ الفَيْحَاءُ تَحْتَ قَدَمِهَا', l2: 'فَبِرُّهَا لِلْمُؤْمِنِ عُنْوَانُهُ' },
       ],
-      audioText: 'محفوظة تراب الوطن: وطني حبيبي يا عراق، إليك يحلو لي العناق، شمسك نور للدنى، وأرضك الطيب هنا، سأبذل النفس له، أحميه من كل عناء.',
     },
   ],
   'grade-6': [
     {
-      title: 'محفوظة (أَنَا عِراقِيٌّ - مَنهَج وِزاري)',
-      poet: 'الشاعر معروف الرصافي',
-      lines: [
-        'أَنَا عِراقِيٌّ وَلِي مَجْدٌ تَليدْ',
-        'عِشْتُ حُرّاً بَيْنَ أَبْناءِ الصَّعِيدْ',
-        'وَطَني أَنْتَ رَجائي وَالأَمَلْ',
-        'فيكَ نَبْني المَجْدَ بِالعِلْمِ الأَجَلّْ',
-        'دُمْتَ يا مَوْطِنَ آبائي كَريماً',
-        'مَشْرِقَ النُّورِ مَدَى الدَّهْرِ عَظيماً',
+      title: 'قصيدة البُسْتَانِيُّ (وزاري مقرر للحفظ)',
+      author: 'الشاعر معروف الرصافي',
+      verses: [
+        { l1: 'تَرَاهُ فِي حَدِيقَتِهِ', l2: 'مَعَ الإِشْرَاقِ مُبْتَسِمَا' },
+        { l1: 'يَسْقِي الغُرُوسَ بِمَائِهَا', l2: 'فَيُحْيِي الزَّهْرَ وَالعَلَمَا' },
+        { l1: 'يَجْنِي الثِّمَارَ طَيِّبَةً', l2: 'وَيَجْعَلُ رَوْضَهُ حَرَمَا' },
+        { l1: 'يَعْمَلُ دَوْماً فِي نَشَاطٍ', l2: 'وَيَحْمَدُ اللهَ وَالكَرَمَا' },
       ],
-      audioText: 'محفوظة أنا عراقي: أنا عراقي ولي مجد تليد، عشت حراً بين أبناء الصعيد، وطني أنت رجائي والأمل، فيك نبني المجد بالعلم الأجل، دمت يا موطن آبائي كريماً، مشرق النور مدى الدهر عظيماً.',
+    },
+    {
+      title: 'نشيد مَوْطِنِي (النشيد الخالد)',
+      author: 'الشاعر إبراهيم طوقان',
+      verses: [
+        { l1: 'مَوْطِنِي مَوْطِنِي', l2: 'الجَلَالُ وَالجَمَالُ وَالسَّنَاءُ وَالبَهَاءُ فِي رُبَاكْ' },
+        { l1: 'وَالحَيَاةُ وَالنَّجَاةُ وَالهَنَاءُ وَالرَّجَاءُ', l2: 'فِي هَوَاكْ فِي هَوَاكْ' },
+        { l1: 'هَلْ أَرَاكْ هَلْ أَرَاكْ', l2: 'سَالِماً مُنَعَّماً وَغَانِماً مُكَرَّماً؟' },
+        { l1: 'مَوْطِنِي', l2: 'مَوْطِنِي!' },
+      ],
     },
   ],
 };
 
-// الآيات القرآنية والأحاديث النبوية المقررة
-const IRAQI_ISLAMIC_DATA: Record<string, { type: 'quran' | 'hadith'; title: string; text: string; audioText: string; explanation: string }[]> = {
+// ================= مكتبة القرآن الكريم والأحاديث النبوية المقررة للحفظ =================
+const IRAQI_ISLAMIC_DATA: Record<string, { title: string; type: 'surah' | 'hadith'; text: string; lessons: string }[]> = {
   'grade-1': [
     {
-      type: 'quran',
-      title: 'سُورَةُ الفاتِحَة',
-      text: 'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ ﴿١﴾ الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ ﴿٢﴾ الرَّحْمَٰنِ الرَّحِيمِ ﴿٣﴾ مَالِكِ يَوْمِ الدِّينِ ﴿٤﴾ إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ ﴿٥﴾ اهْدِنَا الصِّرَاطَ الْمُسْتَقِيمَ ﴿٦﴾ صِرَاطَ الَّذِينَ أَنْعَمْتَ عَلَيْهِمْ غَيْرِ الْمَغْضُوبِ عَلَيْهِمْ وَلَا الضَّالِّينَ ﴿٧﴾',
-      audioText: 'بسم الله الرحمن الرحيم، الحمد لله رب العالمين، الرحمن الرحيم، مالك يوم الدين، إياك نعبد وإياك نستعين، اهدنا الصراط المستقيم، صراط الذين أنعمت عليهم غير المغضوب عليهم ولا الضالين.',
-      explanation: 'سورة الفاتحة هي أعظم سور القرآن الكريم، وتسمى أم الكتاب والسبع المثاني.',
+      title: 'سورة الفاتحة المباركة',
+      type: 'surah',
+      text: 'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ ﴿١﴾ الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ ﴿٢﴾ الرَّحْمَٰنِ الرَّحِيمِ ﴿٣﴾ مَالِكِ يَوْمِ الدِّينِ ﴿٤﴾ إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ ﴿٥﴾ اهْدِنَا الصِّرَاطَ الْمُسْتَقِيمَ ﴿٦﴾ صِرَاطَ الَّذِينَ أَنْعَمْتَ عَلَيْهِمْ غَيْرِ الْمَغْضُوبِ عَلَيْهِمْ وَلَا الضَّالِّينَ ﴿٧﴾',
+      lessons: 'أم الكتاب والسبع المثاني التي نفتح بها كل صلاة ودعاء.',
     },
-  ],
-  'grade-4': [
     {
-      type: 'quran',
-      title: 'سُورَةُ الزَّلْزَلَة',
-      text: 'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ ﴿ إِذَا زُلْزِلَتِ الْأَرْضُ زِلْزَالَهَا ﴿١﴾ وَأَخْرَجَتِ الْأَرْضُ أَثْقَالَهَا ﴿٢﴾ وَقَالَ الْإِنسَانُ مَا لَهَا ﴿٣﴾ يَوْمَئِذٍ تُحَدِّثُ أَخْبَارَهَا ﴿٤﴾ بِأَنَّ رَبَّكَ أَوْحَىٰ لَهَا ﴿٥﴾ يَوْمَئِذٍ يَصْدُرُ النَّاسُ أَشْتَاتًا لِّيُرَوْا أَعْمَالَهُمْ ﴿٦﴾ فَمَن يَعْمَلْ مِثْقَالَ ذَرَّةٍ خَيْرًا يَرَهُ ﴿٧﴾ وَمَن يَعْمَلْ مِثْقَالَ ذَرَّةٍ شَرًّا يَرَهُ ﴿٨﴾ ﴾',
-      audioText: 'بسم الله الرحمن الرحيم، إذا زلزلت الأرض زلزالها، وأخرجت الأرض أثقالها، وقال الإنسان ما لها، يومئذ تحدث أخبارها، بأن ربك أوحى لها، يومئذ يصدر الناس أشتاتاً ليروا أعمالهم، فمن يعمل مثقال ذرة خيراً يره، ومن يعمل مثقال ذرة شراً يره.',
-      explanation: 'تبين السورة أهوال يوم القيامة وحساب العباد على كل صغيرة وكبيرة.',
+      title: 'سورة الإخلاص (التوحيد)',
+      type: 'surah',
+      text: 'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ ﴿١﴾ قُلْ هُوَ اللَّهُ أَحَدٌ ﴿٢﴾ اللَّهُ الصَّمَدُ ﴿٣﴾ لَمْ يَلِدْ وَلَمْ يُولَدْ ﴿٤﴾ وَلَمْ يَكُن لَّهُ كُفُوًا أَحَدٌ ﴿٥﴾',
+      lessons: 'إثبات وحدانية الله جل جلاله وأنه الصمد الذي تقصده الخلائق في حوائجها.',
     },
-  ],
-  'grade-5': [
     {
+      title: 'حديث بر الوالدين الشريف',
       type: 'hadith',
-      title: 'حَديثٌ شَريف في حُسْنِ الخُلُق',
-      text: 'قَالَ رَسُولُ اللَّهِ (صَلَّى اللَّهُ عَلَيْهِ وَآلِهِ وَسَلَّمَ): «إِنَّ مِنْ أَحَبِّكُمْ إِلَيَّ وَأَقْرَبِكُمْ مِنِّي مَجْلِساً يَوْمَ الْقِيَامَةِ، أَحَاسِنُكُمْ أَخْلَاقاً».',
-      audioText: 'قال رسول الله صلى الله عليه وآله وسلم: إن من أحبكم إلي وأقربكم مني مجلساً يوم القيامة، أحاسنكم أخلاقاً.',
-      explanation: 'يحث الحديث النبوي الشريف على مكارم الأخلاق والصدق والتواضع والأمانة وحسن معاملة الآخرين.',
+      text: 'قال رسول الله (صلى الله عليه وآله وسلم): «رِضَا اللَّهِ فِي رِضَا الْوَالِدَيْنِ، وَسَخَطُ اللَّهِ فِي سَخَطِ الْوَالِدَيْنِ».',
+      lessons: 'طاعة الأب والأم وبرهما سبب عظيم لنيل رضا الله ودخول الجنة.',
+    },
+  ],
+  'grade-2': [
+    {
+      title: 'سورة النصر المباركة',
+      type: 'surah',
+      text: 'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ ﴿١﴾ إِذَا جَاءَ نَصْرُ اللَّهِ وَالْفَتْحُ ﴿٢﴾ وَرَأَيْتَ النَّاسَ يَدْخُلُونَ فِي دِينِ اللَّهِ أَفْوَاجًا ﴿٣﴾ فَسَبِّحْ بِحَمْدِ رَبِّكَ وَاسْتَغْفِرْهُ إِنَّهُ كَانَ تَوَّابًا ﴿٤﴾',
+      lessons: 'البشارة بنصر دين الله والدعوة للتسبيح والاستغفار دائماً.',
+    },
+    {
+      title: 'حديث طلب العلم الشريف',
+      type: 'hadith',
+      text: 'قال رسول الله (صلى الله عليه وآله وسلم): «طَلَبُ الْعِلْمِ فَرِيضَةٌ عَلَى كُلِّ مُسْلِمٍ وَمُسْلِمَةٍ».',
+      lessons: 'التعلم واكتساب المعرفة واجب ديني وأخلاقي على كل طفل وطفلة.',
     },
   ],
   'grade-6': [
     {
-      type: 'quran',
-      title: 'سُورَةُ النَّجْم (آيات الحفظ الوزارية)',
-      text: 'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ ﴿ وَالنَّجْمِ إِذَا هَوَىٰ ﴿١﴾ مَا ضَلَّ صَاحِبُكُمْ وَمَا غَوَىٰ ﴿٢﴾ وَمَا يَنطِقُ عَنِ الْهَوَىٰ ﴿٣﴾ إِنْ هُوَ إِلَّا وَحْيٌ يُوحَىٰ ﴿٤﴾ عَلَّمَهُ شَدِيدُ الْقُوَىٰ ﴿٥﴾ ذُو مِرَّةٍ فَاسْتَوَىٰ ﴿٦﴾ وَهُوَ بِالْأُفُقِ الْأَعْلَىٰ ﴿٧﴾ ﴾',
-      audioText: 'بسم الله الرحمن الرحيم، والنجم إذا هوى، ما ضل صاحبكم وما غوى، وما ينطق عن الهوى، إن هو إلا وحي يوحى، علمه شديد القوى، ذو مرة فاستوى، وهو بالأفق الأعلى.',
-      explanation: 'الآيات الوزارية المقررة في حفظ سورة النجم لشهادة الدراسة الابتدائية الوزارية.',
+      title: 'سورة النجم المباركة (وزاري مقرر للحفظ من 1 إلى 18)',
+      type: 'surah',
+      text: 'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ ﴿١﴾ وَالنَّجْمِ إِذَا هَوَىٰ ﴿٢﴾ مَا ضَلَّ صَاحِبُكُمْ وَمَا غَوَىٰ ﴿٣﴾ وَمَا يَنطِقُ عَنِ الْهَوَىٰ ﴿٤﴾ إِنْ هُوَ إِلَّا وَحْيٌ يُوحَىٰ ﴿٥﴾ عَلَّمَهُ شَدِيدُ الْقُوَىٰ ﴿٦﴾',
+      lessons: 'إثبات صدق رسالة نبينا محمد (صلى الله عليه وآله) ومعجزة الإسراء والمعراج.',
+    },
+    {
+      title: 'سورة الرحمن (وزاري مقرر للحفظ)',
+      type: 'surah',
+      text: 'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ ﴿١﴾ الرَّحْمَٰنُ ﴿٢﴾ عَلَّمَ الْقُرْآنَ ﴿٣﴾ خَلَقَ الْإِنسَانَ ﴿٤﴾ عَلَّمَهُ الْبَيَانَ ﴿٥﴾ الشَّمْسُ وَالْقَمَرُ بِحُسْبَانٍ ﴿٦﴾ وَالنَّجْمُ وَالشَّجَرُ يَسْجُدَانِ ﴿٧﴾',
+      lessons: 'بيان نعم الله العظيمة على الخلق وخلق الإنسان وتكريمه بالعقل والبيان.',
+    },
+    {
+      title: 'حديث الصدق والأمانة (وزاري)',
+      type: 'hadith',
+      text: 'قال رسول الله (صلى الله عليه وآله وسلم): «عَلَيْكُمْ بِالصِّدْقِ؛ فَإِنَّ الصِّدْقَ يَهْدِي إِلَى الْبِرِّ، وَإِنَّ الْبِرَّ يَهْدِي إِلَى الْجَنَّةِ».',
+      lessons: 'فضيلة الصدق والابتعاد التام عن الكذب لنيل الفوز بالجنة.',
     },
   ],
 };
 
-// الفونكس الإنجليزي والمحادثات لجميع المراحل
-const IRAQI_ENGLISH_DATA: Record<string, { title: string; phonetic: string; arabicMeaning: string; example: string }[]> = {
+// ================= مكتبة اللغة الإنجليزية التفاعلية (English for Iraq) =================
+const IRAQI_ENGLISH_DATA: Record<string, { unit: string; topic: string; items: { en: string; ar: string; note: string }[] }[]> = {
   'grade-1': [
-    { title: 'Letter A - Apple', phonetic: '/æ/ sound', arabicMeaning: 'تفاحة - صوت حرف الآي القصير', example: 'An Apple a day keeps the doctor away' },
-    { title: 'Letter B - Book', phonetic: '/b/ sound', arabicMeaning: 'كتاب - صوت حرف البي', example: 'Open your book please' },
-    { title: 'Letter C - Cat', phonetic: '/k/ sound', arabicMeaning: 'قطة - صوت حرف السي كافاً', example: 'The cat is playing' },
-  ],
-  'grade-5': [
-    { title: 'English for Iraq: Daily Routine', phonetic: 'Present Simple', arabicMeaning: 'الروتين اليومي والأوقات', example: 'I wake up at seven o\'clock every morning' },
-    { title: 'English for Iraq: Countries', phonetic: 'Where are you from?', arabicMeaning: 'البلدان والجنسيات', example: 'I am from Iraq, I am Iraqi' },
+    {
+      unit: 'Unit 1: Alphabet Phonics',
+      topic: 'Letters & Sounds',
+      items: [
+        { en: 'Apple', ar: 'تُفَّاحة 🍎', note: 'Letter A /æ/' },
+        { en: 'Ball', ar: 'كُرة ⚽', note: 'Letter B /b/' },
+        { en: 'Cat', ar: 'قِطَّة 🐱', note: 'Letter C /k/' },
+        { en: 'Dog', ar: 'كَلْب 🐶', note: 'Letter D /d/' },
+      ],
+    },
+    {
+      unit: 'Unit 2: Colors & Numbers',
+      topic: 'Basic Colors',
+      items: [
+        { en: 'Red', ar: 'أحمر 🔴', note: 'As in Red Apple' },
+        { en: 'Blue', ar: 'أزرق 🔵', note: 'As in Blue Sky' },
+        { en: 'Green', ar: 'أخضر 🟢', note: 'As in Green Tree' },
+        { en: 'Yellow', ar: 'أصفر 🟡', note: 'As in Warm Sun' },
+      ],
+    },
   ],
   'grade-6': [
-    { title: 'Ministerial Grammar: Jobs & Places', phonetic: 'Occupations', arabicMeaning: 'الوظائف وأماكن العمل الوزارية', example: 'A doctor works in a hospital' },
-    { title: 'Ministerial Grammar: Materials', phonetic: 'Passive & Origin', arabicMeaning: 'المواد وما تُصنع منه الأشياء', example: 'Keys are made of metal' },
+    {
+      unit: 'Unit 1: Jobs & Workplaces (وزاري)',
+      topic: 'Careers in English',
+      items: [
+        { en: 'Doctor', ar: 'طَبِيب 🩺', note: 'Works in a hospital' },
+        { en: 'IT Programmer', ar: 'مُبَرْمِج حَاسُوب 💻', note: 'Works in an office' },
+        { en: 'Engineer', ar: 'مُهَنْدِس 🏗️', note: 'Works on an oil refinery or site' },
+        { en: 'Farmer', ar: 'فَلَّاح / مُزَارِع 🌾', note: 'Works on a farm' },
+      ],
+    },
+    {
+      unit: 'Unit 2: Materials (المواد - وزاري مرشح)',
+      topic: 'Origin of Materials',
+      items: [
+        { en: 'Cotton comes from plants', ar: 'القطن يأتي من النباتات 🌿', note: 'Plant origin' },
+        { en: 'Wool comes from sheep', ar: 'الصوف يأتي من الأغنام 🐑', note: 'Animal origin' },
+        { en: 'Rubber comes from trees', ar: 'المطاط يأتي من الأشجار 🌳', note: 'Rubber tree' },
+        { en: 'Glass is made from sand', ar: 'الزجاج مصنوع من الرمال ⏳', note: 'Mineral origin' },
+      ],
+    },
   ],
-};
-
-const DEFAULT_IRAQI_CHAPTERS: Record<string, string[]> = {
-  'ar-1': ['الفصل الأول: الحروف والمقاطع التأسيسية', 'الفصل الثاني: دار ودور وبابا وماما', 'الفصل الثالث: ميزان قدوري ونبيل بقال', 'الفصل الرابع: محفوظات وقصص تدريبية'],
-  'ar-4': ['الوحدة الأولى: أقسام الكلام (اسم، فعل، حرف)', 'الوحدة الثانية: المذكر والمؤنث', 'الوحدة الثالثة: المفرد والمثنى والجمع', 'الوحدة الرابعة: محفوظات التعبير والمطالعة'],
-  'math-5': ['الفصل الأول: الأعداد ضمن المليارات', 'الفصل الثاني: جمع وطرح الأعداد الكبيرة', 'الفصل الثالث: ضرب الأعداد وقسمتها', 'الفصل الرابع: الكسور الاعتيادية والعشرية'],
 };
 
 function sanitizeQuestionSubject(q: Question): Question {
@@ -250,7 +914,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
   const gradeInfo = GRADES_DATA.find((g) => g.id === currentGradeId);
 
   // نضمن ظهور كافة المواد الرسمية (بما فيها الإنجليزي والإسلامية والاجتماعيات) لكل صف
-  const officialForGrade = DEFAULT_SUBJECTS.filter((s) => s.gradeId === currentGradeId);
+  const officialForGrade = ALL_IRAQI_OFFICIAL_SUBJECTS.filter((s) => s.gradeId === currentGradeId);
   const userSubjectsForGrade = subjects.filter((s) => s.gradeId === currentGradeId);
   const gradeSubjects = [...officialForGrade];
   for (const us of userSubjectsForGrade) {
@@ -268,7 +932,8 @@ export const GradePortal: React.FC<GradePortalProps> = ({
   const selectedSubject =
     gradeSubjects.find((s) => s.id === selectedSubjectId) || gradeSubjects[0];
 
-  const currentSubjectQuestions = questions
+  const allQuestions = [...questions, ...DEFAULT_EXTRA_QUESTIONS];
+  const currentSubjectQuestions = allQuestions
     .map(sanitizeQuestionSubject)
     .filter(
       (q) => q.gradeId === currentGradeId && q.subjectId === selectedSubject?.id
@@ -319,8 +984,45 @@ export const GradePortal: React.FC<GradePortalProps> = ({
       'الفصل الثالث: مراجعة شاملة ونصف السنة',
       'الفصل الرابع: الاختبارات والوزاريات النهائية',
     ];
-    return defaults;
+
+    const fromQuestions = currentSubjectQuestions.map((q) => q.chapter).filter(Boolean);
+    return Array.from(new Set([...defaults, ...fromQuestions]));
   };
+
+  const subjectChapters = selectedSubject ? getSubjectChapters(selectedSubject.id) : [];
+
+  const getOrderedQuestionsForChapter = (chapName: string): Question[] => {
+    const raw = currentSubjectQuestions.filter((q) => q.chapter === chapName);
+    const key = `iraq_edu_order_${currentGradeId}_${selectedSubject?.id}_${chapName}`;
+    let orderMap: Record<string, number> = {};
+    try {
+      const saved = localStorage.getItem(key);
+      if (saved) orderMap = JSON.parse(saved);
+    } catch (e) {}
+
+    return [...raw].sort((a, b) => {
+      const orderA = orderMap[a.id] !== undefined ? orderMap[a.id] : 9999;
+      const orderB = orderMap[b.id] !== undefined ? orderMap[b.id] : 9999;
+      return orderA - orderB;
+    });
+  };
+
+  // هل المادة الحالية لغة عربية أو قراءة؟
+  const isArabicSubject =
+    selectedSubject?.id.startsWith('ar-') ||
+    selectedSubject?.name.includes('قراءتي') ||
+    selectedSubject?.name.includes('العربية');
+
+  // هل المادة إسلامية؟
+  const isIslamicSubject =
+    selectedSubject?.id.startsWith('isl-') ||
+    selectedSubject?.name.includes('إسلامية');
+
+  // هل المادة إنجليزية؟
+  const isEnglishSubject =
+    selectedSubject?.id.startsWith('eng-') ||
+    selectedSubject?.name.toLowerCase().includes('english') ||
+    selectedSubject?.name.includes('إنجليزية');
 
   const gradePoems = IRAQI_POEMS_DATA[currentGradeId] || IRAQI_POEMS_DATA['grade-6'];
   const gradeIslamic = IRAQI_ISLAMIC_DATA[currentGradeId] || IRAQI_ISLAMIC_DATA['grade-1'];
@@ -337,8 +1039,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
             </span>
             <div>
               <div className="flex flex-wrap items-center gap-2 mb-1">
-                {/* قائمة تبديل الصف الدراسي والتنقل السريع المباشر */}
-                <div className="flex items-center gap-1 bg-amber-400 text-amber-950 px-2.5 py-0.5 rounded-full shadow-xs">
+                <div className="flex items-center gap-1 bg-amber-400 text-amber-950 px-2 py-0.5 rounded-full shadow-xs">
                   <span className="text-[10px] font-bold">المرحلة:</span>
                   <select
                     value={activeGradeId}
@@ -346,7 +1047,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                       playClickSound();
                       const ng = e.target.value as GradeId;
                       setActiveGradeId(ng);
-                      const firstSubj = DEFAULT_SUBJECTS.find((s) => s.gradeId === ng);
+                      const firstSubj = ALL_IRAQI_OFFICIAL_SUBJECTS.find((s) => s.gradeId === ng);
                       if (firstSubj) setSelectedSubjectId(firstSubj.id);
                     }}
                     className="bg-transparent font-black text-xs cursor-pointer outline-none border-none text-amber-950"
@@ -358,7 +1059,6 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                     ))}
                   </select>
                 </div>
-
                 {currentStudent.subscription === 'paid' ? (
                   <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-white/20 text-white backdrop-blur-xs flex items-center gap-1">
                     <Sparkles className="w-3 h-3 text-amber-300" />
@@ -377,7 +1077,6 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                 منهاجك متكامل: محفوظات، قرآن وحديث، رياضيات، إنجليزي، وامتحانات مطولة ذكية
               </p>
 
-              {/* زر العودة للصفحة الرئيسية وتبديل الطالب */}
               <div className="flex flex-wrap items-center gap-2 pt-2.5">
                 <button
                   onClick={() => {
@@ -422,10 +1121,10 @@ export const GradePortal: React.FC<GradePortalProps> = ({
           </span>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
           {gradeSubjects.map((subj) => {
             const isSelected = selectedSubject?.id === subj.id;
-            const subjectQuestionsCount = questions
+            const subjectQuestionsCount = [...questions, ...DEFAULT_EXTRA_QUESTIONS]
               .map(sanitizeQuestionSubject)
               .filter((q) => q.gradeId === currentGradeId && q.subjectId === subj.id).length;
 
@@ -439,30 +1138,21 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                 }}
                 className={`p-4 rounded-3xl border-2 text-right transition-all flex flex-col justify-between cursor-pointer ${
                   isSelected
-                    ? 'border-emerald-500 bg-emerald-50/80 shadow-md ring-2 ring-emerald-300'
-                    : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-xs'
+                    ? 'border-emerald-500 bg-emerald-50/80 shadow-md scale-102 ring-2 ring-emerald-200'
+                    : 'border-slate-200/90 bg-white hover:border-slate-300 hover:shadow-xs'
                 }`}
               >
                 <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-3xl">{subj.icon}</span>
-                    {subj.isSpecialInteractive && (
-                      <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
-                        تفاعلي
-                      </span>
-                    )}
-                  </div>
-                  <h4 className="font-black text-sm text-slate-900 mb-1">
+                  <span className="text-3xl block mb-2">{subj.icon}</span>
+                  <h3 className="font-extrabold text-sm text-slate-900 line-clamp-1">
                     {subj.name}
-                  </h4>
-                  <p className="text-[11px] text-slate-500 line-clamp-2 leading-relaxed">
-                    {subj.description}
-                  </p>
+                  </h3>
                 </div>
-
-                <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px] font-bold text-slate-400">
+                <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500 font-semibold">
                   <span>{subj.lessonsCount} درس</span>
-                  <span className="text-emerald-700 font-extrabold">{subjectQuestionsCount} سؤال</span>
+                  <span className="text-emerald-700 font-bold">
+                    {subjectQuestionsCount} سؤال
+                  </span>
                 </div>
               </button>
             );
@@ -470,185 +1160,496 @@ export const GradePortal: React.FC<GradePortalProps> = ({
         </div>
       </div>
 
-      {/* Specialized Interactive Modules for Grade 1 */}
-      {currentGradeId === 'grade-1' && selectedSubject?.id === 'ar-1' && (
-        <Grade1ArabicReading />
-      )}
-      {currentGradeId === 'grade-1' && selectedSubject?.id === 'eng-1' && (
-        <Grade1EnglishLetters />
-      )}
-
-      {/* Main Subject Section */}
-      <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-xs space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-100">
-          <div className="flex items-center gap-3">
-            <span className="text-3xl">{selectedSubject?.icon}</span>
-            <div>
-              <h3 className="text-xl font-black text-slate-900">
-                {selectedSubject?.name}
-              </h3>
-              <p className="text-xs text-slate-500 font-medium">
-                {gradeInfo?.name} • منهاج وزارة التربية العراقية المعتمد
-              </p>
+      {selectedSubject && (
+        <div className="bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-8 shadow-xs space-y-6">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pb-4 border-b border-slate-100 text-center sm:text-right">
+            <div className="flex items-center gap-3">
+              <span className="text-4xl p-2 rounded-2xl bg-slate-50 border border-slate-100 shadow-2xs">
+                {selectedSubject.icon}
+              </span>
+              <div>
+                <h3 className="text-xl font-black text-slate-900">
+                  {selectedSubject.name}
+                </h3>
+                <p className="text-xs text-slate-500 font-medium">
+                  {gradeInfo?.name} • منهاج وزارة التربية العراقية المعتمد
+                </p>
+              </div>
             </div>
-          </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+            {/* زر بدء الاختبار الشامل المطول */}
             <button
               onClick={() => {
                 playClickSound();
                 onStartQuiz(selectedSubject, currentSubjectQuestions);
               }}
-              className="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-black text-xs sm:text-sm flex items-center gap-2 shadow-md shadow-emerald-600/20 cursor-pointer"
+              className="flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 text-white font-extrabold text-xs sm:text-sm shadow-md shadow-emerald-600/25 transition-all transform hover:-translate-y-0.5 cursor-pointer shrink-0"
             >
-              <PlayCircle className="w-4 h-4" />
-              <span>بدء الاختبار التفاعلي السريع</span>
+              <Trophy className="w-5 h-5 text-amber-300" />
+              <span>بدء الامتحان الشامل المطول 🎯</span>
             </button>
           </div>
-        </div>
 
-        {/* Navigation Tabs inside the Subject */}
-        <div className="flex items-center gap-2 border-b border-slate-100 pb-3 overflow-x-auto">
-          <button
-            onClick={() => { playClickSound(); setActiveTab('qa'); }}
-            className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
-              activeTab === 'qa'
-                ? 'bg-emerald-600 text-white shadow-xs'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-            }`}
-          >
-            <HelpCircle className="w-4 h-4" />
-            <span>بنك الأسئلة والتعاليل المعتمدة ({currentSubjectQuestions.length})</span>
-          </button>
-
-          <button
-            onClick={() => { playClickSound(); setActiveTab('curriculum'); }}
-            className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
-              activeTab === 'curriculum'
-                ? 'bg-emerald-600 text-white shadow-xs'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-            }`}
-          >
-            <Folder className="w-4 h-4" />
-            <span>فصول ووحدات الكتاب</span>
-          </button>
-        </div>
-
-        {/* Tab Content: Q&A Bank */}
-        {activeTab === 'qa' && (
-          <div className="space-y-4">
-            {currentSubjectQuestions.length === 0 ? (
-              <div className="text-center py-12 bg-slate-50 rounded-3xl border border-dashed border-slate-200 p-6 space-y-3">
-                <BookOpen className="w-10 h-10 text-slate-300 mx-auto" />
-                <h4 className="font-black text-slate-700 text-sm">لا توجد أسئلة مضافة لهذه المادة حالياً</h4>
-                <p className="text-xs text-slate-400">يمكن للمعلم أو المشرف إضافة الأسئلة ونماذج الاختبارات من لوحة التحكم</p>
+          {/* 1. مجلد الحروف التفاعلية: للأول والثاني قراءتي */}
+          {(currentGradeId === 'grade-1' || currentGradeId === 'grade-2') && isArabicSubject && (
+            <details className="group bg-gradient-to-r from-amber-50 to-orange-50 rounded-3xl border-2 border-amber-200 p-4 sm:p-5 transition-all shadow-xs" open={currentGradeId === 'grade-1'}>
+              <summary className="cursor-pointer font-black text-amber-950 flex flex-col sm:flex-row items-center justify-between gap-2 text-sm sm:text-base select-none list-none text-center sm:text-right">
+                <span className="flex items-center gap-2">
+                  <span className="text-2xl">🔤</span>
+                  <span>مجلد تأسيس ومراجعة الحروف والمقاطع بالحركات ({currentGradeId === 'grade-1' ? 'الصف الأول' : 'الصف الثاني'})</span>
+                </span>
+                <span className="text-xs bg-amber-200 text-amber-900 px-3 py-1 rounded-full font-bold group-open:rotate-180 transition-transform">
+                  ▼ فتح / غلق المجلد
+                </span>
+              </summary>
+              <div className="mt-4 pt-4 border-t border-amber-200/80">
+                <Grade1ArabicReading />
               </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {currentSubjectQuestions.map((q) => (
-                  <QuestionCard
-                    key={q.id}
-                    question={q}
-                    onSpeak={() => handleSpeakArabic(q.questionText + '. الجواب المعتمد: ' + q.answerText, q.id)}
-                    isSpeaking={speakingId === q.id}
-                  />
+            </details>
+          )}
+
+          {/* 2. مجلد قصائد وأناشيد المحفوظات مع النطق الصوتي التفاعلي (لكل المراحل) */}
+          {isArabicSubject && gradePoems && gradePoems.length > 0 && (
+            <details className="group bg-gradient-to-r from-emerald-50 via-teal-50 to-cyan-50 rounded-3xl border-2 border-emerald-300 p-4 sm:p-6 transition-all shadow-xs" open>
+              <summary className="cursor-pointer font-black text-emerald-950 flex flex-col sm:flex-row items-center justify-between gap-2 text-sm sm:text-base select-none list-none text-center sm:text-right">
+                <span className="flex items-center gap-2.5">
+                  <span className="text-2xl">📜</span>
+                  <span>محفوظات وأناشيد الحفظ المقررة (كتابة مع النطق الصوتي والتكرار)</span>
+                </span>
+                <span className="text-xs bg-emerald-200 text-emerald-900 px-3 py-1 rounded-full font-bold group-open:rotate-180 transition-transform">
+                  ▼ فتح / غلق المجلد
+                </span>
+              </summary>
+              <div className="mt-4 pt-4 border-t border-emerald-200 space-y-6">
+                {gradePoems.map((poem, pIdx) => {
+                  const fullPoemText = poem.verses.map((v) => `${v.l1} ... ${v.l2}`).join('. ');
+                  const isSpeakingThis = speakingId === `poem_${pIdx}`;
+
+                  return (
+                    <div key={pIdx} className="bg-white rounded-2xl p-5 border border-emerald-200 shadow-2xs space-y-4">
+                      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pb-3 border-b border-slate-100">
+                        <div>
+                          <h4 className="font-black text-base sm:text-lg text-slate-900 flex items-center gap-2">
+                            <Bookmark className="w-5 h-5 text-emerald-600" />
+                            <span>{poem.title}</span>
+                          </h4>
+                          <span className="text-xs text-slate-500 font-bold">{poem.author}</span>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => handleSpeakArabic(fullPoemText, `poem_${pIdx}`)}
+                          className={`px-4 py-2 rounded-xl text-xs font-black flex items-center gap-1.5 cursor-pointer shadow-xs transition-all ${
+                            isSpeakingThis
+                              ? 'bg-rose-600 text-white animate-pulse'
+                              : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                          }`}
+                        >
+                          {isSpeakingThis ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                          <span>{isSpeakingThis ? 'إيقاف الإلقاء الصوتي' : '🔊 استمع لإلقاء القصيدة كاملة'}</span>
+                        </button>
+                      </div>
+
+                      {/* أبيات القصيدة مشكولة بالكامل */}
+                      <div className="space-y-2.5 text-center sm:text-right font-serif">
+                        {poem.verses.map((v, vIdx) => {
+                          const verseText = `${v.l1} ، ${v.l2}`;
+                          const isVerseSpeaking = speakingId === `v_${pIdx}_${vIdx}`;
+
+                          return (
+                            <div
+                              key={vIdx}
+                              className="p-3 rounded-xl bg-slate-50 hover:bg-emerald-50/70 border border-slate-200/80 flex flex-col sm:flex-row items-center justify-between gap-2 transition-colors"
+                            >
+                              <div className="text-sm sm:text-base font-black text-slate-900 flex-1 leading-relaxed">
+                                <span className="inline-block px-2 text-emerald-800">{v.l1}</span>
+                                <span className="text-slate-300 font-bold px-1">❊</span>
+                                <span className="inline-block px-2 text-teal-900">{v.l2}</span>
+                              </div>
+
+                              <button
+                                type="button"
+                                onClick={() => handleSpeakArabic(verseText, `v_${pIdx}_${vIdx}`)}
+                                className={`p-2 rounded-lg text-xs font-bold shrink-0 cursor-pointer ${
+                                  isVerseSpeaking
+                                    ? 'bg-rose-100 text-rose-700 animate-pulse'
+                                    : 'bg-white hover:bg-emerald-100 text-emerald-700 border border-slate-200'
+                                }`}
+                                title="نطق هذا البيت"
+                              >
+                                {isVerseSpeaking ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </details>
+          )}
+
+          {/* 3. مجلد القرآن الكريم والسور والأحاديث النبوية مع التلاوة الصوتية */}
+          {isIslamicSubject && gradeIslamic && gradeIslamic.length > 0 && (
+            <details className="group bg-gradient-to-r from-amber-50 via-yellow-50 to-orange-50 rounded-3xl border-2 border-amber-300 p-4 sm:p-6 transition-all shadow-xs" open>
+              <summary className="cursor-pointer font-black text-amber-950 flex flex-col sm:flex-row items-center justify-between gap-2 text-sm sm:text-base select-none list-none text-center sm:text-right">
+                <span className="flex items-center gap-2.5">
+                  <span className="text-2xl">🕌</span>
+                  <span>القرآن الكريم والأحاديث النبوية الشريفة المقررة للحفظ (كتابة وتلاوة صوتية)</span>
+                </span>
+                <span className="text-xs bg-amber-200 text-amber-900 px-3 py-1 rounded-full font-bold group-open:rotate-180 transition-transform">
+                  ▼ فتح / غلق المجلد
+                </span>
+              </summary>
+              <div className="mt-4 pt-4 border-t border-amber-200 space-y-6">
+                {gradeIslamic.map((item, idx) => {
+                  const isSpeakingThis = speakingId === `isl_${idx}`;
+
+                  return (
+                    <div key={idx} className="bg-white rounded-2xl p-5 border border-amber-200 shadow-2xs space-y-3 text-right">
+                      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pb-2 border-b border-slate-100">
+                        <div className="flex items-center gap-2">
+                          <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-amber-100 text-amber-900">
+                            {item.type === 'surah' ? '📖 سورة كريمة' : '✨ حديث نبوي شريف'}
+                          </span>
+                          <h4 className="font-black text-base text-slate-900">{item.title}</h4>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => handleSpeakArabic(item.text, `isl_${idx}`)}
+                          className={`px-4 py-2 rounded-xl text-xs font-black flex items-center gap-1.5 cursor-pointer shadow-xs transition-all ${
+                            isSpeakingThis
+                              ? 'bg-rose-600 text-white animate-pulse'
+                              : 'bg-amber-600 hover:bg-amber-700 text-white'
+                          }`}
+                        >
+                          {isSpeakingThis ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                          <span>{isSpeakingThis ? 'إيقاف التلاوة' : '🔊 استمع للتلاوة الصوتية'}</span>
+                        </button>
+                      </div>
+
+                      {/* النص القرآني أو الحديث بالرسم الواضح */}
+                      <div className="p-4 rounded-xl bg-amber-50/50 border border-amber-200 font-serif text-base sm:text-lg font-bold text-amber-950 leading-loose text-center sm:text-right">
+                        {item.text}
+                      </div>
+
+                      <p className="text-xs text-slate-600 font-medium">
+                        💡 <strong>الدروس والعبر: </strong> {item.lessons}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            </details>
+          )}
+
+          {/* 4. مجلد اللغة الإنجليزية التفاعلي (English for Iraq) لكافة المراحل */}
+          {isEnglishSubject && gradeEnglish && gradeEnglish.length > 0 && (
+            <details className="group bg-gradient-to-r from-sky-50 via-blue-50 to-indigo-50 rounded-3xl border-2 border-blue-300 p-4 sm:p-6 transition-all shadow-xs" open>
+              <summary className="cursor-pointer font-black text-blue-950 flex flex-col sm:flex-row items-center justify-between gap-2 text-sm sm:text-base select-none list-none text-center sm:text-right">
+                <span className="flex items-center gap-2.5">
+                  <span className="text-2xl">🔤</span>
+                  <span>English for Iraq - الاستماع والنطق الصوتي والمفردات التفاعلية</span>
+                </span>
+                <span className="text-xs bg-blue-200 text-blue-900 px-3 py-1 rounded-full font-bold group-open:rotate-180 transition-transform">
+                  ▼ فتح / غلق المجلد
+                </span>
+              </summary>
+              <div className="mt-4 pt-4 border-t border-blue-200 space-y-6">
+                {gradeEnglish.map((u, uIdx) => (
+                  <div key={uIdx} className="bg-white rounded-2xl p-5 border border-blue-200 shadow-2xs space-y-3 text-right">
+                    <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                      <div>
+                        <span className="text-xs font-black px-2 py-0.5 rounded-md bg-blue-100 text-blue-900">{u.unit}</span>
+                        <h4 className="font-black text-base text-slate-900 mt-1">{u.topic}</h4>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      {u.items.map((it, itIdx) => {
+                        const isSpeakingThis = speakingId === `en_${uIdx}_${itIdx}`;
+                        return (
+                          <div
+                            key={itIdx}
+                            className="p-3.5 rounded-xl bg-slate-50 hover:bg-blue-50/60 border border-slate-200 flex items-center justify-between gap-3 text-left transition-colors"
+                          >
+                            <div>
+                              <div className="text-sm font-black text-slate-950 font-sans">{it.en}</div>
+                              <div className="text-xs font-bold text-slate-600">{it.ar}</div>
+                              {it.note && <div className="text-[10px] text-blue-600 mt-0.5">{it.note}</div>}
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => handleSpeakEnglish(it.en, `en_${uIdx}_${itIdx}`)}
+                              className={`p-2.5 rounded-xl text-xs font-bold cursor-pointer shrink-0 ${
+                                isSpeakingThis
+                                  ? 'bg-rose-100 text-rose-700 animate-pulse'
+                                  : 'bg-white hover:bg-blue-100 text-blue-700 border border-slate-200'
+                              }`}
+                              title="Listen to native English pronunciation"
+                            >
+                              {isSpeakingThis ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
                 ))}
               </div>
-            )}
-          </div>
-        )}
+            </details>
+          )}
 
-        {/* Tab Content: Curriculum Chapters */}
-        {activeTab === 'curriculum' && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {getSubjectChapters(selectedSubject?.id || '').map((chap, idx) => (
-              <div key={idx} className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-800 text-xs font-black flex items-center justify-center">
-                    {idx + 1}
+          {/* التبويبات الرئيسية الثلاثة */}
+          <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 pb-2">
+            <button
+              onClick={() => {
+                playClickSound();
+                setActiveTab('qa');
+              }}
+              className={`px-4 py-2.5 rounded-2xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 ${
+                activeTab === 'qa'
+                  ? 'bg-slate-900 text-white shadow-xs'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              <HelpCircle className="w-4 h-4" />
+              <span>المنهاج والأسئلة مرتبة بالفصول ({currentSubjectQuestions.length})</span>
+            </button>
+
+            <button
+              onClick={() => {
+                playClickSound();
+                setActiveTab('exams');
+              }}
+              className={`px-4 py-2.5 rounded-2xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 ${
+                activeTab === 'exams'
+                  ? 'bg-emerald-600 text-white shadow-xs'
+                  : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200'
+              }`}
+            >
+              <Award className="w-4 h-4" />
+              <span>📝 الامتحانات والاختبارات المطولة النموذجية</span>
+            </button>
+
+            <button
+              onClick={() => {
+                playClickSound();
+                setActiveTab('curriculum');
+              }}
+              className={`px-4 py-2.5 rounded-2xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 ${
+                activeTab === 'curriculum'
+                  ? 'bg-slate-900 text-white shadow-xs'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              <BookOpen className="w-4 h-4" />
+              <span>خطة ومفردات المنهاج</span>
+            </button>
+          </div>
+
+          {/* Tab 1: الأسئلة مقسمة ومرتبة بدقة حسب الفصول */}
+          {activeTab === 'qa' && (
+            <div className="space-y-6 pt-2">
+              {subjectChapters.map((chapName, chapIdx) => {
+                const chapterQuestions = getOrderedQuestionsForChapter(chapName);
+                if (chapterQuestions.length === 0) return null;
+
+                return (
+                  <div key={chapIdx} className="rounded-3xl border border-slate-200 bg-slate-50/40 overflow-hidden shadow-2xs">
+                    <div className="p-4 bg-slate-100/90 border-b border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3">
+                      <div className="flex items-center gap-2.5 text-right">
+                        <span className="text-2xl">📁</span>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-black text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-md">
+                              #{chapIdx + 1}
+                            </span>
+                            <h4 className="font-black text-sm sm:text-base text-slate-900">
+                              {chapName}
+                            </h4>
+                          </div>
+                          <span className="text-[11px] font-bold text-slate-500">
+                            يتضمن {chapterQuestions.length} سؤال وشرح ونطق صوتي
+                          </span>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => {
+                          playClickSound();
+                          onStartQuiz(selectedSubject, chapterQuestions);
+                        }}
+                        className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black cursor-pointer shadow-2xs"
+                      >
+                        <PlayCircle className="w-4 h-4" />
+                        <span>اختبار {chapName} 🎯</span>
+                      </button>
+                    </div>
+
+                    <div className="p-4 space-y-3">
+                      {chapterQuestions.map((q, idx) => (
+                        <QuestionCard
+                          key={q.id}
+                          question={q}
+                          studentSubscription={currentStudent.subscription}
+                          onUpgradePrompt={onOpenUpgradeModal}
+                          index={idx}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+
+              {currentSubjectQuestions.length === 0 && (
+                <div className="py-12 text-center text-slate-500 space-y-3">
+                  <div className="w-14 h-14 mx-auto rounded-2xl bg-slate-100 flex items-center justify-center text-2xl">
+                    📚
+                  </div>
+                  <p className="text-sm font-bold">
+                    لم يقم المعلم أو المشرف بإضافة أسئلة لهذا المنهج بعد.
+                  </p>
+                  <p className="text-xs text-slate-400">
+                    يمكن إضافة الأسئلة بنقرة واحدة من لوحة الإشراف (زر إضافة الأسئلة النموذجية الملونة).
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Tab 2: قسم الامتحانات والاختبارات المطولة النموذجية */}
+          {activeTab === 'exams' && (
+            <div className="space-y-6 pt-2">
+              {/* الامتحان الشامل المطول الذهبي */}
+              <div className="p-6 rounded-3xl bg-gradient-to-r from-amber-500 via-amber-600 to-yellow-600 text-white shadow-xl shadow-amber-600/15 space-y-4">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-right">
+                  <div className="flex items-center gap-3">
+                    <span className="text-4xl p-2.5 rounded-2xl bg-white/20 backdrop-blur-md">
+                      🏆
+                    </span>
+                    <div>
+                      <span className="text-xs font-black px-2.5 py-0.5 rounded-full bg-white/25 text-white">
+                        الامتحان الشامل والنهائي المطول
+                      </span>
+                      <h4 className="text-lg sm:text-xl font-black mt-1">
+                        الامتحان النموذجي المطول لمادة {selectedSubject.name}
+                      </h4>
+                      <p className="text-xs text-amber-100 font-medium mt-0.5">
+                        اختبار متكامل وشامل يقيس استيعاب كافة فصول المنهج مع التقييم الذكي وشهادة التقدير الرسمية
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    disabled={currentSubjectQuestions.length === 0}
+                    onClick={() => {
+                      playClickSound();
+                      onStartQuiz(selectedSubject, currentSubjectQuestions);
+                    }}
+                    className="px-6 py-3.5 rounded-2xl bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white font-black text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer shadow-lg shrink-0 transition-transform hover:scale-105"
+                  >
+                    <Trophy className="w-5 h-5 text-amber-400" />
+                    <span>ابدأ الامتحان الشامل المطول الآن ({currentSubjectQuestions.length} سؤال)</span>
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-white/20 text-center text-xs font-bold">
+                  <div className="p-2 rounded-xl bg-white/10">⏱️ اختبار شامل ومطول</div>
+                  <div className="p-2 rounded-xl bg-white/10">⭐ نجوم تفوق عند النجاح</div>
+                  <div className="p-2 rounded-xl bg-white/10">📜 شهادة تقدير فورية</div>
+                  <div className="p-2 rounded-xl bg-white/10">🎯 نطق صوتي للأسئلة</div>
+                </div>
+              </div>
+
+              {/* امتحانات الفصول الدورية */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-base font-black text-slate-900 flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-emerald-600" />
+                    <span>امتحانات الفصول الدورية (اختبر معلوماتك فصلاً بفصل):</span>
+                  </h4>
+                  <span className="text-xs font-bold text-slate-500">
+                    {subjectChapters.length} فصول مقررة
                   </span>
-                  <span className="font-bold text-xs text-slate-800">{chap}</span>
                 </div>
-                <span className="text-[10px] font-bold text-slate-400">
-                  {questions.filter((q) => q.gradeId === currentGradeId && q.subjectId === selectedSubject?.id && q.chapter === chap).length} سؤال
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
 
-      {/* Recitation Drawers: Poems & Hadiths */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Iraqi Poems Drawer */}
-        <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-            <h4 className="font-black text-slate-900 text-base flex items-center gap-2">
-              <Music className="w-5 h-5 text-amber-500" />
-              <span>محفوظات وأناشيد {gradeInfo?.name}</span>
-            </h4>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
-              قراءة شفهية
-            </span>
-          </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {subjectChapters.map((chapName, chapIdx) => {
+                    const chapterQuestions = getOrderedQuestionsForChapter(chapName);
+                    const hasQuestions = chapterQuestions.length > 0;
 
-          <div className="space-y-3">
-            {gradePoems.map((poem, pIdx) => (
-              <div key={pIdx} className="p-4 rounded-2xl bg-amber-50/40 border border-amber-200/80 space-y-2">
-                <div className="flex items-center justify-between">
-                  <h5 className="font-black text-xs sm:text-sm text-slate-900">{poem.title}</h5>
-                  <button
-                    onClick={() => handleSpeakArabic(poem.audioText, `poem-${pIdx}`)}
-                    className="p-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold flex items-center gap-1 cursor-pointer shadow-2xs"
-                  >
-                    <Volume2 className="w-3.5 h-3.5" />
-                    <span>استمع</span>
-                  </button>
-                </div>
-                <div className="space-y-1 text-xs text-slate-700 font-medium leading-relaxed bg-white/70 p-3 rounded-xl border border-amber-100 text-center font-serif">
-                  {poem.lines.map((l, lIdx) => (
-                    <p key={lIdx}>{l}</p>
-                  ))}
+                    return (
+                      <div
+                        key={chapIdx}
+                        className={`p-5 rounded-3xl border-2 transition-all flex flex-col justify-between text-right ${
+                          hasQuestions
+                            ? 'bg-white border-slate-200 hover:border-emerald-400 hover:shadow-sm'
+                            : 'bg-slate-50 border-slate-200/60 opacity-70'
+                        }`}
+                      >
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-black px-2 py-0.5 rounded-lg bg-emerald-100 text-emerald-900">
+                              امتحان الفصل #{chapIdx + 1}
+                            </span>
+                            <span className="text-xs font-bold text-slate-500">
+                              {chapterQuestions.length} سؤال
+                            </span>
+                          </div>
+
+                          <h5 className="font-black text-sm text-slate-900">
+                            {chapName}
+                          </h5>
+                          <p className="text-xs text-slate-500">
+                            اختبار تدريبي وتقييمي شامل لأسئلة وتعاليل وتعريفات هذا الفصل
+                          </p>
+                        </div>
+
+                        <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+                          <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
+                            <Clock className="w-3.5 h-3.5" />
+                            <span>تصحيح فوري ذكي</span>
+                          </span>
+
+                          <button
+                            disabled={!hasQuestions}
+                            onClick={() => {
+                              playClickSound();
+                              onStartQuiz(selectedSubject, chapterQuestions);
+                            }}
+                            className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 text-white text-xs font-black flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                          >
+                            <PlayCircle className="w-4 h-4" />
+                            <span>بدء امتحان الفصل</span>
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
-            ))}
-          </div>
+            </div>
+          )}
+
+          {activeTab === 'curriculum' && (
+            <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 text-slate-700 text-xs sm:text-sm leading-relaxed space-y-3 text-right">
+              <h4 className="font-black text-slate-900 text-base">
+                مفردات ومنهاج {selectedSubject.name} - {gradeInfo?.name}
+              </h4>
+              <p>
+                يتضمن هذا المنهج {selectedSubject.lessonsCount} درساً تدريبياً مع تمارين واختبارات تفاعلية، متطابقة مع كتاب وزارة التربية العراقية الرسمي.
+              </p>
+              <div className="p-4 rounded-xl bg-white border border-slate-200 font-medium">
+                💡 <strong>نصيحة للمتفوق:</strong> يمكنك الاستماع للنطق الصوتي للأشعار والآيات الكريمة والأسئلة لترسيخ المعلومات قبل خوض الامتحان المطول للحصول على وسام التفوق الذهبي.
+              </div>
+            </div>
+          )}
         </div>
-
-        {/* Quran & Hadith Drawer */}
-        <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-            <h4 className="font-black text-slate-900 text-base flex items-center gap-2">
-              <Bookmark className="w-5 h-5 text-emerald-600" />
-              <span>القرآن والحديث الشريف ({gradeInfo?.name})</span>
-            </h4>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
-              نطق وترتيل
-            </span>
-          </div>
-
-          <div className="space-y-3">
-            {gradeIslamic.map((isl, iIdx) => (
-              <div key={iIdx} className="p-4 rounded-2xl bg-emerald-50/40 border border-emerald-200/80 space-y-2">
-                <div className="flex items-center justify-between">
-                  <h5 className="font-black text-xs sm:text-sm text-slate-900">{isl.title}</h5>
-                  <button
-                    onClick={() => handleSpeakArabic(isl.audioText, `isl-${iIdx}`)}
-                    className="p-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-1 cursor-pointer shadow-2xs"
-                  >
-                    <Volume2 className="w-3.5 h-3.5" />
-                    <span>استمع</span>
-                  </button>
-                </div>
-                <div className="text-xs text-slate-800 font-bold leading-relaxed bg-white/80 p-3 rounded-xl border border-emerald-100 text-center font-serif">
-                  {isl.text}
-                </div>
-                <p className="text-[10px] text-slate-500 font-medium">{isl.explanation}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+      )}
     </div>
   );
 };

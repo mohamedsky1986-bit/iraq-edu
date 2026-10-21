@@ -142,9 +142,19 @@ export const AdminPanel: React.FC = () => {
     return matchGrade && matchSearch;
   });
 
+  // فلاتر التصفية المزدوجة (الصف + المادة + البحث بالكلمة)
   const [qGradeFilter, setQGradeFilter] = useState<string>('all');
+  const [qSubjectFilter, setQSubjectFilter] = useState<string>('all');
+  const [qSearchQuery, setQSearchQuery] = useState<string>('');
+
   const filteredQuestions = questions.filter((q) => {
-    return qGradeFilter === 'all' || q.gradeId === qGradeFilter;
+    const matchGrade = qGradeFilter === 'all' || q.gradeId === qGradeFilter;
+    const matchSubject = qSubjectFilter === 'all' || q.subjectId === qSubjectFilter;
+    const matchSearch =
+      !qSearchQuery.trim() ||
+      q.questionText.toLowerCase().includes(qSearchQuery.toLowerCase()) ||
+      q.answerText.toLowerCase().includes(qSearchQuery.toLowerCase());
+    return matchGrade && matchSubject && matchSearch;
   });
 
   const insertFormatting = (prefix: string, suffix: string, target: 'question' | 'answer') => {
@@ -248,7 +258,6 @@ export const AdminPanel: React.FC = () => {
         tags: [getIraqiGradeName(formGradeId), formBadgeType !== 'none' ? formBadgeType : ''].filter(Boolean),
       };
 
-      // إذا كانت هناك صورة مضافة نضعها، وإذا كانت فارغة لا نمررها لتفادي أخطاء Firestore
       if (formImageUrl.trim()) {
         payload.imageUrl = formImageUrl.trim();
       }
@@ -447,30 +456,75 @@ export const AdminPanel: React.FC = () => {
 
       {activeTab === 'curriculum' && (
         <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200">
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-slate-500 font-bold">تصفية حسب الصف:</span>
-              <select
-                value={qGradeFilter}
-                onChange={(e) => setQGradeFilter(e.target.value)}
-                className="text-xs px-3 py-2 rounded-xl border border-slate-200 bg-white font-bold"
+          {/* شريط التصفية المتطور المزدوج (الصف + المادة) مع البحث السريع */}
+          <div className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200 shadow-xs space-y-3">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-3">
+              <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs font-black text-slate-700">الصف:</span>
+                  <select
+                    value={qGradeFilter}
+                    onChange={(e) => {
+                      setQGradeFilter(e.target.value);
+                      setQSubjectFilter('all');
+                    }}
+                    className="text-xs px-3 py-2 rounded-xl border-2 border-emerald-500/40 bg-emerald-50/30 font-black text-slate-900 cursor-pointer outline-none"
+                  >
+                    <option value="all">جميع الصفوف ({questions.length})</option>
+                    {GRADES_DATA.map((g) => (
+                      <option key={g.id} value={g.id}>
+                        {g.name} ({questions.filter((q) => q.gradeId === g.id).length})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs font-black text-slate-700">المادة:</span>
+                  <select
+                    value={qSubjectFilter}
+                    onChange={(e) => setQSubjectFilter(e.target.value)}
+                    className="text-xs px-3 py-2 rounded-xl border border-slate-200 bg-white font-black text-slate-800 cursor-pointer outline-none"
+                  >
+                    <option value="all">
+                      {qGradeFilter === 'all' ? 'جميع المواد الدراسية' : `جميع مواد ${getIraqiGradeName(qGradeFilter as GradeId)}`}
+                    </option>
+                    {(qGradeFilter !== 'all'
+                      ? OFFICIAL_IRAQI_SUBJECTS[qGradeFilter as GradeId] || []
+                      : Object.values(OFFICIAL_IRAQI_SUBJECTS).flat()
+                    ).map((s) => {
+                      const count = questions.filter(
+                        (q) => (qGradeFilter === 'all' || q.gradeId === qGradeFilter) && q.subjectId === s.id
+                      ).length;
+                      return (
+                        <option key={s.id} value={s.id}>
+                          {s.name} ({count} سؤال)
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
+              </div>
+
+              <button
+                onClick={handleOpenAddQuestion}
+                className="w-full md:w-auto px-4 py-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs flex items-center justify-center gap-1.5 shadow-md shadow-emerald-600/20 cursor-pointer shrink-0"
               >
-                <option value="all">جميع الصفوف ({questions.length})</option>
-                {GRADES_DATA.map((g) => (
-                  <option key={g.id} value={g.id}>
-                    {g.name} ({questions.filter((q) => q.gradeId === g.id).length})
-                  </option>
-                ))}
-              </select>
+                <PlusCircle className="w-4 h-4" />
+                <span>إضافة سؤال جديد</span>
+              </button>
             </div>
 
-            <button
-              onClick={handleOpenAddQuestion}
-              className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-xs cursor-pointer"
-            >
-              <PlusCircle className="w-4 h-4" />
-              <span>إضافة سؤال جديد (س وج / فراغات / اختبار)</span>
-            </button>
+            <div className="relative">
+              <Search className="absolute right-3.5 top-2.5 w-4 h-4 text-slate-400" />
+              <input
+                type="text"
+                value={qSearchQuery}
+                onChange={(e) => setQSearchQuery(e.target.value)}
+                placeholder="ابحث عن نص سؤال، جواب، أو كلمة في الأسئلة المعروضة..."
+                className="w-full pr-10 pl-4 py-2 rounded-xl border border-slate-200 text-xs font-bold outline-none focus:border-emerald-500 bg-slate-50/50"
+              />
+            </div>
           </div>
 
           <div className="space-y-3">
@@ -1280,7 +1334,7 @@ export const AdminPanel: React.FC = () => {
                   required
                 />
               </div>
-{/* حقل رابط الصورة التوضيحية (اختياري) مع معاينة وزر حذف */}
+
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <label className="block text-xs font-bold text-slate-700 flex items-center gap-1.5">
@@ -1423,5 +1477,5 @@ export const AdminPanel: React.FC = () => {
     </div>
   );
 };
+
 export default AdminPanel;
-                

@@ -179,19 +179,23 @@ interface EduContextType {
   updateQuestion: (id: string, q: Partial<Question>) => void;
   deleteQuestion: (id: string) => void;
 
-  recordQuizAttempt: (attempt: Omit<QuizAttempt, 'id' | 'completedAt'>) => void;
-  toggleSound: () => void;
-}
+  updateQuestion: (questionOrId: any, partialQuestion?: any) => void;
+    toggleSound: () => void;
+  }
 
-const STORAGE_KEYS = {
-  ACTIVE_STUDENT: 'iraq_edu_active_student_v4',
-  IS_ADMIN: 'iraq_edu_is_admin_v4',
-  SOUND: 'iraq_edu_sound_v4',
-  ADMIN_USER: 'iraq_edu_adm_u_v4',
-  ADMIN_PASS: 'iraq_edu_adm_p_v4',
-  SUB_CONFIG: 'iraq_edu_sub_conf_v4',
-  SUB_REQUESTS: 'iraq_edu_sub_reqs_v4',
-  QUESTIONS: 'iraq_edu_questions_v4',
+  const EduContext = createContext<EduContextType | undefined>(undefined);
+
+  const STORAGE_KEYS = {
+    ACTIVE_STUDENT: 'iraq_edu_active_student_v4',
+    IS_ADMIN: 'iraq_edu_is_admin_v4',
+    SOUND: 'iraq_edu_sound_v4',
+    ADMIN_USER: 'iraq_edu_adm_u_v4',
+    ADMIN_PASS: 'iraq_edu_adm_p_v4',
+    SUB_CONFIG: 'iraq_edu_sub_conf_v4',
+    SUB_REQUESTS: 'iraq_edu_sub_reqs_v4',
+    QUESTIONS: 'iraq_edu_questions_v4',
+    SUBJECTS: 'iraq_edu_subjects_v4',
+  };
 };
 updateQuestion: (questionOrId: any, partialQuestion?: any) => void;
 const EduContext = createContext<EduContextType | undefined>(undefined);

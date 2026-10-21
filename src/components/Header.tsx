@@ -1,15 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useEdu } from '../context/EduContext';
 import { getIraqiGradeName } from '../utils/edu-logic';
 import { playClickSound } from '../utils/audio';
 import {
-  GraduationCap,
   Volume2,
   VolumeX,
   ShieldCheck,
   LogOut,
   Sparkles,
-  HelpCircle,
   Crown,
   Search,
 } from 'lucide-react';
@@ -26,84 +24,76 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenAuth,
   onOpenAdminLogin,
   onOpenSupport,
+  onOpenZipModal,
   onOpenSearch,
 }) => {
   const { currentStudent, isAdmin, logout, logoutAdmin, soundOn, toggleSound } = useEdu();
 
   return (
-    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs">
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-2 sm:gap-4">
-        {/* Brand identity */}
-        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-tr from-amber-500 via-orange-500 to-amber-400 flex items-center justify-center text-white shadow-md shadow-amber-500/20 ring-2 sm:ring-4 ring-amber-100">
-            <GraduationCap className="w-5 h-5 sm:w-7 sm:h-7" />
+    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-2xs">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-2">
+        {/* Logo and Platform Name */}
+        <div className="flex items-center gap-2 sm:gap-3 cursor-pointer shrink-0">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center font-black text-xl sm:text-2xl shadow-md shadow-emerald-600/30">
+            <span>متفوق</span>
           </div>
-          <div>
-            <div className="flex items-center gap-1.5 sm:gap-2">
-              <span className="font-extrabold text-base sm:text-xl text-slate-900 tracking-tight">
-                المتفوّق
-              </span>
-              <span className="text-[10px] sm:text-xs font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
-                العراق 🇮🇶
+          <div className="text-right">
+            <div className="flex items-center gap-1.5">
+              <h1 className="text-base sm:text-xl font-black text-slate-900 tracking-tight leading-none">
+                منصة المتفوق
+              </h1>
+              <span className="text-[10px] sm:text-xs font-black px-1.5 py-0.5 rounded-md bg-emerald-100 text-emerald-800 leading-none">
+                العراق IQ
               </span>
             </div>
-            <p className="hidden sm:block text-xs text-slate-500 font-medium">
+            <p className="text-[10px] sm:text-xs text-slate-500 font-bold mt-0.5 hidden xs:block">
               المنصة التعليمية الشاملة للمرحلة الابتدائية
             </p>
           </div>
         </div>
 
-        {/* Center / Action buttons (تم حذف زر تحميل ZIP نهائياً) */}
-        <div className="hidden md:flex items-center gap-2">
+        {/* Global Controls & Actions */}
+        <div className="flex items-center gap-1.5 sm:gap-3">
+          {/* Audio toggle button */}
+          <button
+            onClick={() => {
+              playClickSound();
+              toggleSound();
+            }}
+            className={`p-2 sm:p-2.5 rounded-xl border transition-all cursor-pointer ${
+              soundOn
+                ? 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                : 'border-slate-200 bg-slate-50 text-slate-400 hover:bg-slate-100'
+            }`}
+            title={soundOn ? 'الصوت والمؤثرات مفعلة' : 'الصوت كتم'}
+            aria-label="تبديل الصوت"
+          >
+            {soundOn ? (
+              <Volume2 className="w-4 h-4 sm:w-5 sm:h-5" />
+            ) : (
+              <VolumeX className="w-4 h-4 sm:w-5 sm:h-5" />
+            )}
+          </button>
+
+          {/* Quick Question Search Button */}
           {currentStudent && (
             <button
               onClick={() => {
                 playClickSound();
                 onOpenSearch();
               }}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold transition-all shadow-2xs"
+              className="px-2.5 sm:px-3 py-2 sm:py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+              title="بحث سريع في أسئلة المنهاج"
             >
               <Search className="w-4 h-4 text-slate-500" />
-              <span>بحث عن سؤال أو مسألة</span>
-              <kbd className="text-[10px] bg-white px-1.5 py-0.5 rounded-sm border border-slate-300 text-slate-500">
-                سريع
-              </kbd>
+              <span className="hidden sm:inline">بحث عن سؤال أو مسألة</span>
+              <span className="sm:hidden">بحث</span>
             </button>
           )}
 
-          <button
-            onClick={() => {
-              playClickSound();
-              onOpenSupport();
-            }}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-800 text-xs font-bold border border-sky-200 transition-all cursor-pointer"
-          >
-            <HelpCircle className="w-4 h-4 text-sky-600" />
-            <span>دعم فوري</span>
-          </button>
-        </div>
-
-        {/* User state & controls */}
-        <div className="flex items-center gap-2 sm:gap-3">
-          {/* Sound Toggle */}
-          <button
-            onClick={() => {
-              playClickSound();
-              toggleSound();
-            }}
-            aria-label={soundOn ? 'كتم الصوت' : 'تفعيل أصوات النظام'}
-            className="p-2 sm:p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors cursor-pointer"
-            title={soundOn ? 'الأصوات مفعلة' : 'الأصوات مكتومة'}
-          >
-            {soundOn ? (
-              <Volume2 className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600" />
-            ) : (
-              <VolumeX className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400" />
-            )}
-          </button>
-
-          {/* Student logged in */}
+          {/* User state section */}
           {currentStudent ? (
+            /* Student active view */
             <div className="flex items-center gap-1.5 sm:gap-2.5">
               <div className="flex items-center gap-2 bg-slate-50 hover:bg-slate-100/70 border border-slate-200/90 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-2xl transition-all shadow-2xs">
                 <span className="text-2xl sm:text-3xl shrink-0" role="img" aria-label="avatar">
@@ -111,7 +101,6 @@ export const Header: React.FC<HeaderProps> = ({
                 </span>
                 <div className="text-right flex flex-col justify-center min-w-0">
                   <div className="flex items-center gap-1.5">
-                    {/* إبراز اسم الطالب الأول واسم الوالد بالموبايل، والاسم الكامل بالشاشات الأكبر */}
                     <span className="text-xs sm:text-sm font-black text-slate-950 leading-tight">
                       <span className="sm:hidden">
                         {(currentStudent.fullName || '').trim().split(/\s+/).slice(0, 2).join(' ')}
@@ -143,6 +132,20 @@ export const Header: React.FC<HeaderProps> = ({
                 </div>
               </div>
 
+              {/* زر دخول الإدارة السريع للمشرف مباشرة من حساب الطالب */}
+              <button
+                onClick={() => {
+                  playClickSound();
+                  onOpenAdminLogin();
+                }}
+                className="p-2 sm:p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors shrink-0 cursor-pointer"
+                title="لوحة تحكم الإدارة (Admin)"
+                aria-label="لوحة تحكم الإدارة"
+              >
+                <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-rose-600" />
+              </button>
+
+              {/* زر تسجيل الخروج الفوري */}
               <button
                 onClick={() => {
                   playClickSound();
@@ -203,5 +206,3 @@ export const Header: React.FC<HeaderProps> = ({
     </header>
   );
 };
-
-export default Header;

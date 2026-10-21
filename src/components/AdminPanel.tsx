@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import {
-  LogOut, useEdu } from '../context/EduContext';
+import { useEdu } from '../context/EduContext';
 import { GradeId, Question, Subject, SubscriptionType } from '../types/index';
 import { GRADES_DATA } from '../data/initialData';
 import { getIraqiGradeName, formatIraqiDinar } from '../utils/edu-logic';
@@ -26,6 +25,7 @@ import {
   Clock,
   CheckCheck,
   Image,
+  LogOut,
 } from 'lucide-react';
 
 const OFFICIAL_IRAQI_SUBJECTS: Record<GradeId, { id: string; name: string }[]> = {

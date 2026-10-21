@@ -1345,22 +1345,30 @@ export const GradePortal: React.FC<GradePortalProps> = ({
             </details>
           )}
 
-          {/* مجلد أصوات ونطق الحروف الإنجليزية التفاعلية للأول والثاني الابتدائي */}
+          {/* قسم الحروف الإنجليزية التفاعلية مفتوح وظاهر ومباشر للأول والثاني الابتدائي */}
           {(currentGradeId === 'grade-1' || currentGradeId === 'grade-2') && isEnglishSubject && (
-            <details className="group bg-gradient-to-r from-sky-50 via-indigo-50 to-blue-50 rounded-3xl border-2 border-indigo-200 p-4 sm:p-5 transition-all shadow-xs" open>
-              <summary className="cursor-pointer font-black text-indigo-950 flex flex-col sm:flex-row items-center justify-between gap-2 text-sm sm:text-base select-none list-none text-center sm:text-right">
-                <span className="flex items-center gap-2">
-                  <span className="text-2xl">🔠</span>
-                  <span>مجلد أصوات ونطق الحروف الإنجليزية التفاعلية المبسطة ({currentGradeId === 'grade-1' ? 'الصف الأول' : 'الصف الثاني'})</span>
+            <div className="bg-gradient-to-r from-sky-50 via-indigo-50 to-blue-50 rounded-3xl border-2 border-indigo-300 p-4 sm:p-6 shadow-sm space-y-4">
+              <div className="flex items-center justify-between gap-3 pb-3 border-b border-indigo-200">
+                <div className="flex items-center gap-2.5">
+                  <span className="text-3xl">🔠</span>
+                  <div>
+                    <h4 className="font-black text-indigo-950 text-base sm:text-lg">
+                      بنك الحروف الإنجليزية التفاعلية المباشرة (A إلى Z)
+                    </h4>
+                    <p className="text-xs text-indigo-800 font-medium">
+                      اضغط على أي حرف للاستماع لنطقه بالعربي والإنجليزي وترجمة كلمته فوراً
+                    </p>
+                  </div>
+                </div>
+                <span className="text-xs font-black px-3 py-1 rounded-full bg-amber-400 text-amber-950 shadow-xs shrink-0">
+                  مقرر للأول والثاني 🌟
                 </span>
-                <span className="text-xs bg-indigo-200 text-indigo-900 px-3 py-1 rounded-full font-bold group-open:rotate-180 transition-transform">
-                  ▼ فتح / غلق المجلد
-                </span>
-              </summary>
-              <div className="mt-4 pt-4 border-t border-indigo-200/80">
+              </div>
+
+              <div>
                 <Grade1EnglishLetters />
               </div>
-            </details>
+            </div>
           )}
 
           {/* 4. مجلد اللغة الإنجليزية التفاعلي (English for Iraq) لكافة المراحل */}

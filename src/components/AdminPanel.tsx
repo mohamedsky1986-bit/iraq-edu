@@ -1425,5 +1425,4 @@ export const AdminPanel: React.FC = () => {
 };
 
 export default AdminPanel;
-                      alt="معاينة الصورة"
-                      className="w-full h-auto max-h-32 object-contain
+                

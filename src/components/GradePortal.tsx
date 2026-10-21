@@ -7,7 +7,7 @@ import { QuestionCard } from './QuestionCard';
 import { Grade1ArabicReading } from './Grade1ArabicReading';
 import { Grade1EnglishLetters } from './Grade1EnglishLetters';
 import { playClickSound } from '../utils/audio';
-import {
+import { GRADES_DATA, DEFAULT_SUBJECTS } from '../data/initialData';
   Sparkles,
   BookOpen,
   HelpCircle,

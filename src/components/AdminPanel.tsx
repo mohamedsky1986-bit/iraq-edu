@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { useEdu } from '../context/EduContext';
+import {
+  LogOut, useEdu } from '../context/EduContext';
 import { GradeId, Question, Subject, SubscriptionType } from '../types/index';
 import { GRADES_DATA } from '../data/initialData';
 import { getIraqiGradeName, formatIraqiDinar } from '../utils/edu-logic';
@@ -94,6 +95,7 @@ export const AdminPanel: React.FC = () => {
     updateSubscriptionConfig,
     approveSubscriptionRequest,
     rejectSubscriptionRequest,
+    logoutAdmin,
   } = useEdu();
 
   const [activeTab, setActiveTab] = useState<
@@ -142,7 +144,6 @@ export const AdminPanel: React.FC = () => {
     return matchGrade && matchSearch;
   });
 
-  // فلاتر التصفية المزدوجة (الصف + المادة + البحث بالكلمة)
   const [qGradeFilter, setQGradeFilter] = useState<string>('all');
   const [qSubjectFilter, setQSubjectFilter] = useState<string>('all');
   const [qSearchQuery, setQSearchQuery] = useState<string>('');
@@ -258,6 +259,7 @@ export const AdminPanel: React.FC = () => {
         tags: [getIraqiGradeName(formGradeId), formBadgeType !== 'none' ? formBadgeType : ''].filter(Boolean),
       };
 
+      // إذا كانت هناك صورة مضافة نضعها، وإذا كانت فارغة لا نمررها لتفادي أخطاء Firestore
       if (formImageUrl.trim()) {
         payload.imageUrl = formImageUrl.trim();
       }
@@ -343,6 +345,17 @@ export const AdminPanel: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                playClickSound();
+                logoutAdmin();
+              }}
+              className="px-4 py-2.5 rounded-2xl bg-rose-600 hover:bg-rose-500 text-white font-extrabold text-xs flex items-center gap-1.5 shadow-md shadow-rose-600/30 transition-all cursor-pointer"
+              title="الخروج من لوحة التحكم والعودة كطالب أو زائر"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>خروج وعودة للمنصة</span>
+            </button>
             <button
               onClick={handleOpenAddQuestion}
               className="px-4 py-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs flex items-center gap-1.5 shadow-md shadow-emerald-600/30 transition-all cursor-pointer"
@@ -456,19 +469,19 @@ export const AdminPanel: React.FC = () => {
 
       {activeTab === 'curriculum' && (
         <div className="space-y-4">
-          {/* شريط التصفية المتطور المزدوج (الصف + المادة) مع البحث السريع */}
-          <div className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200 shadow-xs space-y-3">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-3">
-              <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
+          {/* شريط التصفية والبحث المتطور (الصف + المادة + البحث النصي) */}
+          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-3">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
                 <div className="flex items-center gap-1.5">
-                  <span className="text-xs font-black text-slate-700">الصف:</span>
+                  <span className="text-xs text-slate-500 font-bold shrink-0">الصف:</span>
                   <select
                     value={qGradeFilter}
                     onChange={(e) => {
                       setQGradeFilter(e.target.value);
                       setQSubjectFilter('all');
                     }}
-                    className="text-xs px-3 py-2 rounded-xl border-2 border-emerald-500/40 bg-emerald-50/30 font-black text-slate-900 cursor-pointer outline-none"
+                    className="text-xs px-3 py-2 rounded-xl border border-slate-200 bg-white font-bold cursor-pointer"
                   >
                     <option value="all">جميع الصفوف ({questions.length})</option>
                     {GRADES_DATA.map((g) => (
@@ -480,11 +493,11 @@ export const AdminPanel: React.FC = () => {
                 </div>
 
                 <div className="flex items-center gap-1.5">
-                  <span className="text-xs font-black text-slate-700">المادة:</span>
+                  <span className="text-xs text-slate-500 font-bold shrink-0">المادة:</span>
                   <select
                     value={qSubjectFilter}
                     onChange={(e) => setQSubjectFilter(e.target.value)}
-                    className="text-xs px-3 py-2 rounded-xl border border-slate-200 bg-white font-black text-slate-800 cursor-pointer outline-none"
+                    className="text-xs px-3 py-2 rounded-xl border border-slate-200 bg-white font-bold cursor-pointer"
                   >
                     <option value="all">
                       {qGradeFilter === 'all' ? 'جميع المواد الدراسية' : `جميع مواد ${getIraqiGradeName(qGradeFilter as GradeId)}`}
@@ -508,7 +521,7 @@ export const AdminPanel: React.FC = () => {
 
               <button
                 onClick={handleOpenAddQuestion}
-                className="w-full md:w-auto px-4 py-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs flex items-center justify-center gap-1.5 shadow-md shadow-emerald-600/20 cursor-pointer shrink-0"
+                className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs cursor-pointer shrink-0"
               >
                 <PlusCircle className="w-4 h-4" />
                 <span>إضافة سؤال جديد</span>
@@ -680,7 +693,8 @@ export const AdminPanel: React.FC = () => {
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {filteredStudents.map((st) => (
-<td className="p-4 font-bold text-slate-900 flex items-center gap-2.5">
+                    <tr key={st.id} className="hover:bg-slate-50/60 transition-colors">
+                      <td className="p-4 font-bold text-slate-900 flex items-center gap-2.5">
                         <div className="relative shrink-0">
                           <span className="text-xl">{st.avatar}</span>
                           {(st as any).isOnline && (
@@ -704,16 +718,6 @@ export const AdminPanel: React.FC = () => {
                             ) : null}
                           </div>
                           <span className="text-[10px] text-slate-400 font-normal block mt-0.5">
-                            {st.city || 'العراق'} • {st.schoolName || 'مدرسة ابتدائية'}
-                          </span>
-                        </div>
-                      </td>
-                    <tr key={st.id} className="hover:bg-slate-50/60 transition-colors">
-                      <td className="p-4 font-bold text-slate-900 flex items-center gap-2.5">
-                        <span className="text-xl">{st.avatar}</span>
-                        <div>
-                          <div>{st.fullName}</div>
-                          <span className="text-[10px] text-slate-400 font-normal">
                             {st.city || 'العراق'} • {st.schoolName || 'مدرسة ابتدائية'}
                           </span>
                         </div>
@@ -1363,6 +1367,7 @@ export const AdminPanel: React.FC = () => {
                 />
               </div>
 
+              {/* حقل رابط الصورة التوضيحية (اختياري) مع معاينة وزر حذف */}
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <label className="block text-xs font-bold text-slate-700 flex items-center gap-1.5">
@@ -1495,7 +1500,7 @@ export const AdminPanel: React.FC = () => {
                   type="submit"
                   className="px-6 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs cursor-pointer"
                 >
-                  حفظ وتثبيت السؤال ✓
+                  حفظ السؤال ✓
                 </button>
               </div>
             </form>

@@ -248,7 +248,7 @@ export const AdminPanel: React.FC = () => {
         tags: [getIraqiGradeName(formGradeId), formBadgeType !== 'none' ? formBadgeType : ''].filter(Boolean),
       };
 
-      // إذا كانت هناك صورة مضافة نضعها، وإذا كانت فارغة لا نمررها لكي ينحفظ السؤال بدون صورة
+      // إذا كانت هناك صورة مضافة نضعها، وإذا كانت فارغة لا نمررها لتفادي أخطاء Firestore
       if (formImageUrl.trim()) {
         payload.imageUrl = formImageUrl.trim();
       }
@@ -682,4 +682,627 @@ export const AdminPanel: React.FC = () => {
                                 alert(`تم تعيين كلمة المرور الجديدة للطالب إلى: ${newPass.trim()}`);
                               }
                             }}
-                            className="p-
+                            className="p-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600"
+                            title="إعادة تعيين كلمة المرور"
+                          >
+                            <KeyRound className="w-4 h-4" />
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              if (confirm(`هل أنت متأكد من حذف حساب الطالب (${st.fullName})؟`)) {
+                                deleteStudent(st.id);
+                              }
+                            }}
+                            className="p-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700"
+                            title="حذف الطالب"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'requests' && (
+        <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-xs">
+          <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+            <h2 className="font-black text-slate-900 text-base">
+              طلبات اشتراك أولياء الأمور والطلبة (تأكيد الدفع)
+            </h2>
+            <span className="text-xs font-bold px-3 py-1 rounded-full bg-amber-100 text-amber-900">
+              {subscriptionRequests.filter((r) => r.status === 'pending').length} طلب بحاجة للموافقة
+            </span>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-right text-xs">
+              <thead className="bg-slate-50 text-slate-500 font-bold border-b border-slate-200">
+                <tr>
+                  <th className="p-4">اسم الطالب</th>
+                  <th className="p-4">المرحلة</th>
+                  <th className="p-4">طريقة الدفع</th>
+                  <th className="p-4">المبلغ</th>
+                  <th className="p-4">ملاحظات / رقم الحوالة</th>
+                  <th className="p-4">الحالة</th>
+                  <th className="p-4 text-center">القرار</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {subscriptionRequests.map((req) => (
+                  <tr key={req.id}>
+                    <td className="p-4 font-bold text-slate-900">
+                      <div>{req.studentName}</div>
+                      <span className="text-[10px] font-mono text-slate-400">@{req.username}</span>
+                    </td>
+                    <td className="p-4">{getIraqiGradeName(req.gradeId)}</td>
+                    <td className="p-4 font-bold text-slate-700">
+                      {req.paymentMethod === 'zain_cash'
+                        ? 'محفظة زين كاش'
+                        : req.paymentMethod === 'qi_card'
+                        ? 'بطاقة كي كارد'
+                        : req.paymentMethod === 'asia_cell'
+                        ? 'رصيد آسياسيل'
+                        : 'نقدي'}
+                    </td>
+                    <td className="p-4 font-black text-emerald-700">
+                      {formatIraqiDinar(req.amount, req.currency)}
+                    </td>
+                    <td className="p-4 text-slate-600">
+                      {req.paymentPhoneOrRef && (
+                        <div className="font-mono text-slate-900">{req.paymentPhoneOrRef}</div>
+                      )}
+                      {req.notes && <div className="text-[11px] text-slate-500">{req.notes}</div>}
+                    </td>
+                    <td className="p-4">
+                      {req.status === 'pending' ? (
+                        <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 flex items-center gap-1 w-max">
+                          <Clock className="w-3.5 h-3.5" /> بانتظار التأكيد
+                        </span>
+                      ) : req.status === 'approved' ? (
+                        <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-900 flex items-center gap-1 w-max">
+                          <Check className="w-3.5 h-3.5" /> تم التفعيل
+                        </span>
+                      ) : (
+                        <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-100 text-rose-900">
+                          مرفوض
+                        </span>
+                      )}
+                    </td>
+                    <td className="p-4">
+                      {req.status === 'pending' ? (
+                        <div className="flex items-center justify-center gap-1.5">
+                          <button
+                            onClick={() => {
+                              playCorrectSound();
+                              approveSubscriptionRequest(req.id);
+                            }}
+                            className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-[11px] flex items-center gap-1 cursor-pointer"
+                          >
+                            <CheckCheck className="w-3.5 h-3.5" />
+                            <span>قبول وتفعيل VIP</span>
+                          </button>
+                          <button
+                            onClick={() => {
+                              playClickSound();
+                              rejectSubscriptionRequest(req.id);
+                            }}
+                            className="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-rose-100 text-rose-700 font-bold text-[11px] cursor-pointer"
+                          >
+                            رفض
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="text-slate-400 text-[11px] font-medium text-center block">مكتمل</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'pricing' && (
+        <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 max-w-2xl shadow-xs space-y-6">
+          <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
+            <div className="w-11 h-11 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center shadow-xs">
+              <DollarSign className="w-6 h-6" />
+            </div>
+            <div>
+              <h2 className="text-base sm:text-lg font-black text-slate-900">
+                إعدادات وتعديل سعر اشتراك المنهاج (VIP Pricing)
+              </h2>
+              <p className="text-xs text-slate-500 font-medium">
+                تعديل السعر يظهر فورياً لجميع الطلبة عند فتح نافذة الاشتراك
+              </p>
+            </div>
+          </div>
+
+          <form onSubmit={handleSavePricing} className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  سعر الاشتراك (مبلغ رقمي)
+                </label>
+                <input
+                  type="number"
+                  value={newPrice}
+                  onChange={(e) => setNewPrice(Number(e.target.value))}
+                  placeholder="مثال: 15000"
+                  className="w-full px-4 py-3 rounded-2xl border border-slate-200 focus:border-emerald-500 outline-none text-sm font-mono font-bold"
+                  dir="ltr"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  العملة
+                </label>
+                <input
+                  type="text"
+                  value={newCurrency}
+                  onChange={(e) => setNewCurrency(e.target.value)}
+                  placeholder="د.ع"
+                  className="w-full px-4 py-3 rounded-2xl border border-slate-200 focus:border-emerald-500 outline-none text-sm font-bold"
+                  required
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                مسمى فترة الاشتراك
+              </label>
+              <input
+                type="text"
+                value={newPeriodName}
+                onChange={(e) => setNewPeriodName(e.target.value)}
+                placeholder="مثال: اشتراك الفصل الدراسي الكامل أو اشتراك سنوي"
+                className="w-full px-4 py-3 rounded-2xl border border-slate-200 focus:border-emerald-500 outline-none text-xs sm:text-sm font-medium"
+                required
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  رقم محفظة زين كاش (Zain Cash Wallet)
+                </label>
+                <div className="relative">
+                  <Phone className="absolute right-3.5 top-3.5 w-4 h-4 text-slate-400" />
+                  <input
+                    type="text"
+                    value={newZainWallet}
+                    onChange={(e) => setNewZainWallet(e.target.value)}
+                    placeholder="مثال: 07801234567"
+                    className="w-full pr-10 pl-4 py-3 rounded-2xl border border-slate-200 focus:border-emerald-500 outline-none text-xs sm:text-sm font-mono"
+                    dir="ltr"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  رقم بطاقة كي كارد (Qi Card)
+                </label>
+                <div className="relative">
+                  <CreditCard className="absolute right-3.5 top-3.5 w-4 h-4 text-slate-400" />
+                  <input
+                    type="text"
+                    value={newQiCard}
+                    onChange={(e) => setNewQiCard(e.target.value)}
+                    placeholder="رقم بطاقة أو حساب كي كارد"
+                    className="w-full pr-10 pl-4 py-3 rounded-2xl border border-slate-200 focus:border-emerald-500 outline-none text-xs sm:text-sm font-mono"
+                    dir="ltr"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {pricingFeedback && (
+              <div className="p-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-2">
+                <Check className="w-4 h-4 text-emerald-600" />
+                <span>تم تحديث سعر وبيانات الاشتراك بنجاح في المنصة!</span>
+              </div>
+            )}
+
+            <button
+              type="submit"
+              className="w-full py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-sm shadow-md transition-all cursor-pointer"
+            >
+              حفظ وتطبيق السعر الجديد في المنصة ✓
+            </button>
+          </form>
+        </div>
+      )}
+
+      {activeTab === 'security' && (
+        <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 max-w-xl shadow-xs space-y-5">
+          <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
+            <div className="w-11 h-11 rounded-2xl bg-rose-100 text-rose-700 flex items-center justify-center shadow-xs">
+              <Shield className="w-6 h-6" />
+            </div>
+            <div>
+              <h2 className="font-black text-slate-900 text-base sm:text-lg">
+                تأمين وحماية حساب المشرف (اسم مستخدم + كلمة مرور)
+              </h2>
+              <p className="text-xs text-slate-500 font-medium">
+                تغيير اسم المشرف وكلمة المرور لمنع الاختراق وضمان أمان المنصة
+              </p>
+            </div>
+          </div>
+
+          <form onSubmit={handleSaveCredentials} className="space-y-4">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                اسم المشرف الجديد (Admin Username)
+              </label>
+              <div className="relative">
+                <UserCheck className="absolute right-3.5 top-3.5 w-4 h-4 text-slate-400" />
+                <input
+                  type="text"
+                  value={newAdminUser}
+                  onChange={(e) => setNewAdminUser(e.target.value)}
+                  placeholder="اسم المستخدم الجديد"
+                  className="w-full pr-10 pl-4 py-3 rounded-2xl border border-slate-200 focus:border-rose-500 outline-none text-xs sm:text-sm font-mono font-medium transition-all"
+                  dir="ltr"
+                  required
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                كلمة المرور الجديدة (Admin Password)
+              </label>
+              <div className="relative">
+                <KeyRound className="absolute right-3.5 top-3.5 w-4 h-4 text-slate-400" />
+                <input
+                  type="password"
+                  value={newAdminPass}
+                  onChange={(e) => setNewAdminPass(e.target.value)}
+                  placeholder="اكتب كلمة مرور قوية جديدة"
+                  className="w-full pr-10 pl-4 py-3 rounded-2xl border border-slate-200 focus:border-rose-500 outline-none text-xs sm:text-sm font-medium transition-all"
+                  dir="ltr"
+                  required
+                />
+              </div>
+            </div>
+
+            {securityFeedback && (
+              <div
+                className={`p-3 rounded-2xl text-xs font-bold flex items-center gap-2 ${
+                  securityFeedback.success
+                    ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                    : 'bg-rose-50 text-rose-800 border border-rose-200'
+                }`}
+              >
+                <span>{securityFeedback.success ? '✓' : '⚠️'}</span>
+                <span>{securityFeedback.text}</span>
+              </div>
+            )}
+
+            <button
+              type="submit"
+              className="w-full py-3.5 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-black text-sm shadow-md transition-all cursor-pointer"
+            >
+              حفظ اسم المشرف وكلمة المرور وتأمين النظام 🔒
+            </button>
+          </form>
+        </div>
+      )}
+
+      {isQuestionModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl border border-slate-100 max-h-[92vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+              <h3 className="font-black text-slate-900 text-lg">
+                {editingQuestion ? 'تعديل السؤال والمنهاج' : 'إضافة سؤال جديد لبنك المناهج'}
+              </h3>
+              <button
+                onClick={() => {
+                  playClickSound();
+                  setIsQuestionModalOpen(false);
+                }}
+                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveQuestion} className="mt-5 space-y-4">
+              <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200">
+                <label className="block text-xs font-bold text-slate-700 mb-2">
+                  نوع صياغة السؤال المطلوبة:
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      playClickSound();
+                      setFormQuestionType('qa');
+                    }}
+                    className={`py-2 px-2 sm:px-3 rounded-xl text-xs font-black flex items-center justify-center gap-1 border transition-all cursor-pointer ${
+                      formQuestionType === 'qa'
+                        ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                        : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+                    }`}
+                  >
+                    <span>📝 سؤال وجواب</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      playClickSound();
+                      setFormQuestionType('fill_in_the_blank');
+                    }}
+                    className={`py-2 px-2 sm:px-3 rounded-xl text-xs font-black flex items-center justify-center gap-1 border transition-all cursor-pointer ${
+                      formQuestionType === 'fill_in_the_blank'
+                        ? 'bg-amber-600 text-white border-amber-600 shadow-xs'
+                        : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+                    }`}
+                  >
+                    <span>✏️ أكمل الفراغ</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      playClickSound();
+                      setFormQuestionType('multiple_choice');
+                    }}
+                    className={`py-2 px-2 sm:px-3 rounded-xl text-xs font-black flex items-center justify-center gap-1 border transition-all cursor-pointer ${
+                      formQuestionType === 'multiple_choice'
+                        ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
+                        : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+                    }`}
+                  >
+                    <span>🔘 خيارات تفاعلية</span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    المرحلة الدراسية
+                  </label>
+                  <select
+                    value={formGradeId}
+                    onChange={(e) => {
+                      const newGrade = e.target.value as GradeId;
+                      setFormGradeId(newGrade);
+                      const matchingSubj = (OFFICIAL_IRAQI_SUBJECTS[newGrade] || [])[0];
+                      if (matchingSubj) setFormSubjectId(matchingSubj.id);
+                      setIsCustomSubject(false);
+                    }}
+                    className="w-full p-2.5 rounded-xl border border-slate-200 text-xs font-bold"
+                  >
+                    {GRADES_DATA.map((g) => (
+                      <option key={g.id} value={g.id}>
+                        {g.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    المادة الدراسية (شاملة الإسلامية والإنجليزي ومواد مخصصة)
+                  </label>
+                  <select
+                    value={isCustomSubject ? 'custom' : formSubjectId}
+                    onChange={(e) => {
+                      if (e.target.value === 'custom') {
+                        setIsCustomSubject(true);
+                      } else {
+                        setIsCustomSubject(false);
+                        setFormSubjectId(e.target.value);
+                      }
+                    }}
+                    className="w-full p-2.5 rounded-xl border border-slate-200 text-xs font-bold"
+                  >
+                    {(OFFICIAL_IRAQI_SUBJECTS[formGradeId] || []).map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.name}
+                      </option>
+                    ))}
+                    <option value="custom">➕ مادة دراسية أخرى (مخصصة)...</option>
+                  </select>
+
+                  {isCustomSubject && (
+                    <input
+                      type="text"
+                      value={customSubjectName}
+                      onChange={(e) => setCustomSubjectName(e.target.value)}
+                      placeholder="اكتب اسم المادة (مثال: الحاسوب، النشيد، التربية الفنية)..."
+                      className="mt-2 w-full p-2.5 rounded-xl border border-emerald-300 bg-emerald-50/50 text-xs font-bold"
+                      required
+                    />
+                  )}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    اسم الفصل أو الوحدة
+                  </label>
+                  <input
+                    type="text"
+                    value={formChapter}
+                    onChange={(e) => setFormChapter(e.target.value)}
+                    placeholder="مثال: الفصل الأول / الوحدة الأولى"
+                    className="w-full p-2.5 rounded-xl border border-slate-200 text-xs"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    اسم الدرس أو الموضوع
+                  </label>
+                  <input
+                    type="text"
+                    value={formLesson}
+                    onChange={(e) => setFormLesson(e.target.value)}
+                    placeholder="مثال: الفاعل / الملايين / البكتيريا"
+                    className="w-full p-2.5 rounded-xl border border-slate-200 text-xs"
+                  />
+                </div>
+              </div>
+
+              <div className="p-3 bg-amber-50/70 rounded-2xl border border-amber-200 space-y-1.5">
+                <label className="block text-xs font-bold text-amber-950">
+                  شارة تمييز وأهمية السؤال في واجهة التلميذ:
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      playClickSound();
+                      setFormBadgeType('none');
+                    }}
+                    className={`py-1.5 px-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                      formBadgeType === 'none'
+                        ? 'bg-slate-800 text-white border-slate-800 shadow-xs'
+                        : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                    }`}
+                  >
+                    📌 سؤال عادي
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      playClickSound();
+                      setFormBadgeType('ministerial');
+                    }}
+                    className={`py-1.5 px-2 rounded-xl text-xs font-black border transition-all cursor-pointer ${
+                      formBadgeType === 'ministerial'
+                        ? 'bg-amber-500 text-white border-amber-500 shadow-xs'
+                        : 'bg-white text-amber-900 border-amber-200 hover:bg-amber-100'
+                    }`}
+                  >
+                    🌟 وزاري مرشح
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      playClickSound();
+                      setFormBadgeType('smart_challenge');
+                    }}
+                    className={`py-1.5 px-2 rounded-xl text-xs font-black border transition-all cursor-pointer ${
+                      formBadgeType === 'smart_challenge'
+                        ? 'bg-purple-600 text-white border-purple-600 shadow-xs'
+                        : 'bg-white text-purple-900 border-purple-200 hover:bg-purple-100'
+                    }`}
+                  >
+                    🎯 للأذكياء
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      playClickSound();
+                      setFormBadgeType('focus_tip');
+                    }}
+                    className={`py-1.5 px-2 rounded-xl text-xs font-black border transition-all cursor-pointer ${
+                      formBadgeType === 'focus_tip'
+                        ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                        : 'bg-white text-blue-900 border-blue-200 hover:bg-blue-100'
+                    }`}
+                  >
+                    💡 فهم وتركيز
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-bold text-slate-700">
+                    {formQuestionType === 'fill_in_the_blank'
+                      ? 'نص الجملة مع الفراغ:'
+                      : 'نص السؤال (يقرأه النظام صوتياً للطفل):'}
+                  </label>
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => insertFormatting('**', '**', 'question')}
+                      className="px-2 py-0.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 text-[11px] font-black cursor-pointer"
+                      title="خط عريض"
+                    >
+                      B عريض
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => insertFormatting('==', '==', 'question')}
+                      className="px-2 py-0.5 rounded-lg bg-amber-100 hover:bg-amber-200 text-amber-900 text-[11px] font-bold cursor-pointer"
+                      title="تظليل أصفر للكلمة"
+                    >
+                      🖍️ تظليل
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => insertFormatting('«', '»', 'question')}
+                      className="px-2 py-0.5 rounded-lg bg-emerald-100 hover:bg-emerald-200 text-emerald-900 text-[11px] font-bold cursor-pointer"
+                      title="أقواس آية أو حديث"
+                    >
+                      « »
+                    </button>
+                    <button
+                      type="button"
+                      onClick={insertBlank}
+                      className="px-2 py-0.5 rounded-lg bg-sky-100 hover:bg-sky-200 text-sky-900 text-[11px] font-bold cursor-pointer"
+                      title="إدراج نقاط فراغ"
+                    >
+                      ...... فراغ
+                    </button>
+                  </div>
+                </div>
+                <textarea
+                  value={formQuestionText}
+                  onChange={(e) => setFormQuestionText(e.target.value)}
+                  placeholder={
+                    formQuestionType === 'fill_in_the_blank'
+                      ? 'مثال: عاصمة جمهورية العراق الحبيبة هي ......'
+                      : 'مثال: ما هو تعريف الفاعل في قواعد اللغة العربية؟ / علل: لماذا سمي العراق ببلاد الرافدين؟'
+                  }
+                  rows={2}
+                  className="w-full p-3 rounded-xl border border-slate-200 text-xs font-medium"
+                  required
+                />
+              </div>
+
+              {/* حقل رابط الصورة التوضيحية (اختياري) مع معاينة وزر حذف */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                    <Image className="w-3.5 h-3.5 text-slate-500" />
+                    <span>رابط صورة توضيحية للسؤال (اختياري):</span>
+                  </label>
+                  <span className="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-200">
+                    اتركه فارغاً إذا كان السؤال نصياً فقط ✓
+                  </span>
+                </div>
+                <input
+                  type="url"
+                  placeholder="https://example.com/image.png (اختياري - اتركه فارغاً إذا لم توجد صورة)"
+                  value={formImageUrl}
+                  onChange={(e) => setFormImageUrl(e.target.value)}
+                  className="w-full p-2.5 rounded-xl border border-slate-200 text-xs font-bold text-left outline-none focus:border-emerald-500"
+                  dir="ltr"
+                />
+                {formImageUrl && (
+                  <div className="mt-2 p-2 bg-slate-50 rounded-xl border border-slate-200 max-w-xs mx-auto flex flex-col items-center gap-1.5">
+                    <img
+                      src={formImageUrl}
+                      alt="معاينة الصورة"
+                      className="w-full h-auto max-h-32 object-contain

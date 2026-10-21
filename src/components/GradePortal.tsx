@@ -45,8 +45,8 @@ export const ALL_IRAQI_OFFICIAL_SUBJECTS: Subject[] = [
     icon: '🔤',
     themeColor: 'emerald',
     description: 'منهج قراءتي التفاعلي: الحركات، الحروف الهجائية، المقاطع الصوتية ونطق دار ودور وبابا وماما',
-    lessonsCount: 16,
-    questionsCount: 15,
+    lessonsCount: 20,
+    questionsCount: 25,
     isSpecialInteractive: true,
   },
   {
@@ -57,8 +57,8 @@ export const ALL_IRAQI_OFFICIAL_SUBJECTS: Subject[] = [
     icon: '🔠',
     themeColor: 'sky',
     description: 'English for Iraq: Letters A to Z, Phonics, Sounds, Numbers and Words with interactive audio',
-    lessonsCount: 12,
-    questionsCount: 12,
+    lessonsCount: 16,
+    questionsCount: 20,
     isSpecialInteractive: true,
   },
   {
@@ -69,8 +69,8 @@ export const ALL_IRAQI_OFFICIAL_SUBJECTS: Subject[] = [
     icon: '🌿',
     themeColor: 'lime',
     description: 'العلوم للصف الأول: الكائنات الحية، أجزاء النبات، الحواس الخمسة، والبيئة العراقية',
-    lessonsCount: 10,
-    questionsCount: 12,
+    lessonsCount: 20,
+    questionsCount: 25,
     isSpecialInteractive: true,
   },
   {
@@ -81,8 +81,8 @@ export const ALL_IRAQI_OFFICIAL_SUBJECTS: Subject[] = [
     icon: '🔢',
     themeColor: 'teal',
     description: 'الأعداد من 1 إلى 20، الجمع والطرح البسيط والمقارنة بين الأشياء',
-    lessonsCount: 10,
-    questionsCount: 10,
+    lessonsCount: 20,
+    questionsCount: 25,
   },
   {
     id: 'isl-1',
@@ -92,8 +92,8 @@ export const ALL_IRAQI_OFFICIAL_SUBJECTS: Subject[] = [
     icon: '🕌',
     themeColor: 'green',
     description: 'السور القرآنية القصيرة، أركان الإيمان، والآداب الإسلامية الحميدة',
-    lessonsCount: 8,
-    questionsCount: 8,
+    lessonsCount: 16,
+    questionsCount: 20,
   },
 
   // ================= الصف الثاني الابتدائي =================
@@ -932,7 +932,14 @@ export const GradePortal: React.FC<GradePortalProps> = ({
   const selectedSubject =
     gradeSubjects.find((s) => s.id === selectedSubjectId) || gradeSubjects[0];
 
-  const allQuestions = [...questions, ...DEFAULT_EXTRA_QUESTIONS];
+  const rawQuestions = [...questions, ...DEFAULT_EXTRA_QUESTIONS];
+  const uniqueQuestionsMap = new Map<string, Question>();
+  rawQuestions.forEach((q) => {
+    if (q && q.id && !uniqueQuestionsMap.has(q.id)) {
+      uniqueQuestionsMap.set(q.id, q);
+    }
+  });
+  const allQuestions = Array.from(uniqueQuestionsMap.values());
   const currentSubjectQuestions = allQuestions
     .map(sanitizeQuestionSubject)
     .filter(
@@ -960,6 +967,69 @@ export const GradePortal: React.FC<GradePortalProps> = ({
       return;
     }
     setSpeakingId(id);
+
+    // نطق صوتي مبسط للطفل (اسم الحرف بالعربي ثم بالإنجليزي ثم المعنى بالعربي)
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window && textToSpeak.includes(' - ')) {
+      try {
+        window.speechSynthesis.cancel();
+        const parts = textToSpeak.split(' - ');
+        const letterChar = parts[0].trim()[0].toUpperCase();
+        const word = parts[1].trim();
+
+        const AR_LETTER_MAP: Record<string, { arName: string; arMean: string }> = {
+          A: { arName: 'إي', arMean: 'تفاحة حمراء' },
+          B: { arName: 'بي', arMean: 'كرة لعب' },
+          C: { arName: 'سي', arMean: 'قطة أليفة' },
+          D: { arName: 'دي', arMean: 'كلب' },
+          E: { arName: 'إي', arMean: 'بيضة طعام' },
+          F: { arName: 'إف', arMean: 'سمكة في الماء' },
+          G: { arName: 'جي', arMean: 'بنت أو فتاة' },
+          H: { arName: 'إتش', arMean: 'قبعة رأس' },
+          I: { arName: 'آي', arMean: 'مثلجات لذيذة' },
+          J: { arName: 'جاي', arMean: 'مربى فواكه' },
+          K: { arName: 'كاي', arMean: 'طائرة ورقية' },
+          L: { arName: 'إل', arMean: 'أسد قوي' },
+          M: { arName: 'إم', arMean: 'قرد شقي' },
+          N: { arName: 'إن', arMean: 'شبكة صيد' },
+          O: { arName: 'أو', arMean: 'برتقالة طازجة' },
+          P: { arName: 'بي', arMean: 'قلم كتابة' },
+          Q: { arName: 'كيو', arMean: 'ملكة تاج' },
+          R: { arName: 'آر', arMean: 'أرنب يقفز' },
+          S: { arName: 'إس', arMean: 'شمس مشرقة' },
+          T: { arName: 'تي', arMean: 'شجرة خضراء' },
+          U: { arName: 'يو', arMean: 'مظلة المطر' },
+          V: { arName: 'في', arMean: 'سيارة حافلة' },
+          W: { arName: 'دبليو', arMean: 'ساعة يد' },
+          X: { arName: 'إكس', arMean: 'صورة أشعة' },
+          Y: { arName: 'واي', arMean: 'لعبة يويو' },
+          Z: { arName: 'زد', arMean: 'حمار وحشي' },
+        };
+
+        const info = AR_LETTER_MAP[letterChar];
+        if (info) {
+          const u1 = new SpeechSynthesisUtterance(`حرف ال ${info.arName}`);
+          u1.lang = 'ar-SA';
+          u1.rate = 0.85;
+
+          const u2 = new SpeechSynthesisUtterance(`${letterChar} ... ${word}`);
+          u2.lang = 'en-US';
+          u2.rate = 0.75;
+
+          const u3 = new SpeechSynthesisUtterance(`معناها ${info.arMean}`);
+          u3.lang = 'ar-SA';
+          u3.rate = 0.85;
+
+          u3.onend = () => setSpeakingId(null);
+          u3.onerror = () => setSpeakingId(null);
+
+          window.speechSynthesis.speak(u1);
+          window.speechSynthesis.speak(u2);
+          window.speechSynthesis.speak(u3);
+          return;
+        }
+      } catch (e) {}
+    }
+
     speakEnglishPhonics(textToSpeak, {
       onStart: () => setSpeakingId(id),
       onEnd: () => setSpeakingId(null),
@@ -1343,6 +1413,32 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                 })}
               </div>
             </details>
+          )}
+
+          {/* قسم الحروف الإنجليزية التفاعلية مفتوح وظاهر ومباشر للأول والثاني الابتدائي */}
+          {(currentGradeId === 'grade-1' || currentGradeId === 'grade-2') && isEnglishSubject && (
+            <div className="bg-gradient-to-r from-sky-50 via-indigo-50 to-blue-50 rounded-3xl border-2 border-indigo-300 p-4 sm:p-6 shadow-sm space-y-4">
+              <div className="flex items-center justify-between gap-3 pb-3 border-b border-indigo-200">
+                <div className="flex items-center gap-2.5">
+                  <span className="text-3xl">🔠</span>
+                  <div>
+                    <h4 className="font-black text-indigo-950 text-base sm:text-lg">
+                      بنك الحروف الإنجليزية التفاعلية المباشرة (A إلى Z)
+                    </h4>
+                    <p className="text-xs text-indigo-800 font-medium">
+                      اضغط على أي حرف للاستماع لنطقه بالعربي والإنجليزي وترجمة كلمته فوراً
+                    </p>
+                  </div>
+                </div>
+                <span className="text-xs font-black px-3 py-1 rounded-full bg-amber-400 text-amber-950 shadow-xs shrink-0">
+                  مقرر للأول والثاني 🌟
+                </span>
+              </div>
+
+              <div>
+                <Grade1EnglishLetters />
+              </div>
+            </div>
           )}
 
           {/* 4. مجلد اللغة الإنجليزية التفاعلي (English for Iraq) لكافة المراحل */}

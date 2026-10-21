@@ -623,17 +623,21 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
  const logout = () => {
     try {
+      localStorage.removeItem('iraq_edu_active_student_v2');
+      localStorage.removeItem('iraq_edu_active_student_v3');
+      localStorage.removeItem('iraq_edu_active_student_v4');
       localStorage.removeItem(STORAGE_KEYS.ACTIVE_STUDENT);
+      sessionStorage.clear();
     } catch {}
     if (currentStudent && currentStudent.id) {
       const studentId = currentStudent.id;
-      const nowIso = new Date().toISOString();
       setDoc(doc(db, 'students', studentId), {
         isOnline: false,
-        lastActiveAt: nowIso,
+        lastActiveAt: new Date().toISOString(),
       }, { merge: true }).catch(() => {});
     }
     setCurrentStudent(null);
+    window.location.href = '/';
   };
 
   const loginAdmin = (usernameInput: string, passwordInput: string) => {

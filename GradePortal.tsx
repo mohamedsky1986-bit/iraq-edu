@@ -960,6 +960,69 @@ export const GradePortal: React.FC<GradePortalProps> = ({
       return;
     }
     setSpeakingId(id);
+
+    // نطق صوتي مبسط للطفل (اسم الحرف بالعربي ثم بالإنجليزي ثم المعنى بالعربي)
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window && textToSpeak.includes(' - ')) {
+      try {
+        window.speechSynthesis.cancel();
+        const parts = textToSpeak.split(' - ');
+        const letterChar = parts[0].trim()[0].toUpperCase();
+        const word = parts[1].trim();
+
+        const AR_LETTER_MAP: Record<string, { arName: string; arMean: string }> = {
+          A: { arName: 'إي', arMean: 'تفاحة حمراء' },
+          B: { arName: 'بي', arMean: 'كرة لعب' },
+          C: { arName: 'سي', arMean: 'قطة أليفة' },
+          D: { arName: 'دي', arMean: 'كلب' },
+          E: { arName: 'إي', arMean: 'بيضة طعام' },
+          F: { arName: 'إف', arMean: 'سمكة في الماء' },
+          G: { arName: 'جي', arMean: 'بنت أو فتاة' },
+          H: { arName: 'إتش', arMean: 'قبعة رأس' },
+          I: { arName: 'آي', arMean: 'مثلجات لذيذة' },
+          J: { arName: 'جاي', arMean: 'مربى فواكه' },
+          K: { arName: 'كاي', arMean: 'طائرة ورقية' },
+          L: { arName: 'إل', arMean: 'أسد قوي' },
+          M: { arName: 'إم', arMean: 'قرد شقي' },
+          N: { arName: 'إن', arMean: 'شبكة صيد' },
+          O: { arName: 'أو', arMean: 'برتقالة طازجة' },
+          P: { arName: 'بي', arMean: 'قلم كتابة' },
+          Q: { arName: 'كيو', arMean: 'ملكة تاج' },
+          R: { arName: 'آر', arMean: 'أرنب يقفز' },
+          S: { arName: 'إس', arMean: 'شمس مشرقة' },
+          T: { arName: 'تي', arMean: 'شجرة خضراء' },
+          U: { arName: 'يو', arMean: 'مظلة المطر' },
+          V: { arName: 'في', arMean: 'سيارة حافلة' },
+          W: { arName: 'دبليو', arMean: 'ساعة يد' },
+          X: { arName: 'إكس', arMean: 'صورة أشعة' },
+          Y: { arName: 'واي', arMean: 'لعبة يويو' },
+          Z: { arName: 'زد', arMean: 'حمار وحشي' },
+        };
+
+        const info = AR_LETTER_MAP[letterChar];
+        if (info) {
+          const u1 = new SpeechSynthesisUtterance(`حرف ال ${info.arName}`);
+          u1.lang = 'ar-SA';
+          u1.rate = 0.85;
+
+          const u2 = new SpeechSynthesisUtterance(`${letterChar} ... ${word}`);
+          u2.lang = 'en-US';
+          u2.rate = 0.75;
+
+          const u3 = new SpeechSynthesisUtterance(`معناها ${info.arMean}`);
+          u3.lang = 'ar-SA';
+          u3.rate = 0.85;
+
+          u3.onend = () => setSpeakingId(null);
+          u3.onerror = () => setSpeakingId(null);
+
+          window.speechSynthesis.speak(u1);
+          window.speechSynthesis.speak(u2);
+          window.speechSynthesis.speak(u3);
+          return;
+        }
+      } catch (e) {}
+    }
+
     speakEnglishPhonics(textToSpeak, {
       onStart: () => setSpeakingId(id),
       onEnd: () => setSpeakingId(null),

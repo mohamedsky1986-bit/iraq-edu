@@ -1,17 +1,6 @@
-
-function getYouTubeEmbedUrl(url: string): string {
-  if (!url) return '';
-  if (url.includes('embed/')) return url;
-  const matchShort = url.match(/youtu\.be\/([a-zA-Z0-9_-]+)/);
-  if (matchShort) return `https://www.youtube.com/embed/${matchShort[1]}`;
-  const matchLong = url.match(/[?&]v=([a-zA-Z0-9_-]+)/);
-  if (matchLong) return `https://www.youtube.com/embed/${matchLong[1]}`;
-  return url;
-}
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { useEdu } from '../context/EduContext';
 import { Subject, Question } from '../types/index';
-import { ALL_CURRICULUM_BOOKS, CurriculumBook, EducationalVideo } from '../data/curriculumMedia';
 import { GRADES_DATA } from '../data/initialData';
 import { getIraqiGradeName } from '../utils/edu-logic';
 import { QuestionCard } from './QuestionCard';
@@ -43,13 +32,21 @@ import {
   Bookmark,
   Home,
   LogOut,
-  Download,
-  ExternalLink,
-  Tv,
-  Play,
-  X
+  Video,
+  ExternalLink
 } from 'lucide-react';
 
+
+
+function getYouTubeEmbedUrl(url: string): string {
+  if (!url) return '';
+  if (url.includes('embed/')) return url;
+  const matchShort = url.match(/youtu\.be\/([a-zA-Z0-9_-]+)/);
+  if (matchShort) return `https://www.youtube.com/embed/${matchShort[1]}`;
+  const matchLong = url.match(/[?&]v=([a-zA-Z0-9_-]+)/);
+  if (matchLong) return `https://www.youtube.com/embed/${matchLong[1]}`;
+  return url;
+}
 
 export const ALL_IRAQI_OFFICIAL_SUBJECTS: Subject[] = [
   // ================= الصف الأول الابتدائي =================
@@ -915,142 +912,12 @@ function sanitizeQuestionSubject(q: Question): Question {
   return q;
 }
 
-
-// قارئ الكتب المدمج داخل بوابة الطالب
-const BookViewerModal: React.FC<{
-  book: CurriculumBook | null;
-  onClose: () => void;
-}> = ({ book, onClose }) => {
-  if (!book) return null;
-  const embedUrl = 'https://drive.google.com/file/d/' + book.driveFileId + '/preview';
-  const downloadUrl = 'https://drive.google.com/uc?export=download&id=' + book.driveFileId;
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-900/85 backdrop-blur-md animate-fadeIn">
-      <div className="relative w-full max-w-5xl h-[92vh] bg-slate-900 rounded-3xl overflow-hidden shadow-2xl flex flex-col border border-slate-700">
-        <div className="px-5 py-3.5 bg-slate-800 border-b border-slate-700 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
-              <BookOpen className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="text-base font-black text-white line-clamp-1">{book.title}</h3>
-              <p className="text-xs text-slate-400 font-medium">المنهج الدراسي المعتمد لوزارة التربية العراقية</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <a
-              href={downloadUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-md cursor-pointer"
-            >
-              <Download className="w-4 h-4" />
-              <span className="hidden sm:inline">تحميل PDF</span>
-            </a>
-            <a
-              href={'https://drive.google.com/file/d/' + book.driveFileId + '/view'}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-200 transition-all cursor-pointer"
-              title="فتح في نافذة جديدة"
-            >
-              <ExternalLink className="w-4 h-4" />
-            </a>
-            <button
-              onClick={onClose}
-              className="p-2 rounded-xl bg-rose-500/20 hover:bg-rose-500 text-rose-300 hover:text-white transition-all cursor-pointer"
-              title="إغلاق"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-
-        <div className="flex-1 w-full bg-slate-950 relative">
-          <iframe
-            src={embedUrl}
-            className="w-full h-full border-0"
-            allow="autoplay"
-            title={book.title}
-          />
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// مشغل فيديو اليوتيوب التفاعلي المدمج داخل بوابة الطالب
-const VideoPlayerModal: React.FC<{
-  video: EducationalVideo | null;
-  onClose: () => void;
-}> = ({ video, onClose }) => {
-  if (!video) return null;
-  const embedUrl = 'https://www.youtube-nocookie.com/embed/' + video.youtubeId + '?autoplay=1&rel=0';
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-900/85 backdrop-blur-md animate-fadeIn">
-      <div className="relative w-full max-w-4xl bg-slate-900 rounded-3xl overflow-hidden shadow-2xl flex flex-col border border-slate-700">
-        <div className="px-5 py-3.5 bg-slate-800 border-b border-slate-700 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-rose-500/20 text-rose-400 flex items-center justify-center">
-              <Tv className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="text-base font-black text-white line-clamp-1">{video.title}</h3>
-              <p className="text-xs text-slate-400 font-medium">
-                {video.teacherName ? 'إعداد: ' + video.teacherName : 'شرح درس مرئي تفاعلي'}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <a
-              href={video.youtubeUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-3.5 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
-            >
-              <ExternalLink className="w-4 h-4 text-rose-400" />
-              <span className="hidden sm:inline">مشاهدة على YouTube</span>
-            </a>
-            <button
-              onClick={onClose}
-              className="p-2 rounded-xl bg-rose-500/20 hover:bg-rose-500 text-rose-300 hover:text-white transition-all cursor-pointer"
-              title="إغلاق"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-
-        <div className="w-full aspect-video bg-black">
-          <iframe
-            src={embedUrl}
-            className="w-full h-full border-0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            allowFullScreen
-            title={video.title}
-          />
-        </div>
-
-        {video.description && (
-          <div className="p-4 bg-slate-800/60 border-t border-slate-700">
-            <p className="text-xs text-slate-300 font-medium leading-relaxed">{video.description}</p>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
 export const GradePortal: React.FC<GradePortalProps> = ({
   onStartQuiz,
   onOpenSearch,
   onOpenUpgradeModal,
 }) => {
-  const { currentStudent, subjects, questions, logout, videos = [], curriculumBooks = ALL_CURRICULUM_BOOKS } = useEdu();
+  const { currentStudent, subjects, questions, logout } = useEdu();
 
   if (!currentStudent) return null;
 
@@ -1072,21 +939,15 @@ export const GradePortal: React.FC<GradePortalProps> = ({
   const [selectedSubjectId, setSelectedSubjectId] = useState<string>(
     gradeSubjects[0]?.id || ''
   );
-  const [activeTab, setActiveTab] = useState<'qa' | 'exams' | 'books' | 'videos' | 'curriculum'>('qa');
-  const [selectedBook, setSelectedBook] = useState<CurriculumBook | null>(null);
-  const [selectedVideo, setSelectedVideo] = useState<EducationalVideo | null>(null);
-  const subjectSectionRef = useRef<HTMLDivElement>(null);
+  const [activeTab, setActiveTab] = useState<'qa' | 'exams' | 'videos' | 'curriculum'>('qa');
 
-  // دالة النقل التلقائي السلس إلى القسم المطلوب للأطفال والموبايل
-  const navigateToSection = (tabName: 'qa' | 'exams' | 'books' | 'videos' | 'curriculum') => {
-    playClickSound();
-    setActiveTab(tabName);
-    setTimeout(() => {
-      if (subjectSectionRef.current) {
-        subjectSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    }, 120);
-  };
+  const [customVideos, setCustomVideos] = useState<any[]>(() => {
+    try {
+      const saved = localStorage.getItem('iraq_edu_admin_custom_videos_v1');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return [];
+  });
   const [speakingId, setSpeakingId] = useState<string | null>(null);
 
   const selectedSubject =
@@ -1365,11 +1226,6 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                   playClickSound();
                   stopSpeaking();
                   setSelectedSubjectId(subj.id);
-                  setTimeout(() => {
-                    if (subjectSectionRef.current) {
-                      subjectSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }
-                  }, 150);
                 }}
                 className={`p-4 rounded-3xl border-2 text-right transition-all flex flex-col justify-between cursor-pointer ${
                   isSelected
@@ -1396,7 +1252,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
       </div>
 
       {selectedSubject && (
-        <div ref={subjectSectionRef} className="bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-8 shadow-xs space-y-6 scroll-mt-20">
+        <div className="bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-8 shadow-xs space-y-6">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pb-4 border-b border-slate-100 text-center sm:text-right">
             <div className="flex items-center gap-3">
               <span className="text-4xl p-2 rounded-2xl bg-slate-50 border border-slate-100 shadow-2xs">
@@ -1412,37 +1268,17 @@ export const GradePortal: React.FC<GradePortalProps> = ({
               </div>
             </div>
 
-            {/* أزرار الإجراءات السريعة للمادة (امتحان، كتب درايف، فيديوهات يوتيوب) مع تنقل فوري */}
-            <div className="flex flex-wrap items-center justify-center sm:justify-end gap-2 shrink-0">
-              <button
-                onClick={() => navigateToSection('books')}
-                className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-2xl bg-sky-600 hover:bg-sky-700 text-white font-black text-xs shadow-md shadow-sky-600/20 transition-all cursor-pointer hover:scale-105 active:scale-95"
-                title="الانتقال المباشر لكتب وملازم المنهج"
-              >
-                <BookOpen className="w-4 h-4" />
-                <span>📚 كتب المنهج والملازم</span>
-              </button>
-
-              <button
-                onClick={() => navigateToSection('videos')}
-                className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-black text-xs shadow-md shadow-rose-600/20 transition-all cursor-pointer hover:scale-105 active:scale-95"
-                title="الانتقال المباشر للشروحات المرئية"
-              >
-                <Tv className="w-4 h-4" />
-                <span>🎥 الشروحات المرئية</span>
-              </button>
-
-              <button
-                onClick={() => {
-                  playClickSound();
-                  onStartQuiz(selectedSubject, currentSubjectQuestions);
-                }}
-                className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 text-white font-extrabold text-xs sm:text-sm shadow-md shadow-emerald-600/25 transition-all transform hover:scale-105 active:scale-95 cursor-pointer"
-              >
-                <Trophy className="w-4 h-4 text-amber-300" />
-                <span>بدء الامتحان 🎯</span>
-              </button>
-            </div>
+            {/* زر بدء الاختبار الشامل المطول */}
+            <button
+              onClick={() => {
+                playClickSound();
+                onStartQuiz(selectedSubject, currentSubjectQuestions);
+              }}
+              className="flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 text-white font-extrabold text-xs sm:text-sm shadow-md shadow-emerald-600/25 transition-all transform hover:-translate-y-0.5 cursor-pointer shrink-0"
+            >
+              <Trophy className="w-5 h-5 text-amber-300" />
+              <span>بدء الامتحان الشامل المطول 🎯</span>
+            </button>
           </div>
 
           {/* 1. مجلد الحروف التفاعلية: للأول والثاني قراءتي */}
@@ -1717,30 +1553,6 @@ export const GradePortal: React.FC<GradePortalProps> = ({
             </button>
 
             <button
-              onClick={() => navigateToSection('books')}
-              className={`px-4 py-2.5 rounded-2xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 ${
-                activeTab === 'books'
-                  ? 'bg-sky-700 text-white shadow-xs'
-                  : 'bg-sky-50 text-sky-800 hover:bg-sky-100 border border-sky-200'
-              }`}
-            >
-              <BookOpen className="w-4 h-4 text-sky-400" />
-              <span>📚 الكتب والملازم المعتمدة (PDF)</span>
-            </button>
-
-            <button
-              onClick={() => navigateToSection('videos')}
-              className={`px-4 py-2.5 rounded-2xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 ${
-                activeTab === 'videos'
-                  ? 'bg-rose-700 text-white shadow-xs'
-                  : 'bg-rose-50 text-rose-800 hover:bg-rose-100 border border-rose-200'
-              }`}
-            >
-              <Tv className="w-4 h-4 text-rose-500" />
-              <span>🎥 الشروحات والمرئيات التفاعلية</span>
-            </button>
-
-            <button
               onClick={() => {
                 playClickSound();
                 setActiveTab('curriculum');
@@ -1751,7 +1563,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
             >
-              <Bookmark className="w-4 h-4" />
+              <BookOpen className="w-4 h-4" />
               <span>خطة ومفردات المنهاج</span>
             </button>
           </div>
@@ -1940,295 +1752,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
             </div>
           )}
 
-          {/* Tab: الكتب والملازم الدراسية الرسمية (Google Drive) */}
-          {activeTab === 'books' && (
-            <div className="space-y-6 pt-2">
-              <div className="p-5 rounded-3xl bg-gradient-to-r from-sky-900 via-indigo-950 to-slate-900 text-white shadow-md border border-sky-500/20 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div className="space-y-1 text-center sm:text-right">
-                  <span className="px-3 py-1 rounded-full bg-sky-500/20 text-sky-300 border border-sky-500/30 text-xs font-black inline-block">
-                    📚 المنهج الرسمي لوزارة التربية العراقية
-                  </span>
-                  <h3 className="text-lg sm:text-xl font-black">كتب وملازم {gradeInfo?.name}</h3>
-                  <p className="text-xs text-slate-300 font-medium">
-                    تصفح الكتب الرسمية كاملة أونلاين بضغطة زر أو حمّلها مباشرة بصيغة PDF لجهازك.
-                  </p>
-                </div>
-              </div>
-
-              {/* الكتب الخاصة بهذه المادة أولاً */}
-              <div className="space-y-3">
-                <h4 className="font-black text-sm text-slate-800 flex items-center gap-2">
-                  <span className="text-xl">📖</span>
-                  <span>كتب وملازم مادة ({selectedSubject.name}):</span>
-                </h4>
-
-                {(() => {
-                  const subjectBooks = (curriculumBooks || []).filter(
-                    (b) => b.gradeId === currentGradeId && b.subjectId === selectedSubject.id
-                  );
-
-                  if (subjectBooks.length === 0) {
-                    return (
-                      <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 text-center text-xs text-slate-500">
-                        كتاب هذه المادة مدرج ضمن الحقيبة الشاملة بالأسفل، يمكنك تصفح وتحميل بقية كتب الصف.
-                      </div>
-                    );
-                  }
-
-                  return (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
-                      {subjectBooks.map((book) => {
-                        const downloadUrl = 'https://drive.google.com/uc?export=download&id=' + book.driveFileId;
-                        return (
-                          <div
-                            key={book.id}
-                            className="bg-white rounded-2xl border-2 border-sky-100 hover:border-sky-300 p-4 shadow-xs transition-all flex flex-col justify-between space-y-3"
-                          >
-                            <div>
-                              <div className="flex items-center justify-between mb-2">
-                                <span className="px-2.5 py-0.5 rounded-lg bg-sky-50 text-sky-700 text-[10px] font-black border border-sky-200">
-                                  {book.category === 'workbook'
-                                    ? 'كتاب التمرينات'
-                                    : book.category === 'activity'
-                                    ? 'كتاب النشاط'
-                                    : book.category === 'summary'
-                                    ? 'ملزمة مراجعة'
-                                    : 'كتاب الوزارة المعتمد'}
-                                </span>
-                                <span className="text-xl">📘</span>
-                              </div>
-                              <h5 className="font-black text-sm text-slate-900 leading-snug line-clamp-2">
-                                {book.title}
-                              </h5>
-                            </div>
-
-                            <div className="space-y-2 pt-2 border-t border-slate-100">
-                              <div className="flex items-center gap-2">
-                                <button
-                                  onClick={() => {
-                                    playClickSound();
-                                    setSelectedBook(book);
-                                  }}
-                                  className="flex-1 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-black text-xs flex items-center justify-center gap-1.5 shadow-xs transition-all cursor-pointer"
-                                >
-                                  <BookOpen className="w-4 h-4" />
-                                  <span>📖 قراءة وتصفح أونلاين</span>
-                                </button>
-                              </div>
-
-                              <div className="flex items-center gap-2">
-                                <a
-                                  href={'https://drive.google.com/file/d/' + book.driveFileId + '/view'}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="flex-1 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center gap-1 transition-all cursor-pointer"
-                                  title="فتح في صفحة كاملة جديدة (ممتاز للموبايل)"
-                                >
-                                  <ExternalLink className="w-3.5 h-3.5 text-sky-600" />
-                                  <span>فتح بصفحة جديدة 🌐</span>
-                                </a>
-
-                                <a
-                                  href={downloadUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="px-3.5 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs flex items-center justify-center gap-1 transition-all cursor-pointer border border-emerald-200"
-                                  title="تحميل ملف PDF"
-                                >
-                                  <Download className="w-3.5 h-3.5" />
-                                  <span>تحميل</span>
-                                </a>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  );
-                })()}
-              </div>
-
-              {/* بقية كتب ومناهج الصف */}
-              <div className="space-y-3 pt-4 border-t border-slate-200">
-                <h4 className="font-black text-sm text-slate-800 flex items-center gap-2">
-                  <span className="text-xl">🗂️</span>
-                  <span>الحقيبة المدرسية الكاملة لـ ({gradeInfo?.name}):</span>
-                </h4>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
-                  {(curriculumBooks || []).filter((b) => b.gradeId === currentGradeId).map((book) => {
-                    const downloadUrl = 'https://drive.google.com/uc?export=download&id=' + book.driveFileId;
-                    return (
-                      <div
-                        key={'all-' + book.id}
-                        className="bg-white rounded-2xl border border-slate-200 p-4 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between space-y-3"
-                      >
-                        <div>
-                          <div className="flex items-center justify-between mb-1.5">
-                            <span className="px-2 py-0.5 rounded-lg bg-slate-100 text-slate-600 text-[10px] font-bold">
-                              {book.category === 'workbook'
-                                ? 'تمرينات'
-                                : book.category === 'activity'
-                                ? 'نشاط'
-                                : book.category === 'summary'
-                                ? 'ملزمة'
-                                : 'كتاب رسمي'}
-                            </span>
-                            <span className="text-lg">📚</span>
-                          </div>
-                          <h5 className="font-black text-xs sm:text-sm text-slate-900 line-clamp-1">
-                            {book.title}
-                          </h5>
-                        </div>
-
-                        <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
-                          <button
-                            onClick={() => {
-                              playClickSound();
-                              setSelectedBook(book);
-                            }}
-                            className="flex-1 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs flex items-center justify-center gap-1 transition-all cursor-pointer"
-                          >
-                            <BookOpen className="w-3.5 h-3.5" />
-                            <span>تصفح</span>
-                          </button>
-
-                          <a
-                            href={downloadUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="p-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-all cursor-pointer"
-                            title="تحميل PDF"
-                          >
-                            <Download className="w-3.5 h-3.5" />
-                          </a>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Tab: الشروحات والمرئيات التفاعلية (YouTube) */}
-          {activeTab === 'videos' && (
-            <div className="space-y-6 pt-2">
-              <div className="p-5 rounded-3xl bg-gradient-to-r from-rose-900 via-red-950 to-slate-900 text-white shadow-md border border-rose-500/20 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div className="space-y-1 text-center sm:text-right">
-                  <span className="px-3 py-1 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30 text-xs font-black inline-block">
-                    🎥 شروحات مرئية تفاعلية
-                  </span>
-                  <h3 className="text-lg sm:text-xl font-black">دروس وفيديوهات {gradeInfo?.name}</h3>
-                  <p className="text-xs text-slate-300 font-medium">
-                    شاهد شروحات الأساتذة والدروس التوضيحية مباشرة داخل المنصة بدون إعلانات أو تشتت.
-                  </p>
-                </div>
-              </div>
-
-              {(() => {
-                const gradeVideos = (videos || []).filter((v: EducationalVideo) => v.gradeId === currentGradeId);
-
-                if (gradeVideos.length === 0) {
-                  return (
-                    <div className="bg-white rounded-3xl p-10 text-center border border-slate-200 shadow-xs space-y-3">
-                      <div className="w-14 h-14 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center mx-auto text-2xl">
-                        🎬
-                      </div>
-                      <h4 className="font-black text-sm sm:text-base text-slate-800">
-                        جاري تجهيز وإضافة الشروحات المرئية لهذه المرحلة
-                      </h4>
-                      <p className="text-xs text-slate-500 max-w-md mx-auto">
-                        يقوم الأساتذة والمشرفون بإضافة شروحات الدروس تباعاً، يمكنك متابعة بنك الأسئلة والكتب حالياً!
-                      </p>
-                    </div>
-                  );
-                }
-
-                return (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {gradeVideos.map((video: EducationalVideo) => (
-                      <div
-                        key={video.id}
-                        className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-xs hover:shadow-md transition-all flex flex-col justify-between group"
-                      >
-                        <div>
-                          {/* Video Thumbnail */}
-                          <div
-                            onClick={() => {
-                              playClickSound();
-                              setSelectedVideo(video);
-                            }}
-                            className="relative aspect-video bg-slate-900 cursor-pointer overflow-hidden group/thumb"
-                          >
-                            <img
-                              src={'https://img.youtube.com/vi/' + video.youtubeId + '/mqdefault.jpg'}
-                              alt={video.title}
-                              className="w-full h-full object-cover group-hover/thumb:scale-105 transition-transform duration-300"
-                              onError={(e) => {
-                                (e.target as any).src = 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=400';
-                              }}
-                            />
-                            <div className="absolute inset-0 bg-slate-900/40 group-hover/thumb:bg-slate-900/20 transition-colors flex items-center justify-center">
-                              <div className="w-12 h-12 rounded-full bg-rose-600 text-white flex items-center justify-center shadow-lg group-hover/thumb:scale-110 transition-transform">
-                                <Play className="w-6 h-6 fill-white ml-0.5" />
-                              </div>
-                            </div>
-                            <span className="absolute bottom-2 left-2 px-2 py-0.5 rounded-lg bg-black/70 text-white text-[10px] font-bold">
-                              YouTube
-                            </span>
-                          </div>
-
-                          {/* Info */}
-                          <div className="p-4 space-y-2">
-                            {video.teacherName && (
-                              <span className="px-2 py-0.5 rounded-lg bg-rose-50 text-rose-700 border border-rose-200 text-[10px] font-bold inline-block">
-                                👨🏻‍🏫 {video.teacherName}
-                              </span>
-                            )}
-                            <h4 className="font-black text-sm text-slate-900 line-clamp-2 leading-snug">
-                              {video.title}
-                            </h4>
-                            {video.description && (
-                              <p className="text-xs text-slate-500 font-medium line-clamp-2">
-                                {video.description}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-
-                        <div className="p-3 bg-slate-50 border-t border-slate-100 flex flex-col sm:flex-row items-center gap-2">
-                          <button
-                            onClick={() => {
-                              playClickSound();
-                              setSelectedVideo(video);
-                            }}
-                            className="flex-1 w-full py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black text-xs flex items-center justify-center gap-1.5 shadow-xs transition-all cursor-pointer"
-                          >
-                            <Play className="w-3.5 h-3.5 fill-white" />
-                            <span>تشغيل الشرح داخل المنصة</span>
-                          </button>
-
-                          <a
-                            href={video.youtubeUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="px-3.5 py-2 rounded-xl bg-white hover:bg-slate-100 text-slate-700 font-bold text-xs flex items-center justify-center gap-1 transition-all border border-slate-200"
-                            title="فتح في يوتيوب"
-                          >
-                            <ExternalLink className="w-3.5 h-3.5 text-rose-500" />
-                            <span className="hidden sm:inline">YouTube</span>
-                          </a>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                );
-              })()}
-            </div>
-          )}
-
-          {activeTab === 'videos' && selectedSubject && (
+                    {activeTab === 'videos' && (
             <div className="space-y-4 pt-2 text-right">
               <div className="flex items-center justify-between">
                 <h4 className="text-base font-black text-slate-900 flex items-center gap-2">
@@ -2305,55 +1829,10 @@ export const GradePortal: React.FC<GradePortalProps> = ({
               <div className="p-4 rounded-xl bg-white border border-slate-200 font-medium">
                 💡 <strong>نصيحة للمتفوق:</strong> يمكنك الاستماع للنطق الصوتي للأشعار والآيات الكريمة والأسئلة لترسيخ المعلومات قبل خوض الامتحان المطول للحصول على وسام التفوق الذهبي.
               </div>
-
-              {/* قسم الكتب والملازم المعتمدة */}
-              <div className="pt-4 border-t border-slate-200 space-y-3">
-                <h5 className="font-black text-slate-900 text-sm flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-emerald-600" />
-                  <span>الكتب والملازم والمناهج المرفوعة لمادة {selectedSubject.name}:</span>
-                </h5>
-
-                {customBooks.filter(b => b.gradeId === currentGradeId && (b.subjectName === selectedSubject.name || selectedSubject.name.includes(b.subjectName) || b.subjectName.includes(selectedSubject.name))).length === 0 ? (
-                  <p className="text-xs text-slate-500 font-medium bg-white p-3 rounded-xl border border-slate-200">
-                    لم يتم رفع ملازم أو كتب خاصة بهذه المادة بعد، يمكنك الاطلاع على كتاب الوزارة المعتمد أو رفعه من لوحة التحكم.
-                  </p>
-                ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {customBooks
-                      .filter(b => b.gradeId === currentGradeId && (b.subjectName === selectedSubject.name || selectedSubject.name.includes(b.subjectName) || b.subjectName.includes(selectedSubject.name)))
-                      .map((bk, bIdx) => (
-                        <div key={bIdx} className="p-4 rounded-2xl bg-white border border-slate-200 flex items-center justify-between gap-3 shadow-2xs">
-                          <div className="flex items-center gap-2.5">
-                            <FileText className="w-5 h-5 text-emerald-600 shrink-0" />
-                            <div className="text-right">
-                              <h6 className="text-xs font-black text-slate-900">{bk.title}</h6>
-                              <span className="text-[10px] text-slate-500">
-                                {bk.type === 'summary' ? 'ملزمة ملخصة' : 'كتاب الوزارة المعتمد'}
-                              </span>
-                            </div>
-                          </div>
-
-                          <a
-                            href={bk.driveUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-1 shrink-0 transition-all shadow-xs"
-                          >
-                            <ExternalLink className="w-3.5 h-3.5" />
-                            <span>قراءة الكتاب</span>
-                          </a>
-                        </div>
-                      ))}
-                  </div>
-                )}
-              </div>
             </div>
           )}
         </div>
       )}
-      {/* نوافذ عرض الكتب والفيديوهات التفاعلية للطلاب */}
-      <BookViewerModal book={selectedBook} onClose={() => setSelectedBook(null)} />
-      <VideoPlayerModal video={selectedVideo} onClose={() => setSelectedVideo(null)} />
     </div>
   );
 };

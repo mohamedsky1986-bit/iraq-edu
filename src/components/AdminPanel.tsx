@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useEdu } from '../context/EduContext';
+import { db } from '../firebase';
+import { collection, onSnapshot, doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { GradeId, Question, Subject, SubscriptionType } from '../types/index';
 import { GRADES_DATA } from '../data/initialData';
 import { getIraqiGradeName, formatIraqiDinar } from '../utils/edu-logic';
@@ -136,7 +138,11 @@ export function formatIraqiLastSeen(lastActiveAt?: string, isOnline?: boolean): 
   return { label: `آخر ظهور: ${dateStr} الساعة ${timeStr}`, isLive: false };
 }
 
-export const AdminPanel: React.FC = () => {
+interface AdminPanelProps {
+  onInspectGrade?: (gradeId: GradeId) => void;
+}
+
+export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
   const {
     students,
     questions,
@@ -222,7 +228,7 @@ export const AdminPanel: React.FC = () => {
   const [newVidUrl, setNewVidUrl] = useState('');
   const [newVidChapter, setNewVidChapter] = useState('الفصل الأول');
 
-  // إدارة تعليقات وآراء الطلبة والزوار
+  // إدارة تعليقات وآراء الطلبة والزوار المتزامنة سحابياً
   const [platformComments, setPlatformComments] = useState<any[]>(() => {
     try {
       const saved = localStorage.getItem('iraq_edu_platform_comments_v1');
@@ -231,25 +237,60 @@ export const AdminPanel: React.FC = () => {
     return [];
   });
 
-  const handleDeleteComment = (id: string) => {
+  // مزامنة حية للتعليقات عبر Firebase Firestore
+  useEffect(() => {
+    try {
+      const unsub = onSnapshot(collection(db, 'comments'), (snapshot) => {
+        if (!snapshot.empty) {
+          const remoteComments = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+          setPlatformComments(remoteComments);
+          try {
+            localStorage.setItem('iraq_edu_platform_comments_v1', JSON.stringify(remoteComments));
+          } catch {}
+        }
+      });
+      return () => unsub();
+    } catch (e) {
+      console.warn('Firestore comments sync fallback:', e);
+    }
+  }, []);
+
+  const handleDeleteComment = async (id: string) => {
     playClickSound();
     if (confirm('هل أنت متأكد من حذف هذا التعليق نهائياً؟')) {
       const updated = platformComments.filter((c: any) => c.id !== id);
       setPlatformComments(updated);
-      localStorage.setItem('iraq_edu_platform_comments_v1', JSON.stringify(updated));
+      try {
+        localStorage.setItem('iraq_edu_platform_comments_v1', JSON.stringify(updated));
+      } catch {}
+
+      try {
+        await deleteDoc(doc(db, 'comments', id));
+      } catch (e) {
+        console.error('Error deleting comment from Firestore:', e);
+      }
     }
   };
 
-  const handleEditComment = (comm: any) => {
+  const handleEditComment = async (comm: any) => {
     playClickSound();
     const newText = prompt('تعديل نص التعليق:', comm.commentText);
     if (newText && newText.trim()) {
+      const updatedObj = { ...comm, commentText: newText.trim() };
       const updated = platformComments.map((c: any) =>
-        c.id === comm.id ? { ...c, commentText: newText.trim() } : c
+        c.id === comm.id ? updatedObj : c
       );
       setPlatformComments(updated);
-      localStorage.setItem('iraq_edu_platform_comments_v1', JSON.stringify(updated));
-      alert('تم تحديث وحفظ التعليق بنجاح ✓');
+      try {
+        localStorage.setItem('iraq_edu_platform_comments_v1', JSON.stringify(updated));
+      } catch {}
+
+      try {
+        await setDoc(doc(db, 'comments', comm.id), updatedObj);
+      } catch (e) {
+        console.error('Error updating comment in Firestore:', e);
+      }
+      alert('تم تحديث وحفظ التعليق سحابياً بنجاح ✓');
     }
   };
 
@@ -259,7 +300,7 @@ export const AdminPanel: React.FC = () => {
   }, [videosList]);
 
   // Handle Add Video
-  const handleAddVideo = (e: React.FormEvent) => {
+  const handleAddVideo = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newVidTitle.trim() || !newVidUrl.trim()) {
       playWrongSound();

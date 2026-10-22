@@ -17,6 +17,7 @@ import {
   INITIAL_SUBSCRIPTION_REQUESTS,
 } from '../data/initialData';
 import { setSoundEnabled } from '../utils/audio';
+import { EducationalVideo, INITIAL_VIDEOS, extractYouTubeId } from '../data/curriculumMedia';
 import { db } from '../firebase';
 import {
   collection,
@@ -196,6 +197,18 @@ interface EduContextType {
   updateQuestion: (questionOrId: any, partialQuestion?: any) => void;
   deleteQuestion: (questionId: string) => void;
 
+  videos: EducationalVideo[];
+  addVideo: (video: {
+    title: string;
+    gradeId: GradeId;
+    subjectId: string;
+    youtubeUrl: string;
+    description?: string;
+    teacherName?: string;
+    isVipOnly?: boolean;
+  }) => EducationalVideo;
+  deleteVideo: (videoId: string) => void;
+
   recordQuizAttempt: (attempt: {
     studentId: string;
     studentName: string;
@@ -371,6 +384,15 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   });
 
+  const [videos, setVideos] = useState<EducationalVideo[]>(() => {
+    try {
+      const saved = localStorage.getItem('iraq_edu_videos');
+      return saved ? JSON.parse(saved) : INITIAL_VIDEOS;
+    } catch {
+      return INITIAL_VIDEOS;
+    }
+  });
+
   // Sync Students Collection
   useEffect(() => {
     try {
@@ -397,6 +419,25 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, []);
 
   // Sync Questions Collection (safely merge so curriculum is never empty)
+  // Sync Videos Collection from Firebase Firestore
+  useEffect(() => {
+    try {
+      const unsubscribe = onSnapshot(collection(db, 'videos'), (snapshot) => {
+        if (!snapshot.empty) {
+          const remoteVideos: EducationalVideo[] = snapshot.docs.map((docSnap) => ({
+            id: docSnap.id,
+            ...(docSnap.data() as any),
+          }));
+          setVideos(remoteVideos);
+          localStorage.setItem('iraq_edu_videos', JSON.stringify(remoteVideos));
+        }
+      });
+      return () => unsubscribe();
+    } catch (e) {
+      console.warn('Firebase videos sync warning:', e);
+    }
+  }, []);
+
   useEffect(() => {
     try {
       const unsubscribe = onSnapshot(collection(db, 'questions'), (snapshot) => {
@@ -978,6 +1019,43 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return newAttempt;
   };
 
+  const addVideo = (videoData: {
+    title: string;
+    gradeId: GradeId;
+    subjectId: string;
+    youtubeUrl: string;
+    description?: string;
+    teacherName?: string;
+    isVipOnly?: boolean;
+  }): EducationalVideo => {
+    const ytId = extractYouTubeId(videoData.youtubeUrl);
+    const newVideo: EducationalVideo = {
+      ...videoData,
+      id: `vid-${Date.now()}`,
+      youtubeId: ytId,
+      createdAt: new Date().toLocaleDateString('ar-IQ'),
+    };
+
+    setVideos((prev) => {
+      const updated = [newVideo, ...prev];
+      localStorage.setItem('iraq_edu_videos', JSON.stringify(updated));
+      return updated;
+    });
+
+    setDoc(doc(db, 'videos', newVideo.id), newVideo).catch(console.error);
+    return newVideo;
+  };
+
+  const deleteVideo = (videoId: string) => {
+    setVideos((prev) => {
+      const updated = prev.filter((v) => v.id !== videoId);
+      localStorage.setItem('iraq_edu_videos', JSON.stringify(updated));
+      return updated;
+    });
+
+    deleteDoc(doc(db, 'videos', videoId)).catch(console.error);
+  };
+
   const toggleSound = () => {
     setSoundOn((prev) => !prev);
   };
@@ -1013,6 +1091,9 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         updateQuestion,
         deleteQuestion,
         recordQuizAttempt,
+        videos,
+        addVideo,
+        deleteVideo,
         toggleSound,
       }}
     >
@@ -1028,3 +1109,4 @@ export const useEdu = () => {
   }
   return context;
 };
+

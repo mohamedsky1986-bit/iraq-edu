@@ -703,19 +703,13 @@ export const AdminPanel: React.FC = () => {
     ? (Date.now() - new Date((st as any).lastActiveAt).getTime()) / 60000 
     : 999;
   return diffMinutes <= 5 ? (
-    <span
-      className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white animate-pulse"
-      title="متصل الآن"
-    />
-  ) : null;
-})()}
 </div>
 
 <div>
   <div className="flex items-center gap-1.5 flex-wrap">
-    <span>{st.fullName}</span>
+    <span className="font-bold text-slate-900 text-sm">{st.fullName}</span>
 
-    {/* 2. شارة أونلاين الذكية ومكان تواجده أو آخر ظهور */}
+    {/* شارة أونلاين ومكان التواجد أو آخر ظهور */}
     {(() => {
       if (!(st as any).lastActiveAt) {
         return <span className="text-[10px] text-slate-400 font-bold">غير متصل</span>;
@@ -723,7 +717,6 @@ export const AdminPanel: React.FC = () => {
 
       const diffMinutes = Math.floor((Date.now() - new Date((st as any).lastActiveAt).getTime()) / 60000);
 
-      // إذا كان التفاعل خلال 5 دقائق = أونلاين فعلياً
       if (diffMinutes <= 5) {
         return (
           <div className="flex items-center gap-1">
@@ -740,7 +733,6 @@ export const AdminPanel: React.FC = () => {
         );
       }
 
-      // إذا مرت أكثر من 5 دقائق = آخر ظهور
       if (diffMinutes < 60) {
         return (
           <span className="text-[10px] text-slate-400 font-bold">
@@ -764,11 +756,14 @@ export const AdminPanel: React.FC = () => {
         </span>
       );
     })()}
-                          <span className="text-[10px] text-slate-400 font-normal block mt-0.5">
-                            {st.city || 'العراق'} • {st.schoolName || 'مدرسة ابتدائية'}
-                          </span>
-                        </div>
-                      </td>
+  </div>
+
+  <p className="text-[11px] text-slate-400 mt-0.5">
+    {st.schoolName || 'المدرسة الابتدائية'} • {st.city || 'العراق'}
+  </p>
+</div>
+</div>
+</td>
                       <td className="p-4 font-mono text-slate-600">{st.username}</td>
                       <td className="p-4">
                         <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-100 text-slate-700">

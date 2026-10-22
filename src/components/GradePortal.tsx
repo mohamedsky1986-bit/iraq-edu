@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useEdu } from '../context/EduContext';
 import { Subject, Question } from '../types/index';
 import { ALL_CURRICULUM_BOOKS, CurriculumBook, EducationalVideo } from '../data/curriculumMedia';
@@ -1040,7 +1040,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
   onOpenSearch,
   onOpenUpgradeModal,
 }) => {
-  const { currentStudent, subjects, questions, logout, videos = [] } = useEdu();
+  const { currentStudent, subjects, questions, logout, videos = [], curriculumBooks = ALL_CURRICULUM_BOOKS } = useEdu();
 
   if (!currentStudent) return null;
 
@@ -1065,6 +1065,18 @@ export const GradePortal: React.FC<GradePortalProps> = ({
   const [activeTab, setActiveTab] = useState<'qa' | 'exams' | 'books' | 'videos' | 'curriculum'>('qa');
   const [selectedBook, setSelectedBook] = useState<CurriculumBook | null>(null);
   const [selectedVideo, setSelectedVideo] = useState<EducationalVideo | null>(null);
+  const subjectSectionRef = useRef<HTMLDivElement>(null);
+
+  // دالة النقل التلقائي السلس إلى القسم المطلوب للأطفال والموبايل
+  const navigateToSection = (tabName: 'qa' | 'exams' | 'books' | 'videos' | 'curriculum') => {
+    playClickSound();
+    setActiveTab(tabName);
+    setTimeout(() => {
+      if (subjectSectionRef.current) {
+        subjectSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 120);
+  };
   const [speakingId, setSpeakingId] = useState<string | null>(null);
 
   const selectedSubject =
@@ -1343,6 +1355,11 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                   playClickSound();
                   stopSpeaking();
                   setSelectedSubjectId(subj.id);
+                  setTimeout(() => {
+                    if (subjectSectionRef.current) {
+                      subjectSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                  }, 150);
                 }}
                 className={`p-4 rounded-3xl border-2 text-right transition-all flex flex-col justify-between cursor-pointer ${
                   isSelected
@@ -1369,7 +1386,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
       </div>
 
       {selectedSubject && (
-        <div className="bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-8 shadow-xs space-y-6">
+        <div ref={subjectSectionRef} className="bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-8 shadow-xs space-y-6 scroll-mt-20">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pb-4 border-b border-slate-100 text-center sm:text-right">
             <div className="flex items-center gap-3">
               <span className="text-4xl p-2 rounded-2xl bg-slate-50 border border-slate-100 shadow-2xs">
@@ -1385,29 +1402,23 @@ export const GradePortal: React.FC<GradePortalProps> = ({
               </div>
             </div>
 
-            {/* أزرار الإجراءات السريعة للمادة (امتحان، كتب درايف، فيديوهات يوتيوب) */}
+            {/* أزرار الإجراءات السريعة للمادة (امتحان، كتب درايف، فيديوهات يوتيوب) مع تنقل فوري */}
             <div className="flex flex-wrap items-center justify-center sm:justify-end gap-2 shrink-0">
               <button
-                onClick={() => {
-                  playClickSound();
-                  setActiveTab('books');
-                }}
-                className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-2xl bg-sky-50 hover:bg-sky-100 text-sky-800 border border-sky-200 font-extrabold text-xs transition-all cursor-pointer"
-                title="تصفح وتحميل المنهج الرسمي"
+                onClick={() => navigateToSection('books')}
+                className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-2xl bg-sky-600 hover:bg-sky-700 text-white font-black text-xs shadow-md shadow-sky-600/20 transition-all cursor-pointer hover:scale-105 active:scale-95"
+                title="الانتقال المباشر لكتب وملازم المنهج"
               >
-                <BookOpen className="w-4 h-4 text-sky-600" />
-                <span>📚 كتب المنهج PDF</span>
+                <BookOpen className="w-4 h-4" />
+                <span>📚 كتب المنهج والملازم</span>
               </button>
 
               <button
-                onClick={() => {
-                  playClickSound();
-                  setActiveTab('videos');
-                }}
-                className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-2xl bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-200 font-extrabold text-xs transition-all cursor-pointer"
-                title="مشاهدة الشروحات المرئية"
+                onClick={() => navigateToSection('videos')}
+                className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-black text-xs shadow-md shadow-rose-600/20 transition-all cursor-pointer hover:scale-105 active:scale-95"
+                title="الانتقال المباشر للشروحات المرئية"
               >
-                <Tv className="w-4 h-4 text-rose-600" />
+                <Tv className="w-4 h-4" />
                 <span>🎥 الشروحات المرئية</span>
               </button>
 
@@ -1416,7 +1427,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                   playClickSound();
                   onStartQuiz(selectedSubject, currentSubjectQuestions);
                 }}
-                className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 text-white font-extrabold text-xs sm:text-sm shadow-md shadow-emerald-600/25 transition-all transform hover:-translate-y-0.5 cursor-pointer"
+                className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 text-white font-extrabold text-xs sm:text-sm shadow-md shadow-emerald-600/25 transition-all transform hover:scale-105 active:scale-95 cursor-pointer"
               >
                 <Trophy className="w-4 h-4 text-amber-300" />
                 <span>بدء الامتحان 🎯</span>
@@ -1696,10 +1707,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
             </button>
 
             <button
-              onClick={() => {
-                playClickSound();
-                setActiveTab('books');
-              }}
+              onClick={() => navigateToSection('books')}
               className={`px-4 py-2.5 rounded-2xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 ${
                 activeTab === 'books'
                   ? 'bg-sky-700 text-white shadow-xs'
@@ -1711,10 +1719,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
             </button>
 
             <button
-              onClick={() => {
-                playClickSound();
-                setActiveTab('videos');
-              }}
+              onClick={() => navigateToSection('videos')}
               className={`px-4 py-2.5 rounded-2xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 ${
                 activeTab === 'videos'
                   ? 'bg-rose-700 text-white shadow-xs'
@@ -1948,7 +1953,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                 </h4>
 
                 {(() => {
-                  const subjectBooks = ALL_CURRICULUM_BOOKS.filter(
+                  const subjectBooks = (curriculumBooks || []).filter(
                     (b) => b.gradeId === currentGradeId && b.subjectId === selectedSubject.id
                   );
 
@@ -1987,28 +1992,43 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                               </h5>
                             </div>
 
-                            <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
-                              <button
-                                onClick={() => {
-                                  playClickSound();
-                                  setSelectedBook(book);
-                                }}
-                                className="flex-1 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-black text-xs flex items-center justify-center gap-1.5 shadow-xs transition-all cursor-pointer"
-                              >
-                                <BookOpen className="w-3.5 h-3.5" />
-                                <span>قراءة أونلاين</span>
-                              </button>
+                            <div className="space-y-2 pt-2 border-t border-slate-100">
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => {
+                                    playClickSound();
+                                    setSelectedBook(book);
+                                  }}
+                                  className="flex-1 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-black text-xs flex items-center justify-center gap-1.5 shadow-xs transition-all cursor-pointer"
+                                >
+                                  <BookOpen className="w-4 h-4" />
+                                  <span>📖 قراءة وتصفح أونلاين</span>
+                                </button>
+                              </div>
 
-                              <a
-                                href={downloadUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center gap-1 transition-all cursor-pointer"
-                                title="تحميل ملف PDF"
-                              >
-                                <Download className="w-3.5 h-3.5" />
-                                <span className="hidden sm:inline">تحميل</span>
-                              </a>
+                              <div className="flex items-center gap-2">
+                                <a
+                                  href={'https://drive.google.com/file/d/' + book.driveFileId + '/view'}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex-1 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center gap-1 transition-all cursor-pointer"
+                                  title="فتح في صفحة كاملة جديدة (ممتاز للموبايل)"
+                                >
+                                  <ExternalLink className="w-3.5 h-3.5 text-sky-600" />
+                                  <span>فتح بصفحة جديدة 🌐</span>
+                                </a>
+
+                                <a
+                                  href={downloadUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="px-3.5 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs flex items-center justify-center gap-1 transition-all cursor-pointer border border-emerald-200"
+                                  title="تحميل ملف PDF"
+                                >
+                                  <Download className="w-3.5 h-3.5" />
+                                  <span>تحميل</span>
+                                </a>
+                              </div>
                             </div>
                           </div>
                         );
@@ -2026,7 +2046,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                 </h4>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
-                  {ALL_CURRICULUM_BOOKS.filter((b) => b.gradeId === currentGradeId).map((book) => {
+                  {(curriculumBooks || []).filter((b) => b.gradeId === currentGradeId).map((book) => {
                     const downloadUrl = 'https://drive.google.com/uc?export=download&id=' + book.driveFileId;
                     return (
                       <div
@@ -2167,17 +2187,28 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                           </div>
                         </div>
 
-                        <div className="p-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+                        <div className="p-3 bg-slate-50 border-t border-slate-100 flex flex-col sm:flex-row items-center gap-2">
                           <button
                             onClick={() => {
                               playClickSound();
                               setSelectedVideo(video);
                             }}
-                            className="w-full py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black text-xs flex items-center justify-center gap-1.5 shadow-xs transition-all cursor-pointer"
+                            className="flex-1 w-full py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black text-xs flex items-center justify-center gap-1.5 shadow-xs transition-all cursor-pointer"
                           >
                             <Play className="w-3.5 h-3.5 fill-white" />
-                            <span>تشغيل الشرح الآن</span>
+                            <span>تشغيل الشرح داخل المنصة</span>
                           </button>
+
+                          <a
+                            href={video.youtubeUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-3.5 py-2 rounded-xl bg-white hover:bg-slate-100 text-slate-700 font-bold text-xs flex items-center justify-center gap-1 transition-all border border-slate-200"
+                            title="فتح في يوتيوب"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5 text-rose-500" />
+                            <span className="hidden sm:inline">YouTube</span>
+                          </a>
                         </div>
                       </div>
                     ))}

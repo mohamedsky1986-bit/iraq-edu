@@ -7,14 +7,13 @@ import { AdminPanel } from './components/AdminPanel';
 import { StudentAuthModal } from './components/StudentAuthModal';
 import { AdminLoginModal } from './components/AdminLoginModal';
 import { SupportModal } from './components/SupportModal';
-import { ZipDownloadModal } from './components/ZipDownloadModal';
 import { InteractiveQuizModal } from './components/InteractiveQuizModal';
 import { CertificateModal } from './components/CertificateModal';
 import { QuestionSearchModal } from './components/QuestionSearchModal';
 import { UpgradeModal } from './components/UpgradeModal';
 import { GradeId, Subject, Question, CertificateData } from './types/index';
 import { playClickSound } from './utils/audio';
-import { Heart, Sparkles, Download, ShieldCheck, HelpCircle } from 'lucide-react';
+import { ShieldCheck, HelpCircle } from 'lucide-react';
 
 function AppContent() {
   const { currentStudent, isAdmin, subjects } = useEdu();
@@ -24,9 +23,11 @@ function AppContent() {
   const [authModalMode, setAuthModalMode] = useState<'login' | 'register'>('login');
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
   const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
-  const [isZipModalOpen, setIsZipModalOpen] = useState(false);
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
+
+  // حرية دخول الأدمن لأي صف دراسي مباشرة والتعديل فيه كمنتدى
+  const [adminInspectingGradeId, setAdminInspectingGradeId] = useState<GradeId | null>(null);
 
   // Active Quiz State
   const [isQuizModalOpen, setIsQuizModalOpen] = useState(false);
@@ -66,21 +67,36 @@ function AppContent() {
         }}
         onOpenAdminLogin={() => setIsAdminModalOpen(true)}
         onOpenSupport={() => setIsSupportModalOpen(true)}
-        onOpenZipModal={() => setIsZipModalOpen(true)}
+        onOpenZipModal={() => {}}
         onOpenSearch={() => setIsSearchModalOpen(true)}
       />
 
       {/* Main Body */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {isAdmin ? (
-          <AdminPanel />
+        {isAdmin && adminInspectingGradeId ? (
+          /* دخول الأدمن المباشر لأي صف مع حرية التعديل مثل المنتدى */
+          <GradePortal
+            adminInspectingGradeId={adminInspectingGradeId}
+            onBackToAdmin={() => setAdminInspectingGradeId(null)}
+            onChangeAdminGrade={(newGId) => setAdminInspectingGradeId(newGId)}
+            onStartQuiz={handleStartQuiz}
+            onOpenSearch={() => setIsSearchModalOpen(true)}
+            onOpenUpgradeModal={() => setIsUpgradeModalOpen(true)}
+          />
+        ) : isAdmin ? (
+          /* لوحة تحكم الأدمن مع أزرار الدخول المباشر للصفوف */
+          <AdminPanel
+            onInspectGrade={(gId) => setAdminInspectingGradeId(gId)}
+          />
         ) : currentStudent ? (
+          /* واجهة الطالب المسجل */
           <GradePortal
             onStartQuiz={handleStartQuiz}
             onOpenSearch={() => setIsSearchModalOpen(true)}
             onOpenUpgradeModal={() => setIsUpgradeModalOpen(true)}
           />
         ) : (
+          /* الصفحة الرئيسية */
           <HomeHero
             onSelectGrade={handleSelectGradeFromHero}
             onOpenAuth={() => {
@@ -88,12 +104,12 @@ function AppContent() {
               setIsAuthModalOpen(true);
             }}
             onOpenAdminLogin={() => setIsAdminModalOpen(true)}
-            onOpenZipModal={() => setIsZipModalOpen(true)}
+            onOpenZipModal={() => {}}
           />
         )}
       </main>
 
-      {/* Footer */}
+      {/* Footer (تم حذف زر تحميل المشروع بالكامل) */}
       <footer className="bg-white border-t border-slate-200 mt-12 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 font-medium">
           <div className="flex items-center gap-2">
@@ -144,18 +160,13 @@ function AppContent() {
         onClose={() => setIsSupportModalOpen(false)}
       />
 
-      <ZipDownloadModal
-        isOpen={isZipModalOpen}
-        onClose={() => setIsZipModalOpen(false)}
-      />
-
-      {currentStudent && activeQuizSubject && (
+      {(currentStudent || isAdmin) && activeQuizSubject && (
         <InteractiveQuizModal
           isOpen={isQuizModalOpen}
           onClose={() => setIsQuizModalOpen(false)}
           subject={activeQuizSubject}
           questions={activeQuizQuestions}
-          gradeId={currentStudent.gradeId}
+          gradeId={currentStudent ? currentStudent.gradeId : (adminInspectingGradeId || 'grade-1')}
           onViewCertificate={handleViewCertificate}
         />
       )}
@@ -196,3 +207,4 @@ export default function App() {
     </EduProvider>
   );
 }
+

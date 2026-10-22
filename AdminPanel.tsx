@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useEdu } from '../context/EduContext';
 import { GradeId, Question, Subject, SubscriptionType } from '../types/index';
 import { GRADES_DATA } from '../data/initialData';
@@ -24,6 +24,14 @@ import {
   AlertCircle,
   Clock,
   CheckCheck,
+  Image,
+  LogOut,
+  Video,
+  PlayCircle,
+  Play,
+  ExternalLink,
+  Layers,
+  FileText
 } from 'lucide-react';
 
 const OFFICIAL_IRAQI_SUBJECTS: Record<GradeId, { id: string; name: string }[]> = {
@@ -74,6 +82,58 @@ const OFFICIAL_IRAQI_SUBJECTS: Record<GradeId, { id: string; name: string }[]> =
   ],
 };
 
+interface CustomVideo {
+  id: string;
+  gradeId: GradeId;
+  subjectId: string;
+  subjectName: string;
+  title: string;
+  youtubeUrl: string;
+  chapter: string;
+}
+
+const STORAGE_KEYS = {
+  CUSTOM_VIDEOS: 'iraq_edu_admin_custom_videos_v1',
+};
+
+function getYouTubeEmbedUrl(url: string): string {
+  if (!url) return '';
+  if (url.includes('embed/')) return url;
+  const matchShort = url.match(/youtu\.be\/([a-zA-Z0-9_-]+)/);
+  if (matchShort) return `https://www.youtube.com/embed/${matchShort[1]}`;
+  const matchLong = url.match(/[?&]v=([a-zA-Z0-9_-]+)/);
+  if (matchLong) return `https://www.youtube.com/embed/${matchLong[1]}`;
+  return url;
+}
+
+export function formatIraqiLastSeen(lastActiveAt?: string, isOnline?: boolean): { label: string; isLive: boolean } {
+  if (!lastActiveAt) {
+    return { label: 'غير مسجل', isLive: false };
+  }
+  const date = new Date(lastActiveAt);
+  const diffMs = Date.now() - date.getTime();
+  const diffMins = Math.floor(diffMs / (60 * 1000));
+  const diffHours = Math.floor(diffMins / 60);
+
+  if (isOnline && diffMins <= 3) {
+    return { label: '🟢 متصل الآن (نشط)', isLive: true };
+  }
+
+  if (diffMins < 1) {
+    return { label: 'آخر ظهور: قبل لحظات', isLive: false };
+  }
+  if (diffMins < 60) {
+    return { label: `آخر ظهور: منذ ${diffMins} دقيقة`, isLive: false };
+  }
+  if (diffHours < 24) {
+    const timeStr = date.toLocaleTimeString('ar-IQ', { hour: '2-digit', minute: '2-digit' });
+    return { label: `آخر ظهور: اليوم ${timeStr}`, isLive: false };
+  }
+  const dateStr = date.toLocaleDateString('ar-IQ', { month: 'numeric', day: 'numeric' });
+  const timeStr = date.toLocaleTimeString('ar-IQ', { hour: '2-digit', minute: '2-digit' });
+  return { label: `آخر ظهور: ${dateStr} الساعة ${timeStr}`, isLive: false };
+}
+
 export const AdminPanel: React.FC = () => {
   const {
     students,
@@ -93,15 +153,19 @@ export const AdminPanel: React.FC = () => {
     updateSubscriptionConfig,
     approveSubscriptionRequest,
     rejectSubscriptionRequest,
+    logoutAdmin,
   } = useEdu();
 
+  // Active Tab
   const [activeTab, setActiveTab] = useState<
-    'students' | 'requests' | 'pricing' | 'curriculum' | 'security'
+    'curriculum' | 'videos' | 'students' | 'requests' | 'pricing' | 'security'
   >('curriculum');
 
+  // Students Search & Filter
   const [studentSearch, setStudentSearch] = useState('');
   const [selectedGradeFilter, setSelectedGradeFilter] = useState<string>('all');
 
+  // Pricing State
   const [newPrice, setNewPrice] = useState(subscriptionConfig.price);
   const [newCurrency, setNewCurrency] = useState(subscriptionConfig.currency);
   const [newPeriodName, setNewPeriodName] = useState(subscriptionConfig.periodName);
@@ -109,10 +173,12 @@ export const AdminPanel: React.FC = () => {
   const [newQiCard, setNewQiCard] = useState(subscriptionConfig.qiCardNumber);
   const [pricingFeedback, setPricingFeedback] = useState(false);
 
+  // Security Credentials State
   const [newAdminUser, setNewAdminUser] = useState(adminUsername);
   const [newAdminPass, setNewAdminPass] = useState('');
   const [securityFeedback, setSecurityFeedback] = useState<{ text: string; success: boolean } | null>(null);
 
+  // Question Modal & Form State (المنهج وكتابة الآيات والأحاديث والأسئلة والشرح)
   const [isQuestionModalOpen, setIsQuestionModalOpen] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
 
@@ -120,18 +186,74 @@ export const AdminPanel: React.FC = () => {
   const [formBadgeType, setFormBadgeType] = useState<'none' | 'ministerial' | 'smart_challenge' | 'focus_tip'>('none');
   const [isCustomSubject, setIsCustomSubject] = useState(false);
   const [customSubjectName, setCustomSubjectName] = useState('');
-  const [formGradeId, setFormGradeId] = useState<GradeId>('grade-5');
-  const [formSubjectId, setFormSubjectId] = useState<string>('ar-5');
+  const [formGradeId, setFormGradeId] = useState<GradeId>('grade-1');
+  const [formSubjectId, setFormSubjectId] = useState<string>('isl-1');
   const [formChapter, setFormChapter] = useState('');
   const [formLesson, setFormLesson] = useState('');
   const [formQuestionText, setFormQuestionText] = useState('');
   const [formAnswerText, setFormAnswerText] = useState('');
+  const [formImageUrl, setFormImageUrl] = useState('');
   const [formOptions, setFormOptions] = useState<string[]>(['', '', '', '']);
   const [formCorrectIndex, setFormCorrectIndex] = useState(0);
   const [formExplanation, setFormExplanation] = useState('');
   const [formIsVipOnly, setFormIsVipOnly] = useState(false);
   const [formDifficulty, setFormDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
 
+  // Questions Filters
+  const [qGradeFilter, setQGradeFilter] = useState<string>('all');
+  const [qSubjectFilter, setQSubjectFilter] = useState<string>('all');
+  const [qSearchQuery, setQSearchQuery] = useState<string>('');
+
+  // Videos State & In-Panel Player
+  const [videosList, setVideosList] = useState<CustomVideo[]>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEYS.CUSTOM_VIDEOS);
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return [];
+  });
+  const [playingVideoUrl, setPlayingVideoUrl] = useState<string | null>(null);
+
+  const [newVidGrade, setNewVidGrade] = useState<GradeId>('grade-1');
+  const [newVidSubjectId, setNewVidSubjectId] = useState('ar-1');
+  const [newVidTitle, setNewVidTitle] = useState('');
+  const [newVidUrl, setNewVidUrl] = useState('');
+  const [newVidChapter, setNewVidChapter] = useState('الفصل الأول');
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.CUSTOM_VIDEOS, JSON.stringify(videosList));
+  }, [videosList]);
+
+  // Handle Add Video
+  const handleAddVideo = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newVidTitle.trim() || !newVidUrl.trim()) {
+      playWrongSound();
+      return;
+    }
+    const subjectsForGrade = OFFICIAL_IRAQI_SUBJECTS[newVidGrade] || [];
+    const targetSub = subjectsForGrade.find((s) => s.id === newVidSubjectId);
+    const newVid: CustomVideo = {
+      id: `vid-${Date.now()}`,
+      gradeId: newVidGrade,
+      subjectId: newVidSubjectId,
+      subjectName: targetSub ? targetSub.name : 'المنهج العام',
+      title: newVidTitle.trim(),
+      youtubeUrl: newVidUrl.trim(),
+      chapter: newVidChapter.trim() || 'الفصل الأول',
+    };
+    setVideosList((prev) => [...prev, newVid]);
+    playCorrectSound();
+    setNewVidTitle('');
+    setNewVidUrl('');
+  };
+
+  const handleDeleteVideo = (id: string) => {
+    playClickSound();
+    setVideosList((prev) => prev.filter((v) => v.id !== id));
+  };
+
+  // Filtered Students
   const filteredStudents = students.filter((s) => {
     const matchGrade = selectedGradeFilter === 'all' || s.gradeId === selectedGradeFilter;
     const matchSearch =
@@ -140,9 +262,16 @@ export const AdminPanel: React.FC = () => {
     return matchGrade && matchSearch;
   });
 
-  const [qGradeFilter, setQGradeFilter] = useState<string>('all');
+  // Filtered Questions
   const filteredQuestions = questions.filter((q) => {
-    return qGradeFilter === 'all' || q.gradeId === qGradeFilter;
+    const matchGrade = qGradeFilter === 'all' || q.gradeId === qGradeFilter;
+    const matchSubject = qSubjectFilter === 'all' || q.subjectId === qSubjectFilter;
+    const matchSearch =
+      !qSearchQuery.trim() ||
+      q.questionText.toLowerCase().includes(qSearchQuery.toLowerCase()) ||
+      q.answerText.toLowerCase().includes(qSearchQuery.toLowerCase()) ||
+      (q.chapter && q.chapter.toLowerCase().includes(qSearchQuery.toLowerCase()));
+    return matchGrade && matchSubject && matchSearch;
   });
 
   const insertFormatting = (prefix: string, suffix: string, target: 'question' | 'answer') => {
@@ -162,8 +291,8 @@ export const AdminPanel: React.FC = () => {
   const handleOpenAddQuestion = () => {
     playClickSound();
     setEditingQuestion(null);
-    setFormGradeId('grade-5');
-    setFormSubjectId('ar-5');
+    setFormGradeId('grade-1');
+    setFormSubjectId('isl-1');
     setIsCustomSubject(false);
     setCustomSubjectName('');
     setFormQuestionType('qa');
@@ -172,6 +301,7 @@ export const AdminPanel: React.FC = () => {
     setFormLesson('');
     setFormQuestionText('');
     setFormAnswerText('');
+    setFormImageUrl('');
     setFormOptions(['', '', '', '']);
     setFormCorrectIndex(0);
     setFormExplanation('');
@@ -193,6 +323,7 @@ export const AdminPanel: React.FC = () => {
     setFormLesson(q.lessonName || '');
     setFormQuestionText(q.questionText);
     setFormAnswerText(q.answerText);
+    setFormImageUrl((q as any).imageUrl || '');
     setFormOptions(q.options && q.options.length >= 2 ? q.options : ['', '', '', '']);
     setFormCorrectIndex(q.correctAnswerIndex ?? 0);
     setFormExplanation(q.explanation || '');
@@ -205,52 +336,63 @@ export const AdminPanel: React.FC = () => {
     e.preventDefault();
     if (!formQuestionText.trim() || !formAnswerText.trim()) {
       playWrongSound();
+      alert('يرجى كتابة نص السؤال والجواب المعتمد أولاً');
       return;
     }
 
-    const finalSubjectId = isCustomSubject && customSubjectName.trim()
-      ? `custom-${customSubjectName.trim().toLowerCase().replace(/\s+/g, '-')}`
-      : formSubjectId;
+    try {
+      const finalSubjectId = isCustomSubject && customSubjectName.trim()
+        ? `custom-${customSubjectName.trim().toLowerCase().replace(/\s+/g, '-')}`
+        : formSubjectId;
 
-    let cleanOptions: string[] = [];
-    if (formQuestionType === 'multiple_choice') {
-      cleanOptions = formOptions.filter((opt) => opt.trim().length > 0);
-      if (cleanOptions.length < 2) {
-        cleanOptions = [formAnswerText.trim(), 'خيار 1', 'خيار 2'];
+      let cleanOptions: string[] = [];
+      if (formQuestionType === 'multiple_choice') {
+        cleanOptions = formOptions.filter((opt) => opt.trim().length > 0);
+        if (cleanOptions.length < 2) {
+          cleanOptions = [formAnswerText.trim(), 'خيار 1', 'خيار 2'];
+        }
+      } else if (formQuestionType === 'fill_in_the_blank') {
+        const customOpts = formOptions.filter((opt) => opt.trim().length > 0);
+        cleanOptions = customOpts.length >= 2 ? customOpts : [formAnswerText.trim()];
+      } else {
+        cleanOptions = [];
       }
-    } else if (formQuestionType === 'fill_in_the_blank') {
-      const customOpts = formOptions.filter((opt) => opt.trim().length > 0);
-      cleanOptions = customOpts.length >= 2 ? customOpts : [formAnswerText.trim()];
-    } else {
-      cleanOptions = [];
+
+      const payload: any = {
+        gradeId: formGradeId,
+        subjectId: finalSubjectId,
+        chapter: formChapter.trim() || 'الفصل الأول',
+        lessonName: formLesson.trim(),
+        questionText: formQuestionText.trim(),
+        answerText: formAnswerText.trim(),
+        options: cleanOptions,
+        correctAnswerIndex: formCorrectIndex < cleanOptions.length ? formCorrectIndex : 0,
+        explanation: formExplanation.trim(),
+        isVipOnly: formIsVipOnly,
+        difficulty: formDifficulty,
+        questionType: formQuestionType,
+        badgeType: formBadgeType,
+        tags: [getIraqiGradeName(formGradeId), formBadgeType !== 'none' ? formBadgeType : ''].filter(Boolean),
+      };
+
+      if (formImageUrl.trim()) {
+        payload.imageUrl = formImageUrl.trim();
+      }
+
+      if (editingQuestion) {
+        updateQuestion(editingQuestion.id, payload);
+      } else {
+        addQuestion(payload);
+      }
+
+      playCorrectSound();
+      setIsQuestionModalOpen(false);
+      setEditingQuestion(null);
+      alert('تم حفظ وتثبيت المنهج والسؤال بنجاح في المنصة! ✓');
+    } catch (err: any) {
+      console.error('Error saving question:', err);
+      alert('حدث خطأ أثناء الحفظ: ' + (err?.message || 'يرجى مراجعة البيانات'));
     }
-
-    const payload: any = {
-      ...(editingQuestion || { id: `q-${Date.now()}` }),
-      gradeId: formGradeId,
-      subjectId: finalSubjectId,
-      chapter: formChapter.trim() || 'الفصل الأول',
-      lessonName: formLesson.trim(),
-      questionText: formQuestionText.trim(),
-      answerText: formAnswerText.trim(),
-      options: cleanOptions,
-      correctAnswerIndex: formCorrectIndex < cleanOptions.length ? formCorrectIndex : 0,
-      explanation: formExplanation.trim(),
-      isVipOnly: formIsVipOnly,
-      difficulty: formDifficulty,
-      questionType: formQuestionType,
-      badgeType: formBadgeType,
-      tags: [getIraqiGradeName(formGradeId), formBadgeType !== 'none' ? formBadgeType : ''].filter(Boolean),
-    };
-
-    if (editingQuestion) {
-      updateQuestion(payload);
-    } else {
-      addQuestion(payload);
-    }
-
-    playCorrectSound();
-    setIsQuestionModalOpen(false);
   };
 
   const handleSavePricing = (e: React.FormEvent) => {
@@ -284,7 +426,7 @@ export const AdminPanel: React.FC = () => {
     if (success) {
       playCorrectSound();
       setSecurityFeedback({
-        text: 'تم تحديث اسم المشرف وكلمة المرور بنجاح في قاعدة البيانات السحابية 🔒',
+        text: 'تم تحديث اسم المشرف وكلمة المرور بنجاح 🔒',
         success: true,
       });
       setNewAdminPass('');
@@ -295,7 +437,8 @@ export const AdminPanel: React.FC = () => {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-300">
+    <div className="space-y-6 animate-in fade-in duration-200">
+      {/* Top Banner with Direct Password Shortcut & Logout */}
       <div className="rounded-3xl bg-slate-900 text-white p-6 sm:p-8 shadow-xl">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-slate-800">
           <div className="flex items-center gap-3">
@@ -305,30 +448,60 @@ export const AdminPanel: React.FC = () => {
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-xl sm:text-2xl font-black">
-                  لوحة تحكم المشرف العام (Admin Control Center)
+                  لوحة تحكم المشرف العام (Admin Control Panel)
                 </h1>
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
                   حساب محمي 🔒
                 </span>
               </div>
               <p className="text-xs text-slate-400 font-medium mt-1">
-                مشرف المنصة: <strong className="text-rose-300 font-mono">{adminUsername}</strong> • إدارة كاملة للطلبة، الأسعار، المناهج والاشتراكات
+                مشرف المنصة: <strong className="text-rose-300 font-mono">{adminUsername}</strong> • إدارة كاملة للطلبة، بنك المناهج، الفيديوهات والاشتراكات
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={() => {
+                playClickSound();
+                setActiveTab('security');
+              }}
+              className="px-4 py-2.5 rounded-2xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer"
+            >
+              <KeyRound className="w-4 h-4 text-amber-400" />
+              <span>تغيير باسورد المشرف 🔒</span>
+            </button>
+
+            <button
+              onClick={() => {
+                playClickSound();
+                logoutAdmin();
+              }}
+              className="px-4 py-2.5 rounded-2xl bg-rose-600 hover:bg-rose-500 text-white font-extrabold text-xs flex items-center gap-1.5 shadow-md shadow-rose-600/30 transition-all cursor-pointer"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>خروج المشرف</span>
+            </button>
+
             <button
               onClick={handleOpenAddQuestion}
               className="px-4 py-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs flex items-center gap-1.5 shadow-md shadow-emerald-600/30 transition-all cursor-pointer"
             >
               <PlusCircle className="w-4 h-4" />
-              <span>إضافة سؤال أو درس جديد</span>
+              <span>كتابة درس / آيات / أسئلة جديدة</span>
             </button>
           </div>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-6">
+          <div className="p-4 rounded-2xl bg-slate-800/60 border border-slate-700/60">
+            <span className="text-xs text-slate-400 font-bold block mb-1">إجمالي المناهج والأسئلة</span>
+            <span className="text-2xl font-black text-emerald-400">{questions.length}</span>
+          </div>
+          <div className="p-4 rounded-2xl bg-slate-800/60 border border-slate-700/60">
+            <span className="text-xs text-slate-400 font-bold block mb-1">شروحات اليوتيوب المضافة</span>
+            <span className="text-2xl font-black text-rose-400">{videosList.length}</span>
+          </div>
           <div className="p-4 rounded-2xl bg-slate-800/60 border border-slate-700/60">
             <span className="text-xs text-slate-400 font-bold block mb-1">إجمالي الطلبة المسجلين</span>
             <span className="text-2xl font-black text-white">{students.length}</span>
@@ -339,33 +512,39 @@ export const AdminPanel: React.FC = () => {
               {students.filter((s) => s.subscription === 'paid').length}
             </span>
           </div>
-          <div className="p-4 rounded-2xl bg-slate-800/60 border border-slate-700/60">
-            <span className="text-xs text-slate-400 font-bold block mb-1">طلبات التفعيل المعلقة</span>
-            <span className="text-2xl font-black text-rose-400">
-              {subscriptionRequests.filter((r) => r.status === 'pending').length}
-            </span>
-          </div>
-          <div className="p-4 rounded-2xl bg-slate-800/60 border border-slate-700/60">
-            <span className="text-xs text-slate-400 font-bold block mb-1">بنك الأسئلة والمناهج</span>
-            <span className="text-2xl font-black text-emerald-400">{questions.length}</span>
-          </div>
         </div>
       </div>
 
-      <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-slate-200">
+      {/* Tabs Row - flex-wrap to prevent overflow */}
+      <div className="flex flex-wrap items-center gap-2 pb-2">
         <button
           onClick={() => {
             playClickSound();
             setActiveTab('curriculum');
           }}
-          className={`px-4 py-3 rounded-2xl font-black text-xs sm:text-sm flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
+          className={`px-4 py-3 rounded-2xl font-black text-xs sm:text-sm flex items-center gap-2 transition-all cursor-pointer ${
             activeTab === 'curriculum'
               ? 'bg-slate-900 text-white shadow-md'
               : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
           }`}
         >
           <BookOpen className="w-4 h-4 text-emerald-400" />
-          <span>بنك المناهج وإضافة الأسئلة</span>
+          <span>بنك المناهج وإضافة الدروس والأسئلة ({questions.length})</span>
+        </button>
+
+        <button
+          onClick={() => {
+            playClickSound();
+            setActiveTab('videos');
+          }}
+          className={`px-4 py-3 rounded-2xl font-black text-xs sm:text-sm flex items-center gap-2 transition-all cursor-pointer ${
+            activeTab === 'videos'
+              ? 'bg-slate-900 text-white shadow-md'
+              : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+          }`}
+        >
+          <Video className="w-4 h-4 text-rose-500" />
+          <span>شروحات وفيديوهات اليوتيوب ({videosList.length})</span>
         </button>
 
         <button
@@ -373,14 +552,14 @@ export const AdminPanel: React.FC = () => {
             playClickSound();
             setActiveTab('students');
           }}
-          className={`px-4 py-3 rounded-2xl font-black text-xs sm:text-sm flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
+          className={`px-4 py-3 rounded-2xl font-black text-xs sm:text-sm flex items-center gap-2 transition-all cursor-pointer ${
             activeTab === 'students'
               ? 'bg-slate-900 text-white shadow-md'
               : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
           }`}
         >
           <Users className="w-4 h-4 text-sky-400" />
-          <span>إدارة الطلبة والاشتراكات ({students.length})</span>
+          <span>إدارة الطلبة والتواجد ({students.length})</span>
         </button>
 
         <button
@@ -388,7 +567,7 @@ export const AdminPanel: React.FC = () => {
             playClickSound();
             setActiveTab('requests');
           }}
-          className={`px-4 py-3 rounded-2xl font-black text-xs sm:text-sm flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
+          className={`px-4 py-3 rounded-2xl font-black text-xs sm:text-sm flex items-center gap-2 transition-all cursor-pointer ${
             activeTab === 'requests'
               ? 'bg-slate-900 text-white shadow-md'
               : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
@@ -403,14 +582,14 @@ export const AdminPanel: React.FC = () => {
             playClickSound();
             setActiveTab('pricing');
           }}
-          className={`px-4 py-3 rounded-2xl font-black text-xs sm:text-sm flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
+          className={`px-4 py-3 rounded-2xl font-black text-xs sm:text-sm flex items-center gap-2 transition-all cursor-pointer ${
             activeTab === 'pricing'
               ? 'bg-slate-900 text-white shadow-md'
               : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
           }`}
         >
           <DollarSign className="w-4 h-4 text-emerald-400" />
-          <span>تعديل سعر الاشتراك والمدفوعات</span>
+          <span>الأسعار والدفع</span>
         </button>
 
         <button
@@ -418,50 +597,95 @@ export const AdminPanel: React.FC = () => {
             playClickSound();
             setActiveTab('security');
           }}
-          className={`px-4 py-3 rounded-2xl font-black text-xs sm:text-sm flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
+          className={`px-4 py-3 rounded-2xl font-black text-xs sm:text-sm flex items-center gap-2 transition-all cursor-pointer ${
             activeTab === 'security'
               ? 'bg-slate-900 text-white shadow-md'
               : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
           }`}
         >
           <KeyRound className="w-4 h-4 text-rose-400" />
-          <span>الأمان والحماية</span>
+          <span>حساب المشرف 🔒</span>
         </button>
       </div>
 
+      {/* TAB 1: CURRICULUM & QUESTIONS BANK (كتابة المنهج والآيات والأحاديث والأسئلة والشرح) */}
       {activeTab === 'curriculum' && (
         <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200">
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-slate-500 font-bold">تصفية حسب الصف:</span>
-              <select
-                value={qGradeFilter}
-                onChange={(e) => setQGradeFilter(e.target.value)}
-                className="text-xs px-3 py-2 rounded-xl border border-slate-200 bg-white font-bold"
+          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-3">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs text-slate-500 font-bold shrink-0">المرحلة:</span>
+                  <select
+                    value={qGradeFilter}
+                    onChange={(e) => {
+                      setQGradeFilter(e.target.value);
+                      setQSubjectFilter('all');
+                    }}
+                    className="text-xs px-3 py-2 rounded-xl border border-slate-200 bg-white font-bold cursor-pointer"
+                  >
+                    <option value="all">جميع المراحل ({questions.length})</option>
+                    {GRADES_DATA.map((g) => (
+                      <option key={g.id} value={g.id}>
+                        {g.name} ({questions.filter((q) => q.gradeId === g.id).length})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs text-slate-500 font-bold shrink-0">المادة:</span>
+                  <select
+                    value={qSubjectFilter}
+                    onChange={(e) => setQSubjectFilter(e.target.value)}
+                    className="text-xs px-3 py-2 rounded-xl border border-slate-200 bg-white font-bold cursor-pointer"
+                  >
+                    <option value="all">
+                      {qGradeFilter === 'all' ? 'جميع المواد الدراسية' : `جميع مواد ${getIraqiGradeName(qGradeFilter as GradeId)}`}
+                    </option>
+                    {(qGradeFilter !== 'all'
+                      ? OFFICIAL_IRAQI_SUBJECTS[qGradeFilter as GradeId] || []
+                      : Object.values(OFFICIAL_IRAQI_SUBJECTS).flat()
+                    ).map((s) => {
+                      const count = questions.filter(
+                        (q) => (qGradeFilter === 'all' || q.gradeId === qGradeFilter) && q.subjectId === s.id
+                      ).length;
+                      return (
+                        <option key={s.id} value={s.id}>
+                          {s.name} ({count})
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
+              </div>
+
+              <button
+                onClick={handleOpenAddQuestion}
+                className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs flex items-center justify-center gap-1.5 shadow-xs cursor-pointer shrink-0"
               >
-                <option value="all">جميع الصفوف ({questions.length})</option>
-                {GRADES_DATA.map((g) => (
-                  <option key={g.id} value={g.id}>
-                    {g.name} ({questions.filter((q) => q.gradeId === g.id).length})
-                  </option>
-                ))}
-              </select>
+                <PlusCircle className="w-4 h-4" />
+                <span>إضافة درس أو سؤال أو آيات جديدة ✍️</span>
+              </button>
             </div>
 
-            <button
-              onClick={handleOpenAddQuestion}
-              className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-xs cursor-pointer"
-            >
-              <PlusCircle className="w-4 h-4" />
-              <span>إضافة سؤال جديد (س وج / فراغات / اختبار)</span>
-            </button>
+            <div className="relative">
+              <Search className="absolute right-3.5 top-2.5 w-4 h-4 text-slate-400" />
+              <input
+                type="text"
+                value={qSearchQuery}
+                onChange={(e) => setQSearchQuery(e.target.value)}
+                placeholder="ابحث بالنص، الموضوع، الآية، الحديث، الجواب..."
+                className="w-full pr-10 pl-4 py-2 rounded-xl border border-slate-200 text-xs font-bold outline-none focus:border-emerald-500 bg-slate-50/50"
+              />
+            </div>
           </div>
 
           <div className="space-y-3">
             {filteredQuestions.map((q) => (
               <div
                 key={q.id}
-                className="p-5 rounded-2xl bg-white border border-slate-200 hover:border-slate-300 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4"
+                className="p-5 rounded-2xl bg-white border border-slate-200 hover:border-slate-300 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 text-right"
               >
                 <div className="space-y-1.5 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
@@ -495,11 +719,11 @@ export const AdminPanel: React.FC = () => {
                       </span>
                     ) : q.questionType === 'qa' || (!q.options || q.options.length < 2) ? (
                       <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-blue-100 text-blue-900 border border-blue-300">
-                        📝 سؤال وجواب
+                        📝 سؤال وجواب / شرح
                       </span>
                     ) : (
                       <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-900 border border-emerald-300">
-                        🔘 اختبار خيارات
+                        🔘 خيارات تفاعلية
                       </span>
                     )}
                     {q.isVipOnly && (
@@ -514,7 +738,7 @@ export const AdminPanel: React.FC = () => {
                   </h3>
 
                   <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                    <span className="font-bold text-emerald-800">الجواب المعتمد: </span>
+                    <span className="font-bold text-emerald-800">الجواب / النص المعتمد: </span>
                     {q.answerText}
                   </p>
                 </div>
@@ -530,13 +754,13 @@ export const AdminPanel: React.FC = () => {
 
                   <button
                     onClick={() => {
-                      if (confirm('هل أنت متأكد من حذف هذا السؤال؟')) {
+                      if (confirm('هل أنت متأكد من حذف هذا السؤال/الدرس؟')) {
                         deleteQuestion(q.id);
                         playClickSound();
                       }
                     }}
                     className="p-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 cursor-pointer"
-                    title="حذف السؤال"
+                    title="حذف"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -547,6 +771,154 @@ export const AdminPanel: React.FC = () => {
         </div>
       )}
 
+      {/* TAB 2: YOUTUBE VIDEOS WITH IN-PANEL PLAYER */}
+      {activeTab === 'videos' && (
+        <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-200 space-y-6">
+          <div>
+            <h2 className="text-base font-black text-slate-900 flex items-center gap-2">
+              <PlayCircle className="w-5 h-5 text-rose-600" />
+              <span>إضافة وإدارة شروحات وفيديوهات اليوتيوب المعتمدة</span>
+            </h2>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">
+              كل فيديو تضيفه سيرتبط بمادته حصراً، ويمكنك تشغيله ومعاينته مباشرة داخل لوحة التحكم
+            </p>
+          </div>
+
+          <form onSubmit={handleAddVideo} className="grid grid-cols-1 sm:grid-cols-5 gap-3">
+            <div>
+              <label className="block text-xs font-black text-slate-700 mb-1">المرحلة الدراسية:</label>
+              <select
+                value={newVidGrade}
+                onChange={(e) => {
+                  const g = e.target.value as GradeId;
+                  setNewVidGrade(g);
+                  const matching = OFFICIAL_IRAQI_SUBJECTS[g] || [];
+                  if (matching.length > 0) setNewVidSubjectId(matching[0].id);
+                }}
+                className="w-full p-2.5 rounded-xl border border-slate-200 text-xs font-bold outline-none cursor-pointer bg-white"
+              >
+                {GRADES_DATA.map((g) => (
+                  <option key={g.id} value={g.id}>
+                    {g.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-black text-slate-700 mb-1">القسم / المادة:</label>
+              <select
+                value={newVidSubjectId}
+                onChange={(e) => setNewVidSubjectId(e.target.value)}
+                className="w-full p-2.5 rounded-xl border border-slate-200 text-xs font-bold outline-none cursor-pointer bg-white"
+              >
+                {(OFFICIAL_IRAQI_SUBJECTS[newVidGrade] || []).map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-black text-slate-700 mb-1">عنوان الشرح أو الدرس:</label>
+              <input
+                type="text"
+                value={newVidTitle}
+                onChange={(e) => setNewVidTitle(e.target.value)}
+                placeholder="اكتب عنوان الشرح هنا..."
+                className="w-full p-2.5 rounded-xl border border-slate-200 text-xs font-bold outline-none focus:border-emerald-500"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-black text-slate-700 mb-1">رابط يوتيوب (YouTube URL):</label>
+              <input
+                type="url"
+                value={newVidUrl}
+                onChange={(e) => setNewVidUrl(e.target.value)}
+                placeholder="https://youtu.be/..."
+                className="w-full p-2.5 rounded-xl border border-slate-200 text-xs font-bold outline-none font-mono"
+                dir="ltr"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-black text-slate-700 mb-1">إجراء الحفظ:</label>
+              <button
+                type="submit"
+                className="w-full py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black text-xs shadow-md transition-all cursor-pointer flex items-center justify-center gap-1.5"
+              >
+                <PlusCircle className="w-4 h-4" />
+                <span>إضافة الفيديو 🎥</span>
+              </button>
+            </div>
+          </form>
+
+          {/* Videos List with Direct Player */}
+          <div className="pt-4 border-t border-slate-100 space-y-4">
+            <h3 className="text-xs font-black text-slate-800">قائمة الفيديوهات المضافة:</h3>
+            {videosList.length === 0 ? (
+              <p className="text-xs text-slate-500 p-6 bg-slate-50 rounded-2xl border border-slate-200 text-center">
+                لا توجد فيديوهات مسجلة حالياً. استخدم النموذج أعلاه لإضافة شروحات فيديو لأي مادة.
+              </p>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {videosList.map((vd) => (
+                  <div key={vd.id} className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3 text-right">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-rose-100 text-rose-800">
+                        {vd.subjectName}
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-medium">
+                        {getIraqiGradeName(vd.gradeId)}
+                      </span>
+                    </div>
+
+                    <h4 className="text-sm font-black text-slate-900">{vd.title}</h4>
+
+                    {/* Inline Player Option */}
+                    <div className="aspect-video w-full rounded-xl overflow-hidden bg-slate-950 border border-slate-300 shadow-2xs">
+                      <iframe
+                        src={getYouTubeEmbedUrl(vd.youtubeUrl)}
+                        title={vd.title}
+                        className="w-full h-full border-0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between pt-2 border-t border-slate-200">
+                      <a
+                        href={vd.youtubeUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs font-bold text-rose-600 hover:text-rose-700 flex items-center gap-1"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                        <span>فتح في يوتيوب</span>
+                      </a>
+
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteVideo(vd.id)}
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 cursor-pointer transition-colors"
+                        title="حذف الفيديو"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* TAB 3: STUDENTS MANAGEMENT */}
       {activeTab === 'students' && (
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200">
@@ -586,90 +958,108 @@ export const AdminPanel: React.FC = () => {
                     <th className="p-4">الطالب</th>
                     <th className="p-4">اسم المستخدم</th>
                     <th className="p-4">المرحلة الدراسية</th>
+                    <th className="p-4">حالة الاتصال وآخر ظهور</th>
                     <th className="p-4">حالة الاشتراك</th>
-                    <th className="p-4">النقاط والنجوم</th>
                     <th className="p-4 text-center">إجراءات الحساب</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {filteredStudents.map((st) => (
-                    <tr key={st.id} className="hover:bg-slate-50/60 transition-colors">
-                      <td className="p-4 font-bold text-slate-900 flex items-center gap-2.5">
-                        <span className="text-xl">{st.avatar}</span>
-                        <div>
-                          <div>{st.fullName}</div>
-                          <span className="text-[10px] text-slate-400 font-normal">
-                            {st.city || 'العراق'} • {st.schoolName || 'مدرسة ابتدائية'}
+                  {filteredStudents.map((st) => {
+                    const presence = formatIraqiLastSeen((st as any).lastActiveAt, (st as any).isOnline);
+                    return (
+                      <tr key={st.id} className="hover:bg-slate-50/60 transition-colors">
+                        <td className="p-4 font-bold text-slate-900 flex items-center gap-2.5">
+                          <span className="text-xl">{st.avatar || '👦🏻'}</span>
+                          <div>
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span>{st.fullName}</span>
+                              {presence.isLive && (
+                                <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                  🟢 متصل الآن
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-[10px] text-slate-400 font-normal block mt-0.5">
+                              {st.city || 'العراق'} • {st.schoolName || 'مدرسة ابتدائية'}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="p-4 font-mono text-slate-600">{st.username}</td>
+                        <td className="p-4">
+                          <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-100 text-slate-700">
+                            {getIraqiGradeName(st.gradeId)}
                           </span>
-                        </div>
-                      </td>
-                      <td className="p-4 font-mono text-slate-600">{st.username}</td>
-                      <td className="p-4">
-                        <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-100 text-slate-700">
-                          {getIraqiGradeName(st.gradeId)}
-                        </span>
-                      </td>
-                      <td className="p-4">
-                        {st.subscription === 'paid' ? (
-                          <span className="px-2.5 py-1 rounded-full text-[11px] font-black bg-amber-100 text-amber-900 border border-amber-200 flex items-center gap-1 w-max">
-                            <Crown className="w-3.5 h-3.5" /> اشتراك مفعل (VIP)
-                          </span>
-                        ) : (
-                          <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-100 text-slate-600">
-                            حساب مجاني
-                          </span>
-                        )}
-                      </td>
-                      <td className="p-4">
-                        <div className="font-bold text-emerald-700">{st.totalScore} نقطة</div>
-                        <div className="text-[10px] text-slate-400">{st.starsEarned} نجمة مكتسبة</div>
-                      </td>
-                      <td className="p-4">
-                        <div className="flex items-center justify-center gap-1.5">
-                          <button
-                            onClick={() => {
-                              playClickSound();
-                              toggleStudentSubscription(st.id);
-                            }}
-                            className={`px-3 py-1.5 rounded-xl font-bold text-[11px] flex items-center gap-1 cursor-pointer transition-colors ${
-                              st.subscription === 'paid'
-                                ? 'bg-amber-100 hover:bg-amber-200 text-amber-900'
-                                : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs'
-                            }`}
-                          >
-                            <Crown className="w-3 h-3" />
-                            <span>{st.subscription === 'paid' ? 'إلغاء VIP' : 'تفعيل VIP'}</span>
-                          </button>
+                        </td>
+                        <td className="p-4">
+                          <div className="flex items-center gap-1.5">
+                            <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                            <span
+                              className={`text-xs font-bold ${
+                                presence.isLive ? 'text-emerald-700 font-black' : 'text-slate-500'
+                              }`}
+                            >
+                              {presence.label}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="p-4">
+                          {st.subscription === 'paid' ? (
+                            <span className="px-2.5 py-1 rounded-full text-[11px] font-black bg-amber-100 text-amber-900 border border-amber-200 flex items-center gap-1 w-max">
+                              <Crown className="w-3.5 h-3.5" /> VIP مفعل
+                            </span>
+                          ) : (
+                            <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-100 text-slate-600">
+                              مجاني
+                            </span>
+                          )}
+                        </td>
+                        <td className="p-4">
+                          <div className="flex items-center justify-center gap-1.5">
+                            <button
+                              onClick={() => {
+                                playClickSound();
+                                toggleStudentSubscription(st.id);
+                              }}
+                              className={`px-3 py-1.5 rounded-xl font-bold text-[11px] flex items-center gap-1 cursor-pointer transition-colors ${
+                                st.subscription === 'paid'
+                                  ? 'bg-amber-100 hover:bg-amber-200 text-amber-900'
+                                  : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs'
+                              }`}
+                            >
+                              <Crown className="w-3.5 h-3.5" />
+                              <span>{st.subscription === 'paid' ? 'إلغاء VIP' : 'تفعيل VIP'}</span>
+                            </button>
 
-                          <button
-                            onClick={() => {
-                              const newPass = prompt(`أدخل كلمة المرور الجديدة للطالب (${st.fullName}):`, '123');
-                              if (newPass && newPass.trim()) {
-                                resetStudentPassword(st.id, newPass.trim());
-                                alert(`تم تعيين كلمة المرور الجديدة للطالب إلى: ${newPass.trim()}`);
-                              }
-                            }}
-                            className="p-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600"
-                            title="إعادة تعيين كلمة المرور"
-                          >
-                            <KeyRound className="w-4 h-4" />
-                          </button>
+                            <button
+                              onClick={() => {
+                                const newPass = prompt(`أدخل كلمة المرور الجديدة للطالب (${st.fullName}):`, '123');
+                                if (newPass && newPass.trim()) {
+                                  resetStudentPassword(st.id, newPass.trim());
+                                  alert(`تم تعيين كلمة المرور الجديدة للطالب إلى: ${newPass.trim()}`);
+                                }
+                              }}
+                              className="p-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600"
+                              title="تغيير كلمة مرور الطالب"
+                            >
+                              <KeyRound className="w-4 h-4" />
+                            </button>
 
-                          <button
-                            onClick={() => {
-                              if (confirm(`هل أنت متأكد من حذف حساب الطالب (${st.fullName})؟`)) {
-                                deleteStudent(st.id);
-                              }
-                            }}
-                            className="p-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700"
-                            title="حذف الطالب"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                            <button
+                              onClick={() => {
+                                if (confirm(`هل أنت متأكد من حذف حساب الطالب (${st.fullName})؟`)) {
+                                  deleteStudent(st.id);
+                                }
+                              }}
+                              className="p-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700"
+                              title="حذف الطالب"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -677,11 +1067,12 @@ export const AdminPanel: React.FC = () => {
         </div>
       )}
 
+      {/* TAB 4: REQUESTS */}
       {activeTab === 'requests' && (
         <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-xs">
           <div className="p-5 border-b border-slate-100 flex items-center justify-between">
             <h2 className="font-black text-slate-900 text-base">
-              طلبات اشتراك أولياء الأمور والطلبة (تأكيد الدفع)
+              طلبات اشتراك أولياء الأمور والطلبة (VIP)
             </h2>
             <span className="text-xs font-bold px-3 py-1 rounded-full bg-amber-100 text-amber-900">
               {subscriptionRequests.filter((r) => r.status === 'pending').length} طلب بحاجة للموافقة
@@ -696,7 +1087,7 @@ export const AdminPanel: React.FC = () => {
                   <th className="p-4">المرحلة</th>
                   <th className="p-4">طريقة الدفع</th>
                   <th className="p-4">المبلغ</th>
-                  <th className="p-4">ملاحظات / رقم الحوالة</th>
+                  <th className="p-4">رقم الهاتف / الوصل</th>
                   <th className="p-4">الحالة</th>
                   <th className="p-4 text-center">القرار</th>
                 </tr>
@@ -709,36 +1100,19 @@ export const AdminPanel: React.FC = () => {
                       <span className="text-[10px] font-mono text-slate-400">@{req.username}</span>
                     </td>
                     <td className="p-4">{getIraqiGradeName(req.gradeId)}</td>
-                    <td className="p-4 font-bold text-slate-700">
-                      {req.paymentMethod === 'zain_cash'
-                        ? 'محفظة زين كاش'
-                        : req.paymentMethod === 'qi_card'
-                        ? 'بطاقة كي كارد'
-                        : req.paymentMethod === 'asia_cell'
-                        ? 'رصيد آسياسيل'
-                        : 'نقدي'}
-                    </td>
+                    <td className="p-4 font-bold text-slate-700">{req.paymentMethod}</td>
                     <td className="p-4 font-black text-emerald-700">
                       {formatIraqiDinar(req.amount, req.currency)}
                     </td>
-                    <td className="p-4 text-slate-600">
-                      {req.paymentPhoneOrRef && (
-                        <div className="font-mono text-slate-900">{req.paymentPhoneOrRef}</div>
-                      )}
-                      {req.notes && <div className="text-[11px] text-slate-500">{req.notes}</div>}
-                    </td>
+                    <td className="p-4 text-slate-600 font-mono" dir="ltr">{req.paymentPhoneOrRef || '-'}</td>
                     <td className="p-4">
                       {req.status === 'pending' ? (
                         <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 flex items-center gap-1 w-max">
                           <Clock className="w-3.5 h-3.5" /> بانتظار التأكيد
                         </span>
-                      ) : req.status === 'approved' ? (
+                      ) : (
                         <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-900 flex items-center gap-1 w-max">
                           <Check className="w-3.5 h-3.5" /> تم التفعيل
-                        </span>
-                      ) : (
-                        <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-100 text-rose-900">
-                          مرفوض
                         </span>
                       )}
                     </td>
@@ -755,15 +1129,6 @@ export const AdminPanel: React.FC = () => {
                             <CheckCheck className="w-3.5 h-3.5" />
                             <span>قبول وتفعيل VIP</span>
                           </button>
-                          <button
-                            onClick={() => {
-                              playClickSound();
-                              rejectSubscriptionRequest(req.id);
-                            }}
-                            className="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-rose-100 text-rose-700 font-bold text-[11px] cursor-pointer"
-                          >
-                            رفض
-                          </button>
                         </div>
                       ) : (
                         <span className="text-slate-400 text-[11px] font-medium text-center block">مكتمل</span>
@@ -777,6 +1142,7 @@ export const AdminPanel: React.FC = () => {
         </div>
       )}
 
+      {/* TAB 5: PRICING */}
       {activeTab === 'pricing' && (
         <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 max-w-2xl shadow-xs space-y-6">
           <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
@@ -825,53 +1191,33 @@ export const AdminPanel: React.FC = () => {
               </div>
             </div>
 
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                مسمى فترة الاشتراك
-              </label>
-              <input
-                type="text"
-                value={newPeriodName}
-                onChange={(e) => setNewPeriodName(e.target.value)}
-                placeholder="مثال: اشتراك الفصل الدراسي الكامل أو اشتراك سنوي"
-                className="w-full px-4 py-3 rounded-2xl border border-slate-200 focus:border-emerald-500 outline-none text-xs sm:text-sm font-medium"
-                required
-              />
-            </div>
-
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1.5">
                   رقم محفظة زين كاش (Zain Cash Wallet)
                 </label>
-                <div className="relative">
-                  <Phone className="absolute right-3.5 top-3.5 w-4 h-4 text-slate-400" />
-                  <input
-                    type="text"
-                    value={newZainWallet}
-                    onChange={(e) => setNewZainWallet(e.target.value)}
-                    placeholder="مثال: 07801234567"
-                    className="w-full pr-10 pl-4 py-3 rounded-2xl border border-slate-200 focus:border-emerald-500 outline-none text-xs sm:text-sm font-mono"
-                    dir="ltr"
-                  />
-                </div>
+                <input
+                  type="text"
+                  value={newZainWallet}
+                  onChange={(e) => setNewZainWallet(e.target.value)}
+                  placeholder="07801234567"
+                  className="w-full px-4 py-3 rounded-2xl border border-slate-200 outline-none text-xs sm:text-sm font-mono"
+                  dir="ltr"
+                />
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1.5">
                   رقم بطاقة كي كارد (Qi Card)
                 </label>
-                <div className="relative">
-                  <CreditCard className="absolute right-3.5 top-3.5 w-4 h-4 text-slate-400" />
-                  <input
-                    type="text"
-                    value={newQiCard}
-                    onChange={(e) => setNewQiCard(e.target.value)}
-                    placeholder="رقم بطاقة أو حساب كي كارد"
-                    className="w-full pr-10 pl-4 py-3 rounded-2xl border border-slate-200 focus:border-emerald-500 outline-none text-xs sm:text-sm font-mono"
-                    dir="ltr"
-                  />
-                </div>
+                <input
+                  type="text"
+                  value={newQiCard}
+                  onChange={(e) => setNewQiCard(e.target.value)}
+                  placeholder="رقم بطاقة كي كارد"
+                  className="w-full px-4 py-3 rounded-2xl border border-slate-200 outline-none text-xs sm:text-sm font-mono"
+                  dir="ltr"
+                />
               </div>
             </div>
 
@@ -892,6 +1238,7 @@ export const AdminPanel: React.FC = () => {
         </div>
       )}
 
+      {/* TAB 6: SECURITY */}
       {activeTab === 'security' && (
         <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 max-w-xl shadow-xs space-y-5">
           <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
@@ -962,18 +1309,19 @@ export const AdminPanel: React.FC = () => {
               type="submit"
               className="w-full py-3.5 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-black text-sm shadow-md transition-all cursor-pointer"
             >
-              حفظ اسم المشرف وكلمة المرور وتأمين النظام 🔒
+              حفظ وتأمين حساب المشرف 🔒
             </button>
           </form>
         </div>
       )}
 
+      {/* QUESTION MODAL FOR ADDING/EDITING CURRICULUM QUESTIONS & LESSONS */}
       {isQuestionModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in duration-200">
           <div className="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl border border-slate-100 max-h-[92vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-4 border-b border-slate-100">
               <h3 className="font-black text-slate-900 text-lg">
-                {editingQuestion ? 'تعديل السؤال والمنهاج' : 'إضافة سؤال جديد لبنك المناهج'}
+                {editingQuestion ? 'تعديل السؤال والمنهاج' : 'إضافة درس / آيات / أسئلة لبنك المناهج'}
               </h3>
               <button
                 onClick={() => {
@@ -1004,7 +1352,7 @@ export const AdminPanel: React.FC = () => {
                         : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
                     }`}
                   >
-                    <span>📝 سؤال وجواب</span>
+                    <span>📝 سؤال وجواب / شرح</span>
                   </button>
 
                   <button
@@ -1042,7 +1390,7 @@ export const AdminPanel: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">
-                    المرحلة الدراسية
+                    المرحلة الدراسية:
                   </label>
                   <select
                     value={formGradeId}
@@ -1065,7 +1413,7 @@ export const AdminPanel: React.FC = () => {
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">
-                    المادة الدراسية (شاملة الإسلامية والإنجليزي ومواد مخصصة)
+                    المادة الدراسية:
                   </label>
                   <select
                     value={isCustomSubject ? 'custom' : formSubjectId}
@@ -1092,7 +1440,7 @@ export const AdminPanel: React.FC = () => {
                       type="text"
                       value={customSubjectName}
                       onChange={(e) => setCustomSubjectName(e.target.value)}
-                      placeholder="اكتب اسم المادة (مثال: الحاسوب، النشيد، التربية الفنية)..."
+                      placeholder="اكتب اسم المادة (مثال: التربية الفنية، الحاسوب)..."
                       className="mt-2 w-full p-2.5 rounded-xl border border-emerald-300 bg-emerald-50/50 text-xs font-bold"
                       required
                     />
@@ -1103,26 +1451,26 @@ export const AdminPanel: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">
-                    اسم الفصل أو الوحدة
+                    اسم الفصل أو الوحدة (مثال: سورة الفاتحة / الحديث النبوي):
                   </label>
                   <input
                     type="text"
                     value={formChapter}
                     onChange={(e) => setFormChapter(e.target.value)}
-                    placeholder="مثال: الفصل الأول / الوحدة الأولى"
+                    placeholder="مثال: سورة الفاتحة المباركة / الوحدة الأولى"
                     className="w-full p-2.5 rounded-xl border border-slate-200 text-xs"
                     required
                   />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">
-                    اسم الدرس أو الموضوع
+                    اسم الدرس أو الموضوع (مثال: حفظ الآيات / معاني الكلمات):
                   </label>
                   <input
                     type="text"
                     value={formLesson}
                     onChange={(e) => setFormLesson(e.target.value)}
-                    placeholder="مثال: الفاعل / الملايين / البكتيريا"
+                    placeholder="مثال: آيات الحفظ / المعاني والشرح"
                     className="w-full p-2.5 rounded-xl border border-slate-200 text-xs"
                   />
                 </div>
@@ -1195,9 +1543,7 @@ export const AdminPanel: React.FC = () => {
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <label className="block text-xs font-bold text-slate-700">
-                    {formQuestionType === 'fill_in_the_blank'
-                      ? 'نص الجملة مع الفراغ:'
-                      : 'نص السؤال (يقرأه النظام صوتياً للطفل):'}
+                    نص السؤال أو الآية الكريمة أو الحديث:
                   </label>
                   <div className="flex items-center gap-1">
                     <button
@@ -1237,11 +1583,7 @@ export const AdminPanel: React.FC = () => {
                 <textarea
                   value={formQuestionText}
                   onChange={(e) => setFormQuestionText(e.target.value)}
-                  placeholder={
-                    formQuestionType === 'fill_in_the_blank'
-                      ? 'مثال: عاصمة جمهورية العراق الحبيبة هي ......'
-                      : 'مثال: ما هو تعريف الفاعل في قواعد اللغة العربية؟ / علل: لماذا سمي العراق ببلاد الرافدين؟'
-                  }
+                  placeholder="اكتب السؤال أو الآية الكريمة أو نص الحديث هنا..."
                   rows={2}
                   className="w-full p-3 rounded-xl border border-slate-200 text-xs font-medium"
                   required
@@ -1250,18 +1592,12 @@ export const AdminPanel: React.FC = () => {
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  {formQuestionType === 'fill_in_the_blank'
-                    ? 'الكلمة أو العبارة الصحيحة لملء الفراغ:'
-                    : 'الجواب النموذجي المعتمد (يظهر للطالب عند المراجعة):'}
+                  الجواب النموذجي أو الشرح والمعاني:
                 </label>
                 <textarea
                   value={formAnswerText}
                   onChange={(e) => setFormAnswerText(e.target.value)}
-                  placeholder={
-                    formQuestionType === 'fill_in_the_blank'
-                      ? 'مثال: بغداد'
-                      : 'اكتب الإجابة الكاملة النموذجية التي تظهر للتلميذ...'
-                  }
+                  placeholder="اكتب الإجابة النموذجية أو معاني الكلمات أو الشرح التفصيلي..."
                   rows={2}
                   className="w-full p-3 rounded-xl border border-slate-200 text-xs font-medium"
                   required
@@ -1271,7 +1607,7 @@ export const AdminPanel: React.FC = () => {
               {formQuestionType === 'multiple_choice' && (
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">
-                    خيارات الاختبار التفاعلي (حدد الإجابة الصحيحة بالضغط على الدائرة):
+                    خيارات الاختبار (اضغط الدائرة لتحديد الجواب الصحيح):
                   </label>
                   <div className="space-y-2">
                     {formOptions.map((opt, idx) => (
@@ -1284,7 +1620,6 @@ export const AdminPanel: React.FC = () => {
                               ? 'bg-emerald-600 text-white'
                               : 'bg-slate-200 text-slate-600'
                           }`}
-                          title="تحديد كإجابة صحيحة"
                         >
                           {formCorrectIndex === idx ? '✓' : idx + 1}
                         </button>
@@ -1307,7 +1642,7 @@ export const AdminPanel: React.FC = () => {
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  شرح المعلم / نصيحة للتلميذ (اختياري)
+                  شرح المعلم / نصيحة للتلميذ (اختياري):
                 </label>
                 <input
                   type="text"
@@ -1327,7 +1662,7 @@ export const AdminPanel: React.FC = () => {
                   className="w-4 h-4 text-amber-600 rounded-sm cursor-pointer"
                 />
                 <label htmlFor="vipCheck" className="text-xs font-bold text-amber-900 cursor-pointer">
-                  مخصص فقط للاشتراكات المفعلة (VIP)
+                  مخصص فقط للاشتراكات المفعلة (VIP) ⭐
                 </label>
               </div>
 
@@ -1343,7 +1678,7 @@ export const AdminPanel: React.FC = () => {
                   type="submit"
                   className="px-6 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs cursor-pointer"
                 >
-                  حفظ السؤال ✓
+                  حفظ في المنهاج ✓
                 </button>
               </div>
             </form>
@@ -1353,3 +1688,6 @@ export const AdminPanel: React.FC = () => {
     </div>
   );
 };
+
+export default AdminPanel;
+

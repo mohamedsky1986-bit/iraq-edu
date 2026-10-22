@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useEdu } from '../context/EduContext';
 import { db } from '../firebase';
 import { collection, onSnapshot, doc, setDoc, deleteDoc } from 'firebase/firestore';
@@ -37,6 +37,7 @@ import {
   MessageSquare,
   Star
 } from 'lucide-react';
+
 
 const OFFICIAL_IRAQI_SUBJECTS: Record<GradeId, { id: string; name: string }[]> = {
   "grade-1": [
@@ -86,6 +87,7 @@ const OFFICIAL_IRAQI_SUBJECTS: Record<GradeId, { id: string; name: string }[]> =
   ],
 };
 
+
 interface CustomVideo {
   id: string;
   gradeId: GradeId;
@@ -96,9 +98,11 @@ interface CustomVideo {
   chapter: string;
 }
 
+
 const STORAGE_KEYS = {
   CUSTOM_VIDEOS: 'iraq_edu_admin_custom_videos_v1',
 };
+
 
 function getYouTubeEmbedUrl(url: string): string {
   if (!url) return '';
@@ -110,6 +114,7 @@ function getYouTubeEmbedUrl(url: string): string {
   return url;
 }
 
+
 export function formatIraqiLastSeen(lastActiveAt?: string, isOnline?: boolean): { label: string; isLive: boolean } {
   if (!lastActiveAt) {
     return { label: 'غير مسجل', isLive: false };
@@ -119,9 +124,11 @@ export function formatIraqiLastSeen(lastActiveAt?: string, isOnline?: boolean): 
   const diffMins = Math.floor(diffMs / (60 * 1000));
   const diffHours = Math.floor(diffMins / 60);
 
+
   if (isOnline && diffMins <= 3) {
     return { label: '🟢 متصل الآن (نشط)', isLive: true };
   }
+
 
   if (diffMins < 1) {
     return { label: 'آخر ظهور: قبل لحظات', isLive: false };
@@ -138,9 +145,11 @@ export function formatIraqiLastSeen(lastActiveAt?: string, isOnline?: boolean): 
   return { label: `آخر ظهور: ${dateStr} الساعة ${timeStr}`, isLive: false };
 }
 
+
 interface AdminPanelProps {
   onInspectGrade?: (gradeId: GradeId) => void;
 }
+
 
 export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
   const {
@@ -164,14 +173,17 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
     logoutAdmin,
   } = useEdu();
 
+
   // Active Tab
   const [activeTab, setActiveTab] = useState<
     'curriculum' | 'videos' | 'comments' | 'students' | 'requests' | 'pricing' | 'security'
   >('curriculum');
 
+
   // Students Search & Filter
   const [studentSearch, setStudentSearch] = useState('');
   const [selectedGradeFilter, setSelectedGradeFilter] = useState<string>('all');
+
 
   // Pricing State
   const [newPrice, setNewPrice] = useState(subscriptionConfig.price);
@@ -181,14 +193,17 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
   const [newQiCard, setNewQiCard] = useState(subscriptionConfig.qiCardNumber);
   const [pricingFeedback, setPricingFeedback] = useState(false);
 
+
   // Security Credentials State
   const [newAdminUser, setNewAdminUser] = useState(adminUsername);
   const [newAdminPass, setNewAdminPass] = useState('');
   const [securityFeedback, setSecurityFeedback] = useState<{ text: string; success: boolean } | null>(null);
 
+
   // Question Modal & Form State (المنهج وكتابة الآيات والأحاديث والأسئلة والشرح)
   const [isQuestionModalOpen, setIsQuestionModalOpen] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
+
 
   const [formQuestionType, setFormQuestionType] = useState<'multiple_choice' | 'qa' | 'fill_in_the_blank'>('qa');
   const [formBadgeType, setFormBadgeType] = useState<'none' | 'ministerial' | 'smart_challenge' | 'focus_tip'>('none');
@@ -207,10 +222,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
   const [formIsVipOnly, setFormIsVipOnly] = useState(false);
   const [formDifficulty, setFormDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
 
+
   // Questions Filters
   const [qGradeFilter, setQGradeFilter] = useState<string>('all');
   const [qSubjectFilter, setQSubjectFilter] = useState<string>('all');
   const [qSearchQuery, setQSearchQuery] = useState<string>('');
+
 
   // Videos State & In-Panel Player
   const [videosList, setVideosList] = useState<CustomVideo[]>(() => {
@@ -222,11 +239,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
   });
   const [playingVideoUrl, setPlayingVideoUrl] = useState<string | null>(null);
 
+
   const [newVidGrade, setNewVidGrade] = useState<GradeId>('grade-1');
   const [newVidSubjectId, setNewVidSubjectId] = useState('ar-1');
   const [newVidTitle, setNewVidTitle] = useState('');
   const [newVidUrl, setNewVidUrl] = useState('');
   const [newVidChapter, setNewVidChapter] = useState('الفصل الأول');
+
 
   // إدارة تعليقات وآراء الطلبة والزوار المتزامنة سحابياً
   const [platformComments, setPlatformComments] = useState<any[]>(() => {
@@ -236,6 +255,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
     } catch {}
     return [];
   });
+
 
   // مزامنة حية للتعليقات عبر Firebase Firestore
   useEffect(() => {
@@ -255,6 +275,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
     }
   }, []);
 
+
   const handleDeleteComment = async (id: string) => {
     playClickSound();
     if (confirm('هل أنت متأكد من حذف هذا التعليق نهائياً؟')) {
@@ -264,6 +285,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
         localStorage.setItem('iraq_edu_platform_comments_v1', JSON.stringify(updated));
       } catch {}
 
+
       try {
         await deleteDoc(doc(db, 'comments', id));
       } catch (e) {
@@ -271,6 +293,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
       }
     }
   };
+
 
   const handleEditComment = async (comm: any) => {
     playClickSound();
@@ -285,6 +308,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
         localStorage.setItem('iraq_edu_platform_comments_v1', JSON.stringify(updated));
       } catch {}
 
+
       try {
         await setDoc(doc(db, 'comments', comm.id), updatedObj);
       } catch (e) {
@@ -295,9 +319,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
   };
 
 
+
+
   useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.CUSTOM_VIDEOS, JSON.stringify(videosList));
   }, [videosList]);
+
 
   // Handle Add Video
   const handleAddVideo = async (e: React.FormEvent) => {
@@ -323,10 +350,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
     setNewVidUrl('');
   };
 
+
   const handleDeleteVideo = (id: string) => {
     playClickSound();
     setVideosList((prev) => prev.filter((v) => v.id !== id));
   };
+
 
   // Filtered Students
   const filteredStudents = students.filter((s) => {
@@ -336,6 +365,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
       s.username.toLowerCase().includes(studentSearch.toLowerCase());
     return matchGrade && matchSearch;
   });
+
 
   // Filtered Questions
   const filteredQuestions = questions.filter((q) => {
@@ -349,6 +379,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
     return matchGrade && matchSubject && matchSearch;
   });
 
+
   const insertFormatting = (prefix: string, suffix: string, target: 'question' | 'answer') => {
     playClickSound();
     if (target === 'question') {
@@ -358,10 +389,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
     }
   };
 
+
   const insertBlank = () => {
     playClickSound();
     setFormQuestionText((prev) => `${prev} ...... `);
   };
+
 
   const handleOpenAddQuestion = () => {
     playClickSound();
@@ -385,6 +418,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
     setIsQuestionModalOpen(true);
   };
 
+
   const handleOpenEditQuestion = (q: Question) => {
     playClickSound();
     setEditingQuestion(q);
@@ -407,6 +441,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
     setIsQuestionModalOpen(true);
   };
 
+
   const handleSaveQuestion = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formQuestionText.trim() || !formAnswerText.trim()) {
@@ -415,10 +450,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
       return;
     }
 
+
     try {
       const finalSubjectId = isCustomSubject && customSubjectName.trim()
         ? `custom-${customSubjectName.trim().toLowerCase().replace(/\s+/g, '-')}`
         : formSubjectId;
+
 
       let cleanOptions: string[] = [];
       if (formQuestionType === 'multiple_choice') {
@@ -432,6 +469,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
       } else {
         cleanOptions = [];
       }
+
 
       const payload: any = {
         gradeId: formGradeId,
@@ -450,15 +488,18 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
         tags: [getIraqiGradeName(formGradeId), formBadgeType !== 'none' ? formBadgeType : ''].filter(Boolean),
       };
 
+
       if (formImageUrl.trim()) {
         payload.imageUrl = formImageUrl.trim();
       }
+
 
       if (editingQuestion) {
         updateQuestion(editingQuestion.id, payload);
       } else {
         addQuestion(payload);
       }
+
 
       playCorrectSound();
       setIsQuestionModalOpen(false);
@@ -469,6 +510,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
       alert('حدث خطأ أثناء الحفظ: ' + (err?.message || 'يرجى مراجعة البيانات'));
     }
   };
+
 
   const handleSavePricing = (e: React.FormEvent) => {
     e.preventDefault();
@@ -484,6 +526,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
     setTimeout(() => setPricingFeedback(false), 3000);
   };
 
+
   const handleSaveCredentials = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newAdminUser.trim() || newAdminUser.trim().length < 3) {
@@ -496,6 +539,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
       setSecurityFeedback({ text: 'كلمة المرور يجب أن تتكون من 4 خانات على الأقل', success: false });
       return;
     }
+
 
     const success = changeAdminCredentials(newAdminUser.trim(), newAdminPass.trim());
     if (success) {
@@ -510,6 +554,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
       setSecurityFeedback({ text: 'فشل تحديث البيانات', success: false });
     }
   };
+
 
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
@@ -535,6 +580,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
             </div>
           </div>
 
+
           <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => {
@@ -547,6 +593,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
               <span>تغيير باسورد المشرف 🔒</span>
             </button>
 
+
             <button
               onClick={() => {
                 playClickSound();
@@ -558,6 +605,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
               <span>خروج المشرف</span>
             </button>
 
+
             <button
               onClick={handleOpenAddQuestion}
               className="px-4 py-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs flex items-center gap-1.5 shadow-md shadow-emerald-600/30 transition-all cursor-pointer"
@@ -567,6 +615,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
             </button>
           </div>
         </div>
+
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-6">
           <div className="p-4 rounded-2xl bg-slate-800/60 border border-slate-700/60">
@@ -590,6 +639,49 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
         </div>
       </div>
 
+
+      {/* ================= 🚀 قسم التصفح والتحكم المباشر بالصفوف كمنتدى ================= */}
+      {onInspectGrade && (
+        <div className="bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 rounded-3xl p-6 text-slate-950 shadow-xl border-2 border-amber-300 space-y-4 animate-in fade-in duration-200">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-amber-600/30 pb-3">
+            <div className="flex items-center gap-2.5">
+              <span className="text-3xl">🚀</span>
+              <div>
+                <h2 className="text-lg sm:text-xl font-black text-slate-950">
+                  التصفح والتحكم المباشر بالصفوف كمدير (حرية كاملة كمنتدى)
+                </h2>
+                <p className="text-xs font-bold text-amber-950">
+                  اضغط على أي صف بالأسفل للدخول المباشر إليه كـ "مشرف عام" والتعديل والحذف الفوري في مكانه!
+                </p>
+              </div>
+            </div>
+            <span className="text-[11px] font-black px-3.5 py-1.5 rounded-full bg-slate-900 text-amber-300 shadow-md shrink-0">
+              ⚡ دخول مباشر بضغطة واحدة
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 pt-1">
+            {GRADES_DATA.map((g) => (
+              <button
+                key={g.id}
+                onClick={() => {
+                  playClickSound();
+                  onInspectGrade(g.id);
+                }}
+                className="p-4 rounded-2xl bg-white hover:bg-slate-900 text-slate-900 hover:text-white border-2 border-amber-200 hover:border-slate-900 shadow-md hover:shadow-2xl transition-all duration-200 flex flex-col items-center justify-center gap-1.5 cursor-pointer group transform hover:-translate-y-1 select-none"
+              >
+                <span className="text-3xl group-hover:scale-125 transition-transform">{g.icon}</span>
+                <span className="text-xs font-black text-center leading-tight">{g.shortName}</span>
+                <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 group-hover:bg-amber-400 group-hover:text-slate-950 transition-colors mt-0.5">
+                  دخول كمدير ⚡
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+
       {/* Tabs Row - flex-wrap to prevent overflow */}
       <div className="flex flex-wrap items-center gap-2 pb-2">
         <button
@@ -607,6 +699,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
           <span>بنك المناهج وإضافة الدروس والأسئلة ({questions.length})</span>
         </button>
 
+
         <button
           onClick={() => {
             playClickSound();
@@ -621,6 +714,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
           <MessageSquare className="w-4 h-4 text-emerald-500" />
           <span>التعليقات والآراء ({platformComments.length})</span>
         </button>
+
 
         <button
           onClick={() => {
@@ -637,6 +731,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
           <span>شروحات وفيديوهات اليوتيوب ({videosList.length})</span>
         </button>
 
+
         <button
           onClick={() => {
             playClickSound();
@@ -651,6 +746,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
           <Users className="w-4 h-4 text-sky-400" />
           <span>إدارة الطلبة والتواجد ({students.length})</span>
         </button>
+
 
         <button
           onClick={() => {
@@ -667,6 +763,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
           <span>طلبات الاشتراك ({subscriptionRequests.filter((r) => r.status === 'pending').length})</span>
         </button>
 
+
         <button
           onClick={() => {
             playClickSound();
@@ -681,6 +778,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
           <DollarSign className="w-4 h-4 text-emerald-400" />
           <span>الأسعار والدفع</span>
         </button>
+
 
         <button
           onClick={() => {
@@ -697,6 +795,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
           <span>حساب المشرف 🔒</span>
         </button>
       </div>
+
 
       {/* TAB 1: CURRICULUM & QUESTIONS BANK (كتابة المنهج والآيات والأحاديث والأسئلة والشرح) */}
       {activeTab === 'curriculum' && (
@@ -722,6 +821,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
                     ))}
                   </select>
                 </div>
+
 
                 <div className="flex items-center gap-1.5">
                   <span className="text-xs text-slate-500 font-bold shrink-0">المادة:</span>
@@ -750,6 +850,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
                 </div>
               </div>
 
+
               <button
                 onClick={handleOpenAddQuestion}
                 className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs flex items-center justify-center gap-1.5 shadow-xs cursor-pointer shrink-0"
@@ -758,6 +859,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
                 <span>إضافة درس أو سؤال أو آيات جديدة ✍️</span>
               </button>
             </div>
+
 
             <div className="relative">
               <Search className="absolute right-3.5 top-2.5 w-4 h-4 text-slate-400" />
@@ -770,6 +872,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
               />
             </div>
           </div>
+
 
           <div className="space-y-3">
             {filteredQuestions.map((q) => (
@@ -789,6 +892,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
                       {q.chapter} {q.lessonName ? `• ${q.lessonName}` : ''}
                     </span>
 
+
                     {(q as any).badgeType === 'ministerial' ? (
                       <span className="text-[10px] font-black px-2.5 py-0.5 rounded-full bg-amber-400 text-amber-950 border border-amber-500">
                         🌟 وزاري مرشح
@@ -802,6 +906,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
                         💡 فهم وتركيز
                       </span>
                     ) : null}
+
 
                     {q.questionType === 'fill_in_the_blank' ? (
                       <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300">
@@ -823,15 +928,18 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
                     )}
                   </div>
 
+
                   <h3 className="font-black text-sm sm:text-base text-slate-900">
                     {q.questionText}
                   </h3>
+
 
                   <p className="text-xs text-slate-600 leading-relaxed font-medium">
                     <span className="font-bold text-emerald-800">الجواب / النص المعتمد: </span>
                     {q.answerText}
                   </p>
                 </div>
+
 
                 <div className="flex items-center gap-2 shrink-0">
                   <button
@@ -841,6 +949,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
                     <Edit3 className="w-4 h-4" />
                     <span>تعديل</span>
                   </button>
+
 
                   <button
                     onClick={() => {
@@ -861,6 +970,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
         </div>
       )}
 
+
             {/* TAB: COMMENTS MANAGEMENT (التحكم بتعليقات وآراء الطلبة) */}
       {activeTab === 'comments' && (
         <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-200 space-y-6 text-right">
@@ -878,6 +988,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
               {platformComments.length} تعليق
             </span>
           </div>
+
 
           {platformComments.length === 0 ? (
             <p className="text-xs text-slate-500 p-8 bg-slate-50 rounded-2xl border border-slate-200 text-center">
@@ -908,6 +1019,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
                     </p>
                   </div>
 
+
                   <div className="flex items-center gap-2 shrink-0">
                     <button
                       type="button"
@@ -933,6 +1045,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
         </div>
       )}
 
+
 {/* TAB 2: YOUTUBE VIDEOS WITH IN-PANEL PLAYER */}
       {activeTab === 'videos' && (
         <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-200 space-y-6">
@@ -945,6 +1058,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
               كل فيديو تضيفه سيرتبط بمادته حصراً، ويمكنك تشغيله ومعاينته مباشرة داخل لوحة التحكم
             </p>
           </div>
+
 
           <form onSubmit={handleAddVideo} className="grid grid-cols-1 sm:grid-cols-5 gap-3">
             <div>
@@ -967,6 +1081,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
               </select>
             </div>
 
+
             <div>
               <label className="block text-xs font-black text-slate-700 mb-1">القسم / المادة:</label>
               <select
@@ -982,6 +1097,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
               </select>
             </div>
 
+
             <div>
               <label className="block text-xs font-black text-slate-700 mb-1">عنوان الشرح أو الدرس:</label>
               <input
@@ -993,6 +1109,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
                 required
               />
             </div>
+
 
             <div>
               <label className="block text-xs font-black text-slate-700 mb-1">رابط يوتيوب (YouTube URL):</label>
@@ -1007,6 +1124,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
               />
             </div>
 
+
             <div>
               <label className="block text-xs font-black text-slate-700 mb-1">إجراء الحفظ:</label>
               <button
@@ -1018,6 +1136,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
               </button>
             </div>
           </form>
+
 
           {/* Videos List with Direct Player */}
           <div className="pt-4 border-t border-slate-100 space-y-4">
@@ -1039,7 +1158,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
                       </span>
                     </div>
 
+
                     <h4 className="text-sm font-black text-slate-900">{vd.title}</h4>
+
 
                     {/* Inline Player Option */}
                     <div className="aspect-video w-full rounded-xl overflow-hidden bg-slate-950 border border-slate-300 shadow-2xs">
@@ -1052,10 +1173,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
                       />
                     </div>
 
+
                     <div className="flex items-center justify-between pt-2 border-t border-slate-200">
                       <span className="text-[11px] font-bold text-slate-600 flex items-center gap-1">
                         <span>🎬 مشغل مدمج داخل المنصة</span>
                       </span>
+
 
                       <button
                         type="button"
@@ -1074,6 +1197,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
         </div>
       )}
 
+
       {/* TAB 3: STUDENTS MANAGEMENT */}
       {activeTab === 'students' && (
         <div className="space-y-4">
@@ -1088,6 +1212,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
                 className="w-full pr-10 pl-4 py-2 rounded-xl border border-slate-200 text-xs font-medium outline-none focus:border-emerald-500"
               />
             </div>
+
 
             <div className="flex items-center gap-2 w-full sm:w-auto">
               <span className="text-xs text-slate-500 font-bold shrink-0">تصفية حسب الصف:</span>
@@ -1105,6 +1230,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
               </select>
             </div>
           </div>
+
 
           <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-xs">
             <div className="overflow-x-auto">
@@ -1191,6 +1317,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
                               <span>{st.subscription === 'paid' ? 'إلغاء VIP' : 'تفعيل VIP'}</span>
                             </button>
 
+
                             <button
                               onClick={() => {
                                 const newPass = prompt(`أدخل كلمة المرور الجديدة للطالب (${st.fullName}):`, '123');
@@ -1204,6 +1331,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
                             >
                               <KeyRound className="w-4 h-4" />
                             </button>
+
 
                             <button
                               onClick={() => {
@@ -1228,6 +1356,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
         </div>
       )}
 
+
       {/* TAB 4: REQUESTS */}
       {activeTab === 'requests' && (
         <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-xs">
@@ -1239,6 +1368,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
               {subscriptionRequests.filter((r) => r.status === 'pending').length} طلب بحاجة للموافقة
             </span>
           </div>
+
 
           <div className="overflow-x-auto">
             <table className="w-full text-right text-xs">
@@ -1303,6 +1433,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
         </div>
       )}
 
+
       {/* TAB 5: PRICING */}
       {activeTab === 'pricing' && (
         <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 max-w-2xl shadow-xs space-y-6">
@@ -1319,6 +1450,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
               </p>
             </div>
           </div>
+
 
           <form onSubmit={handleSavePricing} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1337,6 +1469,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
                 />
               </div>
 
+
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1.5">
                   العملة
@@ -1351,6 +1484,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
                 />
               </div>
             </div>
+
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
               <div>
@@ -1367,6 +1501,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
                 />
               </div>
 
+
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1.5">
                   رقم بطاقة كي كارد (Qi Card)
@@ -1382,12 +1517,14 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
               </div>
             </div>
 
+
             {pricingFeedback && (
               <div className="p-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-2">
                 <Check className="w-4 h-4 text-emerald-600" />
                 <span>تم تحديث سعر وبيانات الاشتراك بنجاح في المنصة!</span>
               </div>
             )}
+
 
             <button
               type="submit"
@@ -1398,6 +1535,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
           </form>
         </div>
       )}
+
 
       {/* TAB 6: SECURITY */}
       {activeTab === 'security' && (
@@ -1415,6 +1553,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
               </p>
             </div>
           </div>
+
 
           <form onSubmit={handleSaveCredentials} className="space-y-4">
             <div>
@@ -1435,6 +1574,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
               </div>
             </div>
 
+
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1.5">
                 كلمة المرور الجديدة (Admin Password)
@@ -1453,6 +1593,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
               </div>
             </div>
 
+
             {securityFeedback && (
               <div
                 className={`p-3 rounded-2xl text-xs font-bold flex items-center gap-2 ${
@@ -1466,6 +1607,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
               </div>
             )}
 
+
             <button
               type="submit"
               className="w-full py-3.5 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-black text-sm shadow-md transition-all cursor-pointer"
@@ -1475,6 +1617,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
           </form>
         </div>
       )}
+
 
       {/* QUESTION MODAL FOR ADDING/EDITING CURRICULUM QUESTIONS & LESSONS */}
       {isQuestionModalOpen && (
@@ -1494,6 +1637,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
                 <X className="w-5 h-5" />
               </button>
             </div>
+
 
             <form onSubmit={handleSaveQuestion} className="mt-5 space-y-4">
               <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200">
@@ -1516,6 +1660,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
                     <span>📝 سؤال وجواب / شرح</span>
                   </button>
 
+
                   <button
                     type="button"
                     onClick={() => {
@@ -1530,6 +1675,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
                   >
                     <span>✏️ أكمل الفراغ</span>
                   </button>
+
 
                   <button
                     type="button"
@@ -1547,6 +1693,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
                   </button>
                 </div>
               </div>
+
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
@@ -1572,6 +1719,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
                   </select>
                 </div>
 
+
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">
                     المادة الدراسية:
@@ -1596,6 +1744,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
                     <option value="custom">➕ مادة دراسية أخرى (مخصصة)...</option>
                   </select>
 
+
                   {isCustomSubject && (
                     <input
                       type="text"
@@ -1608,6 +1757,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
                   )}
                 </div>
               </div>
+
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
@@ -1636,6 +1786,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
                   />
                 </div>
               </div>
+
 
               <div className="p-3 bg-amber-50/70 rounded-2xl border border-amber-200 space-y-1.5">
                 <label className="block text-xs font-bold text-amber-950">
@@ -1701,6 +1852,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
                 </div>
               </div>
 
+
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <label className="block text-xs font-bold text-slate-700">
@@ -1751,6 +1903,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
                 />
               </div>
 
+
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
                   الجواب النموذجي أو الشرح والمعاني:
@@ -1764,6 +1917,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
                   required
                 />
               </div>
+
 
               {formQuestionType === 'multiple_choice' && (
                 <div>
@@ -1801,6 +1955,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
                 </div>
               )}
 
+
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
                   شرح المعلم / نصيحة للتلميذ (اختياري):
@@ -1814,6 +1969,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
                 />
               </div>
 
+
               <div className="flex items-center gap-2 p-3 rounded-xl bg-amber-50 border border-amber-200">
                 <input
                   type="checkbox"
@@ -1826,6 +1982,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
                   مخصص فقط للاشتراكات المفعلة (VIP) ⭐
                 </label>
               </div>
+
 
               <div className="flex justify-end gap-2 pt-2">
                 <button
@@ -1850,5 +2007,5 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
   );
 };
 
-export default AdminPanel;
 
+export default AdminPanel;

@@ -23,6 +23,7 @@ export interface EducationalVideo {
   createdAt?: string;
 }
 
+// استخراج معرف فيديو اليوتيوب من أي رابط
 export const extractYouTubeId = (url: string): string => {
   if (!url) return '';
   const clean = url.trim();
@@ -30,23 +31,35 @@ export const extractYouTubeId = (url: string): string => {
   if (match && match[1]) {
     return match[1];
   }
-  // إذا أدخل المستخدم المعرف فقط مباشرة (11 حرف)
   if (/^[\w-]{11}$/.test(clean)) {
     return clean;
   }
   return clean;
 };
 
+// استخراج معرف ملف قوقل درايف من أي رابط مشاركة
+export const extractDriveFileId = (input: string): string => {
+  if (!input) return '';
+  const clean = input.trim();
+  const matchD = clean.match(/\/d\/([a-zA-Z0-9_-]{25,})/);
+  if (matchD && matchD[1]) return matchD[1];
+
+  const matchId = clean.match(/[?&]id=([a-zA-Z0-9_-]{25,})/);
+  if (matchId && matchId[1]) return matchId[1];
+
+  return clean;
+};
+
 export const INITIAL_VIDEOS: EducationalVideo[] = [
   {
     id: 'vid-g1-ar-baa',
-    title: 'حرف الباء ( بَ بِ بُ ) مع الأمثلة والحركات - الفتحة والكسرة والضمة',
+    title: 'حفظ الحروف العربية ( أ ب ت ث ج ح خ د ) مع الحركات والأمثلة',
     gradeId: 'grade-1',
     subjectId: 'ar-1',
     youtubeUrl: 'https://youtu.be/sW8cpXQU0sY',
     youtubeId: 'sW8cpXQU0sY',
     teacherName: 'شرح تفاعلي للأطفال',
-    description: 'شرح صوتي ومرئي مبسط لنطق حرف الباء بالحركات الثلاث مع الكلمات والصور التوضيحية',
+    description: 'شرح صوتي ومرئي مبسط لنطق الحروف الهجائية بالحركات مع الكلمات والصور التوضيحية',
     createdAt: '2026-10-22',
   },
 ];

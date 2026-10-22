@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useEdu } from '../context/EduContext';
 import { db } from '../firebase';
 import { collection, onSnapshot } from 'firebase/firestore';
@@ -42,6 +42,9 @@ import {
 
 
 
+
+
+
 function getYouTubeEmbedUrl(url: string): string {
   if (!url) return '';
   if (url.includes('embed/')) return url;
@@ -56,13 +59,16 @@ function getYouTubeEmbedUrl(url: string): string {
   return url;
 }
 
+
 const DEFAULT_DRIVE_FOLDER = 'https://drive.google.com/drive/folders/1Gdmm8qLT26-JA51h5FFpnBxagKJ_jjLL?usp=drive_link';
+
 
 interface SubjectBookItem {
   bookTitle: string;
   edition: string;
   driveUrl: string;
 }
+
 
 const SUBJECT_BOOKS_MAP: Record<string, SubjectBookItem> = {
   // Grade 1
@@ -72,6 +78,7 @@ const SUBJECT_BOOKS_MAP: Record<string, SubjectBookItem> = {
   'isl-1': { bookTitle: 'كتاب التربية الإسلامية والقرآن الكريم للأول الابتدائي', edition: 'طبعة وزارة التربية العراقية المعتمدة', driveUrl: DEFAULT_DRIVE_FOLDER },
   'eng-1': { bookTitle: 'English for Iraq - Pupil Book 1', edition: 'طبعة وزارة التربية العراقية المعتمدة', driveUrl: DEFAULT_DRIVE_FOLDER },
 
+
   // Grade 2
   'ar-2': { bookTitle: 'كتاب قراءتي للصف الثاني الابتدائي', edition: 'طبعة وزارة التربية العراقية المعتمدة', driveUrl: DEFAULT_DRIVE_FOLDER },
   'math-2': { bookTitle: 'كتاب الرياضيات للصف الثاني الابتدائي', edition: 'طبعة وزارة التربية العراقية المعتمدة', driveUrl: DEFAULT_DRIVE_FOLDER },
@@ -79,12 +86,14 @@ const SUBJECT_BOOKS_MAP: Record<string, SubjectBookItem> = {
   'isl-2': { bookTitle: 'كتاب التربية الإسلامية للصف الثاني الابتدائي', edition: 'طبعة وزارة التربية العراقية المعتمدة', driveUrl: DEFAULT_DRIVE_FOLDER },
   'eng-2': { bookTitle: 'English for Iraq - Pupil Book 2', edition: 'طبعة وزارة التربية العراقية المعتمدة', driveUrl: DEFAULT_DRIVE_FOLDER },
 
+
   // Grade 3
   'ar-3': { bookTitle: 'كتاب قراءتي للصف الثالث الابتدائي', edition: 'طبعة وزارة التربية العراقية المعتمدة', driveUrl: DEFAULT_DRIVE_FOLDER },
   'math-3': { bookTitle: 'كتاب الرياضيات للصف الثالث الابتدائي (جدول الضرب والكسور)', edition: 'طبعة وزارة التربية العراقية المعتمدة', driveUrl: DEFAULT_DRIVE_FOLDER },
   'sci-3': { bookTitle: 'كتاب العلوم للصف الثالث الابتدائي', edition: 'طبعة وزارة التربية العراقية المعتمدة', driveUrl: DEFAULT_DRIVE_FOLDER },
   'isl-3': { bookTitle: 'كتاب التربية الإسلامية للصف الثالث الابتدائي', edition: 'طبعة وزارة التربية العراقية المعتمدة', driveUrl: DEFAULT_DRIVE_FOLDER },
   'eng-3': { bookTitle: 'English for Iraq - Pupil Book 3', edition: 'طبعة وزارة التربية العراقية المعتمدة', driveUrl: DEFAULT_DRIVE_FOLDER },
+
 
   // Grade 4
   'ar-4': { bookTitle: 'كتاب قواعد اللغة العربية للصف الرابع الابتدائي', edition: 'طبعة وزارة التربية العراقية المعتمدة', driveUrl: DEFAULT_DRIVE_FOLDER },
@@ -94,6 +103,7 @@ const SUBJECT_BOOKS_MAP: Record<string, SubjectBookItem> = {
   'isl-4': { bookTitle: 'كتاب التربية الإسلامية للصف الرابع الابتدائي', edition: 'طبعة وزارة التربية العراقية المعتمدة', driveUrl: DEFAULT_DRIVE_FOLDER },
   'eng-4': { bookTitle: 'English for Iraq - Pupil Book 4', edition: 'طبعة وزارة التربية العراقية المعتمدة', driveUrl: DEFAULT_DRIVE_FOLDER },
 
+
   // Grade 5
   'ar-5': { bookTitle: 'كتاب قواعد اللغة العربية للصف الخامس الابتدائي', edition: 'طبعة وزارة التربية العراقية المعتمدة', driveUrl: DEFAULT_DRIVE_FOLDER },
   'math-5': { bookTitle: 'كتاب الرياضيات للصف الخامس الابتدائي', edition: 'طبعة وزارة التربية العراقية المعتمدة', driveUrl: DEFAULT_DRIVE_FOLDER },
@@ -101,6 +111,7 @@ const SUBJECT_BOOKS_MAP: Record<string, SubjectBookItem> = {
   'soc-5': { bookTitle: 'كتاب الاجتماعيات للصف الخامس الابتدائي (جغرافية العراق وموارده)', edition: 'طبعة وزارة التربية العراقية المعتمدة', driveUrl: DEFAULT_DRIVE_FOLDER },
   'isl-5': { bookTitle: 'كتاب التربية الإسلامية للصف الخامس الابتدائي', edition: 'طبعة وزارة التربية العراقية المعتمدة', driveUrl: DEFAULT_DRIVE_FOLDER },
   'eng-5': { bookTitle: 'English for Iraq - Pupil Book 5', edition: 'طبعة وزارة التربية العراقية المعتمدة', driveUrl: DEFAULT_DRIVE_FOLDER },
+
 
   // Grade 6
   'ar-6': { bookTitle: 'كتاب قواعد اللغة العربية الوزاري (السادس الابتدائي)', edition: 'المنهج الوزاري الرسمي المعتمد', driveUrl: DEFAULT_DRIVE_FOLDER },
@@ -110,6 +121,7 @@ const SUBJECT_BOOKS_MAP: Record<string, SubjectBookItem> = {
   'isl-6': { bookTitle: 'كتاب التربية الإسلامية الوزاري للصف السادس الابتدائي', edition: 'المنهج الوزاري الرسمي المعتمد', driveUrl: DEFAULT_DRIVE_FOLDER },
   'eng-6': { bookTitle: 'English for Iraq - Pupil Book 6 (Ministerial)', edition: 'المنهج الوزاري الرسمي المعتمد', driveUrl: DEFAULT_DRIVE_FOLDER },
 };
+
 
 export const ALL_IRAQI_OFFICIAL_SUBJECTS: Subject[] = [
   // ================= الصف الأول الابتدائي =================
@@ -172,6 +184,7 @@ export const ALL_IRAQI_OFFICIAL_SUBJECTS: Subject[] = [
     questionsCount: 20,
   },
 
+
   // ================= الصف الثاني الابتدائي =================
   {
     id: 'ar-2',
@@ -229,6 +242,7 @@ export const ALL_IRAQI_OFFICIAL_SUBJECTS: Subject[] = [
     questionsCount: 10,
   },
 
+
   // ================= الصف الثالث الابتدائي =================
   {
     id: 'ar-3',
@@ -285,6 +299,7 @@ export const ALL_IRAQI_OFFICIAL_SUBJECTS: Subject[] = [
     lessonsCount: 12,
     questionsCount: 12,
   },
+
 
   // ================= الصف الرابع الابتدائي =================
   {
@@ -354,6 +369,7 @@ export const ALL_IRAQI_OFFICIAL_SUBJECTS: Subject[] = [
     questionsCount: 14,
   },
 
+
   // ================= الصف الخامس الابتدائي =================
   {
     id: 'ar-5',
@@ -421,6 +437,7 @@ export const ALL_IRAQI_OFFICIAL_SUBJECTS: Subject[] = [
     lessonsCount: 16,
     questionsCount: 16,
   },
+
 
   // ================= الصف السادس الابتدائي =================
   {
@@ -492,6 +509,8 @@ export const ALL_IRAQI_OFFICIAL_SUBJECTS: Subject[] = [
 ];
 
 
+
+
 const DEFAULT_EXTRA_QUESTIONS: Question[] = [
   // Islamic Grade 5
   {
@@ -530,6 +549,7 @@ const DEFAULT_EXTRA_QUESTIONS: Question[] = [
     difficulty: 'medium',
     isVipOnly: false,
   },
+
 
   // English Grade 5
   {
@@ -573,6 +593,7 @@ const DEFAULT_EXTRA_QUESTIONS: Question[] = [
     correctAnswerIndex: 0,
   },
 
+
   // English Grade 2
   {
     id: 'q-eng2-1',
@@ -600,6 +621,7 @@ const DEFAULT_EXTRA_QUESTIONS: Question[] = [
     options: ['Cat', 'Dog', 'Bird', 'Fish'],
     correctAnswerIndex: 0,
   },
+
 
   // English Grade 3
   {
@@ -629,6 +651,7 @@ const DEFAULT_EXTRA_QUESTIONS: Question[] = [
     correctAnswerIndex: 0,
   },
 
+
   // Islamic Grade 2
   {
     id: 'q-isl2-1',
@@ -641,6 +664,7 @@ const DEFAULT_EXTRA_QUESTIONS: Question[] = [
     difficulty: 'easy',
     isVipOnly: false,
   },
+
 
   // Islamic Grade 3
   {
@@ -656,11 +680,16 @@ const DEFAULT_EXTRA_QUESTIONS: Question[] = [
   },
 ];
 
+
 interface GradePortalProps {
   onStartQuiz: (subject: Subject, questions: Question[]) => void;
   onOpenSearch: () => void;
   onOpenUpgradeModal: () => void;
+  adminInspectingGradeId?: GradeId | null;
+  onBackToAdmin?: () => void;
+  onChangeAdminGrade?: (gradeId: GradeId) => void;
 }
+
 
 const DEFAULT_IRAQI_CHAPTERS: Record<string, string[]> = {
   // ================= الصف الأول الابتدائي =================
@@ -694,6 +723,7 @@ const DEFAULT_IRAQI_CHAPTERS: Record<string, string[]> = {
     'الفصل الثالث: الأخلاق والأدعية والحديث الشريف',
   ],
 
+
   // ================= الصف الثاني الابتدائي =================
   'math-2': [
     'الفصل الأول: الأعداد حتى 999 والقيمة المكانية',
@@ -714,6 +744,7 @@ const DEFAULT_IRAQI_CHAPTERS: Record<string, string[]> = {
     'الفصل الرابع: الغذاء والتغذية',
   ],
 
+
   // ================= الصف الثالث الابتدائي =================
   'math-3': [
     'الفصل الأول: الأعداد حتى 9999 والقيمة المكانية',
@@ -722,6 +753,7 @@ const DEFAULT_IRAQI_CHAPTERS: Record<string, string[]> = {
     'الفصل الرابع: القسمة وعلاقتها بالضرب',
     'الفصل الخامس: الكسور والقياس والأشكال الهندسية',
   ],
+
 
   // ================= الصف الرابع الابتدائي =================
   'math-4': [
@@ -733,6 +765,7 @@ const DEFAULT_IRAQI_CHAPTERS: Record<string, string[]> = {
     'الفصل السادس: الهندسة والزوايا والقياس',
   ],
 
+
   // ================= الصف الخامس الابتدائي =================
   'math-5': [
     'الفصل الأول: الأعداد ضمن المليارات والقيمة المكانية',
@@ -741,6 +774,7 @@ const DEFAULT_IRAQI_CHAPTERS: Record<string, string[]> = {
     'الفصل الرابع: الكسور العشرية والعمليات عليها',
     'الفصل الخامس: المساحة والمحيط والدائرة',
   ],
+
 
   // ================= الصف السادس الابتدائي (الوزاري المعتمد) =================
   'math-6': [
@@ -759,6 +793,7 @@ const DEFAULT_IRAQI_CHAPTERS: Record<string, string[]> = {
     'الوحدة الرابعة: المفعول المطلق والمفعول فيه (وزاري)',
   ],
 };
+
 
 // ================= مكتبة قصائد المحفوظات والأناشيد المقررة للحفظ =================
 const IRAQI_POEMS_DATA: Record<string, { title: string; author: string; verses: { l1: string; l2: string }[] }[]> = {
@@ -840,6 +875,7 @@ const IRAQI_POEMS_DATA: Record<string, { title: string; author: string; verses: 
   ],
 };
 
+
 // ================= مكتبة القرآن الكريم والأحاديث النبوية المقررة للحفظ =================
 const IRAQI_ISLAMIC_DATA: Record<string, { title: string; type: 'surah' | 'hadith'; text: string; lessons: string }[]> = {
   'grade-1': [
@@ -898,6 +934,7 @@ const IRAQI_ISLAMIC_DATA: Record<string, { title: string; type: 'surah' | 'hadit
   ],
 };
 
+
 // ================= مكتبة اللغة الإنجليزية التفاعلية (English for Iraq) =================
 const IRAQI_ENGLISH_DATA: Record<string, { unit: string; topic: string; items: { en: string; ar: string; note: string }[] }[]> = {
   'grade-1': [
@@ -946,24 +983,32 @@ const IRAQI_ENGLISH_DATA: Record<string, { unit: string; topic: string; items: {
   ],
 };
 
+
 // تثبيت انتماء الأسئلة حصراً لمادتها بدون أي تداخل أو قفز بين المواد
 function sanitizeQuestionSubject(q: Question): Question {
   return q;
 }
 
+
 export const GradePortal: React.FC<GradePortalProps> = ({
   onStartQuiz,
   onOpenSearch,
   onOpenUpgradeModal,
+  adminInspectingGradeId,
+  onBackToAdmin,
+  onChangeAdminGrade,
 }) => {
-  const { currentStudent, subjects, questions, logout } = useEdu();
+  const { currentStudent, isAdmin, subjects, questions, updateQuestion, deleteQuestion, logout } = useEdu();
 
-  if (!currentStudent) return null;
+  const effectiveGradeId: GradeId = adminInspectingGradeId || currentStudent?.gradeId || 'grade-1';
+
+  if (!currentStudent && !adminInspectingGradeId && !isAdmin) return null;
 
   // دعم التصفح والتنقل بين كافة المراحل الدراسية مباشرة
   const [activeGradeId, setActiveGradeId] = useState<GradeId>(effectiveGradeId);
   const currentGradeId = activeGradeId;
   const gradeInfo = GRADES_DATA.find((g) => g.id === currentGradeId);
+
 
   // نضمن ظهور كافة المواد الرسمية (بما فيها الإنجليزي والإسلامية والاجتماعيات) لكل صف
   const officialForGrade = ALL_IRAQI_OFFICIAL_SUBJECTS.filter((s) => s.gradeId === currentGradeId);
@@ -975,27 +1020,34 @@ export const GradePortal: React.FC<GradePortalProps> = ({
     }
   }
 
+
   const [selectedSubjectId, setSelectedSubjectId] = useState<string>(
     gradeSubjects[0]?.id || ''
   );
   const [activeTab, setActiveTab] = useState<'qa' | 'exams' | 'curriculum'>('qa');
 
+
   // شروحات وفيديوهات المناهج المتزامنة سحابياً عبر Firebase عبر كافة الهواتف والحواسيب
     // حالة عارض كتب ومناهج الـ PDF التفاعلي المدمج لتجاوز قيود تسجيل الدخول في جوجل
   const [selectedBookForViewer, setSelectedBookForViewer] = useState<any | null>(null);
 
+
   // ميزة المنتدى: حالة نافذة التعديل السريع للأسئلة
   const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
+
 
   // ميزة المنتدى: حالة نافذة تعديل الفيديو
   const [editingVideo, setEditingVideo] = useState<any | null>(null);
 
+
   // ميزة المنتدى: حالة نافذة تعديل رابط الكتاب
   const [editingBook, setEditingBook] = useState<any | null>(null);
+
 
   // ميزة إضافة امتحان جديد لفصل محدد
   const [addingExamChapter, setAddingExamChapter] = useState<string | null>(null);
   const [newExamTitle, setNewExamTitle] = useState('');
+
 
   const [platformVideos, setPlatformVideos] = useState<any[]>(() => {
     try {
@@ -1018,6 +1070,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
     ];
   });
 
+
   // مزامنة فورية حية مع قاعدة بيانات Firebase Firestore ليظهر الفيديو على أي موبايل أو حاسبة فوراً
   useEffect(() => {
     try {
@@ -1037,8 +1090,10 @@ export const GradePortal: React.FC<GradePortalProps> = ({
   }, []);
   const [speakingId, setSpeakingId] = useState<string | null>(null);
 
+
   const selectedSubject =
     gradeSubjects.find((s) => s.id === selectedSubjectId) || gradeSubjects[0];
+
 
   const rawQuestions = [...questions, ...DEFAULT_EXTRA_QUESTIONS];
   const uniqueQuestionsMap = new Map<string, Question>();
@@ -1054,6 +1109,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
       (q) => q.gradeId === currentGradeId && q.subjectId === selectedSubject?.id
     );
 
+
   const handleSpeakArabic = (textToSpeak: string, id: string) => {
     if (speakingId === id) {
       stopSpeaking();
@@ -1068,6 +1124,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
     });
   };
 
+
   const handleSpeakEnglish = (textToSpeak: string, id: string) => {
     if (speakingId === id) {
       stopSpeaking();
@@ -1076,6 +1133,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
     }
     setSpeakingId(id);
 
+
     // نطق صوتي مبسط للطفل (اسم الحرف بالعربي ثم بالإنجليزي ثم المعنى بالعربي)
     if (typeof window !== 'undefined' && 'speechSynthesis' in window && textToSpeak.includes(' - ')) {
       try {
@@ -1083,6 +1141,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
         const parts = textToSpeak.split(' - ');
         const letterChar = parts[0].trim()[0].toUpperCase();
         const word = parts[1].trim();
+
 
         const AR_LETTER_MAP: Record<string, { arName: string; arMean: string }> = {
           A: { arName: 'إي', arMean: 'تفاحة حمراء' },
@@ -1113,22 +1172,27 @@ export const GradePortal: React.FC<GradePortalProps> = ({
           Z: { arName: 'زد', arMean: 'حمار وحشي' },
         };
 
+
         const info = AR_LETTER_MAP[letterChar];
         if (info) {
           const u1 = new SpeechSynthesisUtterance(`حرف ال ${info.arName}`);
           u1.lang = 'ar-SA';
           u1.rate = 0.85;
 
+
           const u2 = new SpeechSynthesisUtterance(`${letterChar} ... ${word}`);
           u2.lang = 'en-US';
           u2.rate = 0.75;
+
 
           const u3 = new SpeechSynthesisUtterance(`معناها ${info.arMean}`);
           u3.lang = 'ar-SA';
           u3.rate = 0.85;
 
+
           u3.onend = () => setSpeakingId(null);
           u3.onerror = () => setSpeakingId(null);
+
 
           window.speechSynthesis.speak(u1);
           window.speechSynthesis.speak(u2);
@@ -1138,12 +1202,14 @@ export const GradePortal: React.FC<GradePortalProps> = ({
       } catch (e) {}
     }
 
+
     speakEnglishPhonics(textToSpeak, {
       onStart: () => setSpeakingId(id),
       onEnd: () => setSpeakingId(null),
       onError: () => setSpeakingId(null),
     });
   };
+
 
   const getSubjectChapters = (subjectId: string): string[] => {
     try {
@@ -1156,6 +1222,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
       }
     } catch (e) {}
 
+
     const defaults = DEFAULT_IRAQI_CHAPTERS[subjectId] || [
       'الفصل الأول: المفاهيم والدروس الأساسية',
       'الفصل الثاني: الأنشطة والتطبيقات العملية',
@@ -1163,11 +1230,14 @@ export const GradePortal: React.FC<GradePortalProps> = ({
       'الفصل الرابع: الاختبارات والوزاريات النهائية',
     ];
 
+
     const fromQuestions = currentSubjectQuestions.map((q) => q.chapter).filter(Boolean);
     return Array.from(new Set([...defaults, ...fromQuestions]));
   };
 
+
   const subjectChapters = selectedSubject ? getSubjectChapters(selectedSubject.id) : [];
+
 
   const getOrderedQuestionsForChapter = (chapName: string): Question[] => {
     const raw = currentSubjectQuestions.filter((q) => q.chapter === chapName);
@@ -1178,6 +1248,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
       if (saved) orderMap = JSON.parse(saved);
     } catch (e) {}
 
+
     return [...raw].sort((a, b) => {
       const orderA = orderMap[a.id] !== undefined ? orderMap[a.id] : 9999;
       const orderB = orderMap[b.id] !== undefined ? orderMap[b.id] : 9999;
@@ -1185,16 +1256,19 @@ export const GradePortal: React.FC<GradePortalProps> = ({
     });
   };
 
+
   // هل المادة الحالية لغة عربية أو قراءة؟
   const isArabicSubject =
     selectedSubject?.id.startsWith('ar-') ||
     selectedSubject?.name.includes('قراءتي') ||
     selectedSubject?.name.includes('العربية');
 
+
   // هل المادة إسلامية؟
   const isIslamicSubject =
     selectedSubject?.id.startsWith('isl-') ||
     selectedSubject?.name.includes('إسلامية');
+
 
   // هل المادة إنجليزية؟
   const isEnglishSubject =
@@ -1202,18 +1276,42 @@ export const GradePortal: React.FC<GradePortalProps> = ({
     selectedSubject?.name.toLowerCase().includes('english') ||
     selectedSubject?.name.includes('إنجليزية');
 
+
   const gradePoems = IRAQI_POEMS_DATA[currentGradeId] || IRAQI_POEMS_DATA['grade-6'];
   const gradeIslamic = IRAQI_ISLAMIC_DATA[currentGradeId] || IRAQI_ISLAMIC_DATA['grade-1'];
   const gradeEnglish = IRAQI_ENGLISH_DATA[currentGradeId] || IRAQI_ENGLISH_DATA['grade-1'];
 
+
   return (
-    <div className="space-y-8 animate-in fade-in duration-300">
+        <div className="space-y-8 animate-in fade-in duration-300">
+      {/* شريط المشرف العام للتحكم المباشر بالمنهج كمنتدى */}
+      {(isAdmin || adminInspectingGradeId) && (
+        <div className="bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-slate-950 p-4 rounded-3xl shadow-lg border-2 border-amber-300 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <span className="text-2xl">🛡️</span>
+            <div>
+              <h3 className="font-black text-sm sm:text-base leading-tight">وضع المشرف العام (التحكم بالمنهج كمنتدى)</h3>
+              <p className="text-xs font-bold text-amber-950">تستطيع الآن تعديل أو حذف أي سؤال أو فيديو أو كتاب مباشرة من هنا</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {onBackToAdmin && (
+              <button
+                onClick={onBackToAdmin}
+                className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-black shadow-md cursor-pointer transition-all"
+              >
+                العودة للوحة الإدارة ↩️
+              </button>
+            )}
+          </div>
+        </div>
+      )}
       {/* Student Welcome Banner */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-emerald-600 via-teal-700 to-cyan-800 text-white p-6 sm:p-8 shadow-xl shadow-teal-900/10">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex items-start sm:items-center gap-4">
             <span className="text-4xl sm:text-5xl p-2.5 rounded-2xl bg-white/10 backdrop-blur-md shadow-inner">
-              {currentStudent.avatar}
+              {currentStudent?.avatar || "🛡️"}
             </span>
             <div>
               <div className="flex flex-wrap items-center gap-2 mb-1">
@@ -1237,12 +1335,12 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                     ))}
                   </select>
                 </div>
-                {currentStudent.subscription === 'paid' ? (
+                {(currentStudent?.subscription === 'paid' || isAdmin) ? (
                   <span className="px-3 py-1 rounded-full text-xs font-black bg-white/20 text-white backdrop-blur-xs flex items-center gap-2 shadow-xs">
                     <Sparkles className="w-3.5 h-3.5 text-amber-300" />
                     <span>مشترك VIP مفعل ⭐</span>
                     <span className="text-[11px] font-mono text-amber-200 bg-black/25 px-2 py-0.5 rounded-lg border border-amber-300/40">
-                      صالح حتى: {currentStudent.subscriptionExpiry || '2026-12-31'}
+                      صالح حتى: {currentStudent?.subscriptionExpiry || '2026-12-31'}
                     </span>
                   </span>
                 ) : (
@@ -1253,11 +1351,12 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                 )}
               </div>
               <h2 className="text-xl sm:text-2xl font-black">
-                أهلاً بك يا بطل، {currentStudent.fullName} 🌟
+                أهلاً بك، {currentStudent?.fullName || "مشرف المنصة العام"} 🌟
               </h2>
               <p className="text-xs sm:text-sm text-emerald-100/90 font-medium mt-0.5">
                 منهاجك متكامل: محفوظات، قرآن وحديث، رياضيات، إنجليزي، وامتحانات مطولة ذكية
               </p>
+
 
               <div className="flex flex-wrap items-center gap-2 pt-2.5">
                 <button
@@ -1274,22 +1373,24 @@ export const GradePortal: React.FC<GradePortalProps> = ({
             </div>
           </div>
 
+
           <div className="flex items-center gap-3">
             <div className="p-3 px-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 text-center">
               <span className="block text-lg font-black text-amber-300">
-                {currentStudent.starsEarned || 0} ⭐
+                {currentStudent?.starsEarned || 100} ⭐
               </span>
               <p className="text-[11px] text-emerald-100 font-bold">نجوم التفوق</p>
             </div>
             <div className="p-3 px-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 text-center">
               <span className="block text-lg font-black text-white">
-                {currentStudent.totalScore || 0}
+                {currentStudent?.totalScore || 1000}
               </span>
               <p className="text-[11px] text-emerald-100 font-bold">النقاط الكلية</p>
             </div>
           </div>
         </div>
       </div>
+
 
       {/* Subjects Grid */}
       <div className="space-y-4">
@@ -1303,12 +1404,14 @@ export const GradePortal: React.FC<GradePortalProps> = ({
           </span>
         </div>
 
+
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
           {gradeSubjects.map((subj) => {
             const isSelected = selectedSubject?.id === subj.id;
             const subjectQuestionsCount = [...questions, ...DEFAULT_EXTRA_QUESTIONS]
               .map(sanitizeQuestionSubject)
               .filter((q) => q.gradeId === currentGradeId && q.subjectId === subj.id).length;
+
 
             return (
               <button
@@ -1342,6 +1445,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
         </div>
       </div>
 
+
       {selectedSubject && (
         <div className="bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-8 shadow-xs space-y-6">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pb-4 border-b border-slate-100 text-center sm:text-right">
@@ -1359,6 +1463,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
               </div>
             </div>
 
+
             {/* زر بدء الاختبار الشامل المطول */}
             <button
               onClick={() => {
@@ -1372,6 +1477,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
             </button>
           </div>
 
+
           {/* 1. كتاب وملزمة المادة الرسمية (PDF) - يفتح داخل نفس المادة مباشرة */}
           {(() => {
             const currentBook = SUBJECT_BOOKS_MAP[selectedSubject.id] || {
@@ -1379,6 +1485,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
               edition: 'طبعة وزارة التربية العراقية المعتمدة',
               driveUrl: DEFAULT_DRIVE_FOLDER,
             };
+
 
             return (
               <div className="bg-gradient-to-r from-sky-50 via-indigo-50 to-emerald-50 rounded-3xl border border-sky-200 p-4 sm:p-5 shadow-xs space-y-3 text-right">
@@ -1398,6 +1505,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                     </div>
                   </div>
 
+
                   <a
                     href={currentBook.driveUrl}
                     target="_blank"
@@ -1412,6 +1520,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
             );
           })()}
 
+
           {/* 2. شروحات وفيديوهات اليوتيوب الخاصة بهذه المادة حصراً (مشغل مدمج داخل التطبيق يمنع التشتت) */}
           {(() => {
             // تصفية حصرية صارمة: فيديوهات هذه المرحلة وهذه المادة فقط!
@@ -1424,9 +1533,11 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                   v.subjectName.includes(selectedSubject.name))
             );
 
+
             if (subjectVideos.length === 0) {
               return null;
             }
+
 
             return (
               <div className="bg-slate-950 text-white rounded-3xl p-5 sm:p-6 shadow-md border border-slate-800 space-y-4 text-right">
@@ -1447,6 +1558,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                   </span>
                 </div>
 
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {subjectVideos.map((vd: any, idx: number) => (
                     <div key={idx} className="bg-slate-900 rounded-2xl p-3 border border-slate-800 space-y-2.5">
@@ -1462,6 +1574,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                           sandbox="allow-scripts allow-same-origin allow-presentation"
                         />
 
+
                         {/* 2. شريط حماية علوي يعرض هوية المنصة ويمنع الضغط على عنوان الفيديو لعدم الخروج لليوتيوب */}
                         <div className="absolute top-0 inset-x-0 h-9 bg-gradient-to-b from-black/85 via-black/40 to-transparent pointer-events-auto flex items-center justify-between px-3 text-[11px] font-black text-amber-300 z-10 select-none">
                           <span className="flex items-center gap-1.5">
@@ -1472,6 +1585,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                             مشاهدة آمنة داخل التطبيق
                           </span>
                         </div>
+
 
                         {/* 3. درع حماية زجاجي يغطي الزاوية السفلية لمنع النقر على شعار يوتيوب المائي */}
                         <div
@@ -1490,12 +1604,25 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                       <h5 className="font-black text-xs sm:text-sm text-slate-100 leading-snug">
                         {vd.title}
                       </h5>
+                      {isAdmin && (
+                        <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">
+                          <button
+                            onClick={() => setEditingVideo(vd)}
+                            className="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-bold shadow-xs cursor-pointer flex items-center gap-1"
+                          >
+                            ✏️ تعديل هذا الفيديو
+                          </button>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
               </div>
             );
           })()}
+
+
+
 
 
 
@@ -1517,6 +1644,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
             </details>
           )}
 
+
           {/* 2. مجلد قصائد وأناشيد المحفوظات مع النطق الصوتي التفاعلي (لكل المراحل) */}
           {isArabicSubject && gradePoems && gradePoems.length > 0 && (
             <details className="group bg-gradient-to-r from-emerald-50 via-teal-50 to-cyan-50 rounded-3xl border-2 border-emerald-300 p-4 sm:p-6 transition-all shadow-xs" open>
@@ -1534,6 +1662,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                   const fullPoemText = poem.verses.map((v) => `${v.l1} ... ${v.l2}`).join('. ');
                   const isSpeakingThis = speakingId === `poem_${pIdx}`;
 
+
                   return (
                     <div key={pIdx} className="bg-white rounded-2xl p-5 border border-emerald-200 shadow-2xs space-y-4">
                       <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pb-3 border-b border-slate-100">
@@ -1544,6 +1673,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                           </h4>
                           <span className="text-xs text-slate-500 font-bold">{poem.author}</span>
                         </div>
+
 
                         <button
                           type="button"
@@ -1559,11 +1689,13 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                         </button>
                       </div>
 
+
                       {/* أبيات القصيدة مشكولة بالكامل */}
                       <div className="space-y-2.5 text-center sm:text-right font-serif">
                         {poem.verses.map((v, vIdx) => {
                           const verseText = `${v.l1} ، ${v.l2}`;
                           const isVerseSpeaking = speakingId === `v_${pIdx}_${vIdx}`;
+
 
                           return (
                             <div
@@ -1575,6 +1707,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                                 <span className="text-slate-300 font-bold px-1">❊</span>
                                 <span className="inline-block px-2 text-teal-900">{v.l2}</span>
                               </div>
+
 
                               <button
                                 type="button"
@@ -1599,6 +1732,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
             </details>
           )}
 
+
           {/* 3. مجلد القرآن الكريم والسور والأحاديث النبوية مع التلاوة الصوتية */}
           {isIslamicSubject && gradeIslamic && gradeIslamic.length > 0 && (
             <details className="group bg-gradient-to-r from-amber-50 via-yellow-50 to-orange-50 rounded-3xl border-2 border-amber-300 p-4 sm:p-6 transition-all shadow-xs" open>
@@ -1615,6 +1749,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                 {gradeIslamic.map((item, idx) => {
                   const isSpeakingThis = speakingId === `isl_${idx}`;
 
+
                   return (
                     <div key={idx} className="bg-white rounded-2xl p-5 border border-amber-200 shadow-2xs space-y-3 text-right">
                       <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pb-2 border-b border-slate-100">
@@ -1624,6 +1759,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                           </span>
                           <h4 className="font-black text-base text-slate-900">{item.title}</h4>
                         </div>
+
 
                         <button
                           type="button"
@@ -1639,10 +1775,12 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                         </button>
                       </div>
 
+
                       {/* النص القرآني أو الحديث بالرسم الواضح */}
                       <div className="p-4 rounded-xl bg-amber-50/50 border border-amber-200 font-serif text-base sm:text-lg font-bold text-amber-950 leading-loose text-center sm:text-right">
                         {item.text}
                       </div>
+
 
                       <p className="text-xs text-slate-600 font-medium">
                         💡 <strong>الدروس والعبر: </strong> {item.lessons}
@@ -1653,6 +1791,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
               </div>
             </details>
           )}
+
 
           {/* قسم الحروف الإنجليزية التفاعلية مفتوح وظاهر ومباشر للأول والثاني الابتدائي */}
           {(currentGradeId === 'grade-1' || currentGradeId === 'grade-2') && isEnglishSubject && (
@@ -1674,11 +1813,13 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                 </span>
               </div>
 
+
               <div>
                 <Grade1EnglishLetters />
               </div>
             </div>
           )}
+
 
           {/* 4. مجلد اللغة الإنجليزية التفاعلي (English for Iraq) لكافة المراحل */}
           {isEnglishSubject && gradeEnglish && gradeEnglish.length > 0 && (
@@ -1702,6 +1843,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                       </div>
                     </div>
 
+
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                       {u.items.map((it, itIdx) => {
                         const isSpeakingThis = speakingId === `en_${uIdx}_${itIdx}`;
@@ -1715,6 +1857,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                               <div className="text-xs font-bold text-slate-600">{it.ar}</div>
                               {it.note && <div className="text-[10px] text-blue-600 mt-0.5">{it.note}</div>}
                             </div>
+
 
                             <button
                               type="button"
@@ -1738,6 +1881,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
             </details>
           )}
 
+
           {/* التبويبات الرئيسية الثلاثة */}
           <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 pb-2">
             <button
@@ -1755,6 +1899,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
               <span>المنهاج والأسئلة مرتبة بالفصول ({currentSubjectQuestions.length})</span>
             </button>
 
+
             <button
               onClick={() => {
                 playClickSound();
@@ -1769,6 +1914,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
               <Award className="w-4 h-4" />
               <span>📝 الامتحانات والاختبارات المطولة النموذجية</span>
             </button>
+
 
             <button
               onClick={() => {
@@ -1786,12 +1932,14 @@ export const GradePortal: React.FC<GradePortalProps> = ({
             </button>
           </div>
 
+
           {/* Tab 1: الأسئلة مقسمة ومرتبة بدقة حسب الفصول */}
           {activeTab === 'qa' && (
             <div className="space-y-6 pt-2">
               {subjectChapters.map((chapName, chapIdx) => {
                 const chapterQuestions = getOrderedQuestionsForChapter(chapName);
                 if (chapterQuestions.length === 0) return null;
+
 
                 return (
                   <div key={chapIdx} className="rounded-3xl border border-slate-200 bg-slate-50/40 overflow-hidden shadow-2xs">
@@ -1813,6 +1961,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                         </div>
                       </div>
 
+
                       <button
                         onClick={() => {
                           playClickSound();
@@ -1825,20 +1974,45 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                       </button>
                     </div>
 
+
                     <div className="p-4 space-y-3">
                       {chapterQuestions.map((q, idx) => (
-                        <QuestionCard
-                          key={q.id}
-                          question={q}
-                          studentSubscription={currentStudent.subscription}
-                          onUpgradePrompt={onOpenUpgradeModal}
-                          index={idx}
-                        />
+                        <div key={q.id} className="space-y-1">
+                          <QuestionCard
+                            key={q.id}
+                            question={q}
+                            studentSubscription={currentStudent?.subscription || 'free'}
+                            onUpgradePrompt={onOpenUpgradeModal}
+                            index={idx}
+                          />
+                          {isAdmin && (
+                            <div className="flex items-center justify-end gap-2 bg-amber-50 p-2 rounded-xl border border-amber-200">
+                              <span className="text-[10px] font-black text-amber-900 ml-auto">🛡️ تحكم المشرف بالسؤال:</span>
+                              <button
+                                onClick={() => setEditingQuestion(q)}
+                                className="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-xs cursor-pointer flex items-center gap-1"
+                              >
+                                ✏️ تعديل السؤال
+                              </button>
+                              <button
+                                onClick={() => {
+                                  if (confirm('هل تريد حذف هذا السؤال نهائياً؟')) {
+                                    deleteQuestion(q.id);
+                                  }
+                                }}
+                                className="px-3 py-1 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold shadow-xs cursor-pointer flex items-center gap-1"
+                              >
+                                🗑️ حذف
+                              </button>
+                            </div>
+                          )}
+                        </div>
                       ))}
                     </div>
                   </div>
                 );
               })}
+
 
               {currentSubjectQuestions.length === 0 && (
                 <div className="py-12 text-center text-slate-500 space-y-3">
@@ -1855,6 +2029,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
               )}
             </div>
           )}
+
 
           {/* Tab 2: قسم الامتحانات والاختبارات المطولة النموذجية */}
           {activeTab === 'exams' && (
@@ -1879,6 +2054,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                     </div>
                   </div>
 
+
                   <button
                     disabled={currentSubjectQuestions.length === 0}
                     onClick={() => {
@@ -1892,6 +2068,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                   </button>
                 </div>
 
+
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-white/20 text-center text-xs font-bold">
                   <div className="p-2 rounded-xl bg-white/10">⏱️ اختبار شامل ومطول</div>
                   <div className="p-2 rounded-xl bg-white/10">⭐ نجوم تفوق عند النجاح</div>
@@ -1899,6 +2076,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                   <div className="p-2 rounded-xl bg-white/10">🎯 نطق صوتي للأسئلة</div>
                 </div>
               </div>
+
 
               {/* امتحانات الفصول الدورية */}
               <div className="space-y-3">
@@ -1912,10 +2090,12 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                   </span>
                 </div>
 
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {subjectChapters.map((chapName, chapIdx) => {
                     const chapterQuestions = getOrderedQuestionsForChapter(chapName);
                     const hasQuestions = chapterQuestions.length > 0;
+
 
                     return (
                       <div
@@ -1936,6 +2116,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                             </span>
                           </div>
 
+
                           <h5 className="font-black text-sm text-slate-900">
                             {chapName}
                           </h5>
@@ -1944,11 +2125,13 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                           </p>
                         </div>
 
+
                         <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
                           <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
                             <Clock className="w-3.5 h-3.5" />
                             <span>تصحيح فوري ذكي</span>
                           </span>
+
 
                           <button
                             disabled={!hasQuestions}
@@ -1969,6 +2152,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
               </div>
             </div>
           )}
+
 
           {activeTab === 'curriculum' && (
             <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 text-slate-700 text-xs sm:text-sm leading-relaxed space-y-3 text-right">
@@ -2016,6 +2200,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
               </div>
             </div>
 
+
             {/* Iframe Viewer */}
             <div className="flex-1 w-full bg-slate-800 relative">
               <iframe
@@ -2028,6 +2213,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
           </div>
         </div>
       )}
+
 
       {/* ================= 2. نافذة التعديل السريع للسؤال (مثل نظام المنتدى) ================= */}
       {editingQuestion && (
@@ -2045,6 +2231,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                 ✕
               </button>
             </div>
+
 
             <form
               onSubmit={(e) => {
@@ -2067,6 +2254,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                 />
               </div>
 
+
               <div>
                 <label className="text-xs font-black text-slate-700 block mb-1">الإجابة والشرح النموذجي:</label>
                 <textarea
@@ -2077,6 +2265,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                   required
                 />
               </div>
+
 
               {editingQuestion.options && editingQuestion.options.length > 0 && (
                 <div>
@@ -2107,6 +2296,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                 </div>
               )}
 
+
               <div className="flex items-center gap-4 pt-2">
                 <label className="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer">
                   <input
@@ -2118,6 +2308,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                   <span>خاص بمشتركي VIP 👑</span>
                 </label>
               </div>
+
 
               <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200">
                 <button
@@ -2138,6 +2329,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
           </div>
         </div>
       )}
+
 
       {/* ================= 3. نافذة تعديل الفيديو (صلاحيات المدير) ================= */}
       {editingVideo && (
@@ -2205,6 +2397,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
         </div>
       )}
 
+
       {/* ================= 4. نافذة تعديل رابط الكتاب أو الملزمة ================= */}
       {editingBook && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
@@ -2250,5 +2443,6 @@ export const GradePortal: React.FC<GradePortalProps> = ({
         </div>
       )}
     </div>
-);
+  );
 };
+

@@ -40,3 +40,8 @@ body {
 .speaking-animation {
   animation: voice-pulse 1s infinite ease-in-out;
 }
+html, body, #root {
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100vw;
+}

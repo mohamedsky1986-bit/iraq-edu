@@ -4,6 +4,8 @@ import { GradeId, Question, Subject, SubscriptionType } from '../types/index';
 import { GRADES_DATA } from '../data/initialData';
 import { getIraqiGradeName, formatIraqiDinar } from '../utils/edu-logic';
 import { playClickSound, playCorrectSound, playWrongSound } from '../utils/audio';
+import { EducationalVideo } from '../data/curriculumMedia';
+import { VideoPlayerModal } from './VideoPlayerModal';
 import {
   Users,
   BookOpen,
@@ -26,6 +28,9 @@ import {
   CheckCheck,
   Image,
   LogOut,
+  Tv,
+  Play,
+  Video,
 } from 'lucide-react';
 
 const OFFICIAL_IRAQI_SUBJECTS: Record<GradeId, { id: string; name: string }[]> = {
@@ -96,10 +101,13 @@ export const AdminPanel: React.FC = () => {
     approveSubscriptionRequest,
     rejectSubscriptionRequest,
     logoutAdmin,
+    videos,
+    addVideo,
+    deleteVideo,
   } = useEdu();
 
   const [activeTab, setActiveTab] = useState<
-    'students' | 'requests' | 'pricing' | 'curriculum' | 'security'
+    'students' | 'requests' | 'pricing' | 'curriculum' | 'security' | 'videos'
   >('curriculum');
 
   const [studentSearch, setStudentSearch] = useState('');
@@ -135,6 +143,57 @@ export const AdminPanel: React.FC = () => {
   const [formExplanation, setFormExplanation] = useState('');
   const [formIsVipOnly, setFormIsVipOnly] = useState(false);
   const [formDifficulty, setFormDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
+
+  // Video Management States
+  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
+  const [previewVideo, setPreviewVideo] = useState<EducationalVideo | null>(null);
+  const [videoTitle, setVideoTitle] = useState('');
+  const [videoGradeId, setVideoGradeId] = useState<GradeId>('grade-1');
+  const [videoSubjectId, setVideoSubjectId] = useState('ar-1');
+  const [videoUrl, setVideoUrl] = useState('');
+  const [videoTeacher, setVideoTeacher] = useState('');
+  const [videoDesc, setVideoDesc] = useState('');
+  const [videoIsVipOnly, setVideoIsVipOnly] = useState(false);
+  const [vGradeFilter, setVGradeFilter] = useState<string>('all');
+  const [videoSearchQuery, setVideoSearchQuery] = useState('');
+
+  const filteredVideos = (videos || []).filter((v) => {
+    const matchGrade = vGradeFilter === 'all' || v.gradeId === vGradeFilter;
+    const matchSearch =
+      !videoSearchQuery.trim() ||
+      v.title.toLowerCase().includes(videoSearchQuery.toLowerCase()) ||
+      (v.teacherName && v.teacherName.toLowerCase().includes(videoSearchQuery.toLowerCase()));
+    return matchGrade && matchSearch;
+  });
+
+  const handleSaveVideo = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!videoTitle.trim()) {
+      alert('يرجى كتابة عنوان الشرح المرئي');
+      return;
+    }
+    if (!videoUrl.trim()) {
+      alert('يرجى وضع رابط فيديو اليوتيوب');
+      return;
+    }
+    addVideo({
+      title: videoTitle.trim(),
+      gradeId: videoGradeId,
+      subjectId: videoSubjectId,
+      youtubeUrl: videoUrl.trim(),
+      teacherName: videoTeacher.trim(),
+      description: videoDesc.trim(),
+      isVipOnly: videoIsVipOnly,
+    });
+    playCorrectSound();
+    setVideoTitle('');
+    setVideoUrl('');
+    setVideoTeacher('');
+    setVideoDesc('');
+    setIsVideoModalOpen(false);
+    alert('تمت إضافة الفيديو بنجاح إلى قسم المرئيات والشروحات! ✓');
+  };
+
 
   const filteredStudents = students.filter((s) => {
     const matchGrade = selectedGradeFilter === 'all' || s.gradeId === selectedGradeFilter;
@@ -259,6 +318,7 @@ export const AdminPanel: React.FC = () => {
         tags: [getIraqiGradeName(formGradeId), formBadgeType !== 'none' ? formBadgeType : ''].filter(Boolean),
       };
 
+      // إذا كانت هناك صورة مضافة نضعها، وإذا كانت فارغة لا نمررها لتفادي أخطاء Firestore
       if (formImageUrl.trim()) {
         payload.imageUrl = formImageUrl.trim();
       }
@@ -453,6 +513,21 @@ export const AdminPanel: React.FC = () => {
         <button
           onClick={() => {
             playClickSound();
+            setActiveTab('videos');
+          }}
+          className={`px-4 py-3 rounded-2xl font-black text-xs sm:text-sm flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
+            activeTab === 'videos'
+              ? 'bg-slate-900 text-white shadow-md'
+              : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+          }`}
+        >
+          <Tv className="w-4 h-4 text-rose-500" />
+          <span>المرئيات والشروحات ({(videos || []).length})</span>
+        </button>
+
+        <button
+          onClick={() => {
+            playClickSound();
             setActiveTab('security');
           }}
           className={`px-4 py-3 rounded-2xl font-black text-xs sm:text-sm flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
@@ -468,6 +543,7 @@ export const AdminPanel: React.FC = () => {
 
       {activeTab === 'curriculum' && (
         <div className="space-y-4">
+          {/* شريط التصفية والبحث المتطور (الصف + المادة + البحث النصي) */}
           <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-3">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
               <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
@@ -695,76 +771,29 @@ export const AdminPanel: React.FC = () => {
                       <td className="p-4 font-bold text-slate-900 flex items-center gap-2.5">
                         <div className="relative shrink-0">
                           <span className="text-xl">{st.avatar}</span>
-                          {/* 1. النقطة الخضراء على الصورة: تشتعل فقط إذا كان متصلاً خلال آخر 5 دقائق */}
-                          {(() => {
-                            const diffMinutes = (st as any).lastActiveAt 
-                              ? (Date.now() - new Date((st as any).lastActiveAt).getTime()) / 60000 
-                              : 999;
-                            return diffMinutes <= 5 ? (
-                              <span
-                                className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white animate-pulse"
-                                title="متصل الآن"
-                              />
-                            ) : null;
-                          })()}
+                          {(st as any).isOnline && (
+                            <span
+                              className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 border-2 border-white rounded-full animate-pulse"
+                              title="متصل الآن"
+                            />
+                          )}
                         </div>
-
                         <div>
                           <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="font-bold text-slate-900 text-sm">{st.fullName}</span>
-
-                            {/* شارة أونلاين ومكان التواجد أو آخر ظهور */}
-                            {(() => {
-                              if (!(st as any).lastActiveAt) {
-                                return <span className="text-[10px] text-slate-400 font-bold">غير متصل</span>;
-                              }
-
-                              const diffMinutes = Math.floor((Date.now() - new Date((st as any).lastActiveAt).getTime()) / 60000);
-
-                              if (diffMinutes <= 5) {
-                                return (
-                                  <div className="flex items-center gap-1">
-                                    <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-1">
-                                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                                      أونلاين
-                                    </span>
-                                    {(st as any).currentActivity && (
-                                      <span className="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
-                                        📍 {(st as any).currentActivity}
-                                      </span>
-                                    )}
-                                  </div>
-                                );
-                              }
-
-                              if (diffMinutes < 60) {
-                                return (
-                                  <span className="text-[10px] text-slate-400 font-bold">
-                                    آخر ظهور منذ {diffMinutes} دقيقة
-                                  </span>
-                                );
-                              }
-
-                              const diffHours = Math.floor(diffMinutes / 60);
-                              if (diffHours < 24) {
-                                return (
-                                  <span className="text-[10px] text-slate-400 font-bold">
-                                    آخر ظهور منذ {diffHours} ساعة
-                                  </span>
-                                );
-                              }
-
-                              return (
-                                <span className="text-[10px] text-slate-400 font-bold">
-                                  آخر ظهور: {new Date((st as any).lastActiveAt).toLocaleDateString('ar-IQ')}
-                                </span>
-                              );
-                            })()}
+                            <span>{st.fullName}</span>
+                            {(st as any).isOnline ? (
+                              <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                🟢 أونلاين
+                              </span>
+                            ) : (st as any).lastActiveAt ? (
+                              <span className="text-[9px] font-normal text-slate-400">
+                                آخر ظهور: {new Date((st as any).lastActiveAt).toLocaleTimeString('ar-IQ', { hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                            ) : null}
                           </div>
-
-                          <p className="text-[11px] text-slate-400 mt-0.5">
-                            {st.schoolName || 'المدرسة الابتدائية'} • {st.city || 'العراق'}
-                          </p>
+                          <span className="text-[10px] text-slate-400 font-normal block mt-0.5">
+                            {st.city || 'العراق'} • {st.schoolName || 'مدرسة ابتدائية'}
+                          </span>
                         </div>
                       </td>
                       <td className="p-4 font-mono text-slate-600">{st.username}</td>
@@ -1132,6 +1161,323 @@ export const AdminPanel: React.FC = () => {
         </div>
       )}
 
+      {activeTab === 'videos' && (
+        <div className="space-y-6">
+          {/* Top Video Header Banner */}
+          <div className="bg-gradient-to-r from-rose-900 via-slate-900 to-indigo-950 p-6 sm:p-8 rounded-3xl text-white shadow-lg border border-rose-500/20 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="space-y-1.5 text-center sm:text-right">
+              <span className="px-3 py-1 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30 text-xs font-black inline-block mb-1">
+                🎥 قسم الشروحات والفيديوهات التفاعلية
+              </span>
+              <h3 className="text-xl sm:text-2xl font-black">إدارة مكتبة مرئيات اليوتيوب التعليمية</h3>
+              <p className="text-xs sm:text-sm text-slate-300 font-medium max-w-xl">
+                أضف دروس وشروحات اليوتيوب لتعرض للطلاب مباشرة داخل المنصة بدون إعلانات أو تشتت خارجي.
+              </p>
+            </div>
+
+            <button
+              onClick={() => {
+                playClickSound();
+                setVideoTitle('');
+                setVideoUrl('');
+                setVideoTeacher('');
+                setVideoDesc('');
+                setIsVideoModalOpen(true);
+              }}
+              className="px-6 py-3.5 rounded-2xl bg-rose-600 hover:bg-rose-500 text-white font-black text-xs sm:text-sm shadow-lg flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap hover:scale-105 active:scale-95"
+            >
+              <PlusCircle className="w-5 h-5" />
+              <span>إضافة شرح يوتيوب جديد</span>
+            </button>
+          </div>
+
+          {/* Filter Bar */}
+          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <span className="text-xs font-bold text-slate-500 shrink-0">المرحلة:</span>
+              <select
+                value={vGradeFilter}
+                onChange={(e) => setVGradeFilter(e.target.value)}
+                className="p-2 rounded-xl border border-slate-200 text-xs font-bold bg-white text-slate-800"
+              >
+                <option value="all">كل المراحل الدراسية</option>
+                {GRADES_DATA.map((g) => (
+                  <option key={g.id} value={g.id}>
+                    {g.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="relative w-full sm:w-72">
+              <Search className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={videoSearchQuery}
+                onChange={(e) => setVideoSearchQuery(e.target.value)}
+                placeholder="بحث في عناوين الدروس والشروحات..."
+                className="w-full pr-9 pl-3 py-2 rounded-xl border border-slate-200 text-xs font-bold placeholder-slate-400 outline-none focus:border-rose-500"
+              />
+            </div>
+          </div>
+
+          {/* Videos Grid */}
+          {filteredVideos.length === 0 ? (
+            <div className="bg-white rounded-3xl p-12 text-center border border-slate-200 shadow-xs space-y-3">
+              <div className="w-16 h-16 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center mx-auto text-2xl">
+                🎬
+              </div>
+              <h4 className="text-base font-black text-slate-800">لا توجد فيديوهات مضافة حالياً في هذا القسم</h4>
+              <p className="text-xs text-slate-500 max-w-md mx-auto">
+                اضغط على زر (إضافة شرح يوتيوب جديد) بالأعلى لإدراج أول فيديو لشرح الدروس وسماع أصوات الحروف.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredVideos.map((video) => (
+                <div
+                  key={video.id}
+                  className="bg-white rounded-3xl border border-slate-200/90 overflow-hidden shadow-xs hover:shadow-md transition-all flex flex-col justify-between group"
+                >
+                  <div>
+                    {/* Thumbnail */}
+                    <div
+                      onClick={() => setPreviewVideo(video)}
+                      className="relative aspect-video bg-slate-900 cursor-pointer overflow-hidden group/thumb"
+                    >
+                      <img
+                        src={`https://img.youtube.com/vi/${video.youtubeId}/mqdefault.jpg`}
+                        alt={video.title}
+                        className="w-full h-full object-cover group-hover/thumb:scale-105 transition-transform duration-300"
+                        onError={(e) => {
+                          // fallback placeholder if thumbnail fails
+                          (e.target as any).src = 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=400';
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-slate-900/40 group-hover/thumb:bg-slate-900/20 transition-colors flex items-center justify-center">
+                        <div className="w-12 h-12 rounded-full bg-rose-600 text-white flex items-center justify-center shadow-lg group-hover/thumb:scale-110 transition-transform">
+                          <Play className="w-6 h-6 fill-white ml-0.5" />
+                        </div>
+                      </div>
+                      <span className="absolute bottom-2 left-2 px-2 py-0.5 rounded-lg bg-black/70 text-white text-[10px] font-bold">
+                        YouTube
+                      </span>
+                    </div>
+
+                    {/* Details */}
+                    <div className="p-4 space-y-2">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="px-2 py-0.5 rounded-lg bg-slate-100 text-slate-700 text-[10px] font-black">
+                          {getIraqiGradeName(video.gradeId)}
+                        </span>
+                        {video.teacherName && (
+                          <span className="px-2 py-0.5 rounded-lg bg-rose-50 text-rose-700 border border-rose-200 text-[10px] font-bold">
+                            👨🏻‍🏫 {video.teacherName}
+                          </span>
+                        )}
+                      </div>
+
+                      <h4 className="font-black text-sm text-slate-900 line-clamp-2 leading-snug">
+                        {video.title}
+                      </h4>
+
+                      {video.description && (
+                        <p className="text-xs text-slate-500 font-medium line-clamp-2">
+                          {video.description}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Actions Bar */}
+                  <div className="p-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-2">
+                    <button
+                      onClick={() => setPreviewVideo(video)}
+                      className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all"
+                    >
+                      <Play className="w-3.5 h-3.5 fill-white" />
+                      <span>معاينة وتشغيل</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        if (window.confirm(`هل أنت متأكد من حذف فيديو: "${video.title}"؟`)) {
+                          deleteVideo(video.id);
+                          playWrongSound();
+                        }
+                      }}
+                      className="p-1.5 rounded-xl bg-rose-100 hover:bg-rose-200 text-rose-700 transition-all cursor-pointer"
+                      title="حذف الفيديو"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Add Video Modal */}
+          {isVideoModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in duration-200">
+              <div className="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl border border-slate-100 max-h-[92vh] overflow-y-auto">
+                <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+                  <div className="flex items-center gap-2">
+                    <div className="w-9 h-9 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center">
+                      <Tv className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="font-black text-slate-900 text-base">إضافة شرح مرئي تفاعلي</h3>
+                      <p className="text-xs text-slate-500">اربط فيديو يوتيوب بالمادة والمرحلة المناسبة</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setIsVideoModalOpen(false)}
+                    className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <form onSubmit={handleSaveVideo} className="mt-5 space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      عنوان الدرس / الشرح المرئي: *
+                    </label>
+                    <input
+                      type="text"
+                      value={videoTitle}
+                      onChange={(e) => setVideoTitle(e.target.value)}
+                      placeholder="مثال: شرح درس حرف الباء بالحركات والأمثلة"
+                      className="w-full p-3 rounded-xl border border-slate-200 text-xs font-bold"
+                      required
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">المرحلة الدراسية: *</label>
+                      <select
+                        value={videoGradeId}
+                        onChange={(e) => {
+                          const g = e.target.value as GradeId;
+                          setVideoGradeId(g);
+                          const subjs = OFFICIAL_IRAQI_SUBJECTS[g] || [];
+                          if (subjs.length > 0) setVideoSubjectId(subjs[0].id);
+                        }}
+                        className="w-full p-2.5 rounded-xl border border-slate-200 text-xs font-bold bg-white"
+                      >
+                        {GRADES_DATA.map((g) => (
+                          <option key={g.id} value={g.id}>
+                            {g.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">المادة الدراسية: *</label>
+                      <select
+                        value={videoSubjectId}
+                        onChange={(e) => setVideoSubjectId(e.target.value)}
+                        className="w-full p-2.5 rounded-xl border border-slate-200 text-xs font-bold bg-white"
+                      >
+                        {(OFFICIAL_IRAQI_SUBJECTS[videoGradeId] || []).map((s) => (
+                          <option key={s.id} value={s.id}>
+                            {s.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      رابط فيديو اليوتيوب (YouTube URL): *
+                    </label>
+                    <input
+                      type="url"
+                      value={videoUrl}
+                      onChange={(e) => setVideoUrl(e.target.value)}
+                      placeholder="https://youtu.be/... أو https://www.youtube.com/watch?v=..."
+                      className="w-full p-3 rounded-xl border border-slate-200 text-xs font-bold text-left outline-none focus:border-rose-500"
+                      dir="ltr"
+                      required
+                    />
+                    <p className="text-[11px] text-slate-400 mt-1">
+                      يقبل أي رابط يوتيوب مباشر أو من الموبايل أو المعرف المكون من 11 رمزاً
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        اسم الأستاذ / القناة (اختياري):
+                      </label>
+                      <input
+                        type="text"
+                        value={videoTeacher}
+                        onChange={(e) => setVideoTeacher(e.target.value)}
+                        placeholder="مثال: أستاذ أحمد / شرح تفاعلي"
+                        className="w-full p-2.5 rounded-xl border border-slate-200 text-xs font-medium"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        مستوى الوصول:
+                      </label>
+                      <div className="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200 bg-slate-50">
+                        <input
+                          type="checkbox"
+                          id="vidVipCheck"
+                          checked={videoIsVipOnly}
+                          onChange={(e) => setVideoIsVipOnly(e.target.checked)}
+                          className="w-4 h-4 text-amber-600 rounded-sm cursor-pointer"
+                        />
+                        <label htmlFor="vidVipCheck" className="text-xs font-bold text-slate-800 cursor-pointer">
+                          مخصص للـ VIP فقط
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      وصف مختصر عن محتوى الدرس (اختياري):
+                    </label>
+                    <textarea
+                      value={videoDesc}
+                      onChange={(e) => setVideoDesc(e.target.value)}
+                      placeholder="اكتب نقاط رئيسية يركز عليها الفيديو..."
+                      rows={2}
+                      className="w-full p-2.5 rounded-xl border border-slate-200 text-xs font-medium"
+                    />
+                  </div>
+
+                  <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+                    <button
+                      type="button"
+                      onClick={() => setIsVideoModalOpen(false)}
+                      className="px-4 py-2.5 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold cursor-pointer"
+                    >
+                      إلغاء
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-6 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold shadow-md cursor-pointer flex items-center gap-1.5"
+                    >
+                      <Check className="w-4 h-4" />
+                      <span>تثبيت وإضافة الفيديو ✓</span>
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {isQuestionModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in duration-200">
           <div className="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl border border-slate-100 max-h-[92vh] overflow-y-auto">
@@ -1412,6 +1758,7 @@ export const AdminPanel: React.FC = () => {
                 />
               </div>
 
+              {/* حقل رابط الصورة التوضيحية (اختياري) مع معاينة وزر حذف */}
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <label className="block text-xs font-bold text-slate-700 flex items-center gap-1.5">
@@ -1551,8 +1898,11 @@ export const AdminPanel: React.FC = () => {
           </div>
         </div>
       )}
+      {/* Preview Video Modal */}
+      <VideoPlayerModal video={previewVideo} onClose={() => setPreviewVideo(null)} />
     </div>
   );
 };
 
 export default AdminPanel;
+

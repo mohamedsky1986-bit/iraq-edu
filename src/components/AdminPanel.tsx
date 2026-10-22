@@ -4,7 +4,7 @@ import { GradeId, Question, Subject, SubscriptionType } from '../types/index';
 import { GRADES_DATA } from '../data/initialData';
 import { getIraqiGradeName, formatIraqiDinar } from '../utils/edu-logic';
 import { playClickSound, playCorrectSound, playWrongSound } from '../utils/audio';
-import { EducationalVideo } from '../data/curriculumMedia';
+import { EducationalVideo, CurriculumBook, extractDriveFileId } from '../data/curriculumMedia';
 import {
   Users,
   BookOpen,
@@ -169,10 +169,14 @@ export const AdminPanel: React.FC = () => {
     videos,
     addVideo,
     deleteVideo,
+    curriculumBooks = [],
+    updateBook,
+    addBook,
+    deleteBook,
   } = useEdu();
 
   const [activeTab, setActiveTab] = useState<
-    'students' | 'requests' | 'pricing' | 'curriculum' | 'security' | 'videos'
+    'students' | 'requests' | 'pricing' | 'curriculum' | 'security' | 'videos' | 'books'
   >('curriculum');
 
   const [studentSearch, setStudentSearch] = useState('');
@@ -210,6 +214,85 @@ export const AdminPanel: React.FC = () => {
   const [formDifficulty, setFormDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
 
   // Video Management States
+  // Book Management States
+  const [bGradeFilter, setBGradeFilter] = useState<string>('all');
+  const [bookSearchQuery, setBookSearchQuery] = useState('');
+  const [isBookModalOpen, setIsBookModalOpen] = useState(false);
+  const [editingBook, setEditingBook] = useState<CurriculumBook | null>(null);
+  const [bookFormTitle, setBookFormTitle] = useState('');
+  const [bookFormGradeId, setBookFormGradeId] = useState<GradeId>('grade-1');
+  const [bookFormSubjectId, setBookFormSubjectId] = useState('ar-1');
+  const [bookFormDriveId, setBookFormDriveId] = useState('');
+  const [bookFormCategory, setBookFormCategory] = useState<'book' | 'workbook' | 'activity' | 'summary'>('book');
+
+  const filteredBooks = (curriculumBooks || []).filter((b) => {
+    const matchGrade = bGradeFilter === 'all' || b.gradeId === bGradeFilter;
+    const matchSearch =
+      !bookSearchQuery.trim() ||
+      b.title.toLowerCase().includes(bookSearchQuery.toLowerCase());
+    return matchGrade && matchSearch;
+  });
+
+  const handleOpenEditBook = (book: CurriculumBook) => {
+    playClickSound();
+    setEditingBook(book);
+    setBookFormTitle(book.title);
+    setBookFormGradeId(book.gradeId);
+    setBookFormSubjectId(book.subjectId);
+    setBookFormDriveId(book.driveFileId);
+    setBookFormCategory(book.category);
+    setIsBookModalOpen(true);
+  };
+
+  const handleOpenAddBook = () => {
+    playClickSound();
+    setEditingBook(null);
+    setBookFormTitle('');
+    setBookFormGradeId('grade-1');
+    setBookFormSubjectId('ar-1');
+    setBookFormDriveId('');
+    setBookFormCategory('book');
+    setIsBookModalOpen(true);
+  };
+
+  const handleSaveBook = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!bookFormTitle.trim()) {
+      alert('يرجى كتابة عنوان الكتاب أو الملزمة');
+      return;
+    }
+    if (!bookFormDriveId.trim()) {
+      alert('يرجى وضع رابط أو معرّف ملف قوقل درايف');
+      return;
+    }
+
+    const cleanId = extractDriveFileId(bookFormDriveId.trim());
+
+    if (editingBook) {
+      updateBook(editingBook.id, {
+        title: bookFormTitle.trim(),
+        gradeId: bookFormGradeId,
+        subjectId: bookFormSubjectId,
+        driveFileId: cleanId,
+        category: bookFormCategory,
+      });
+      playCorrectSound();
+      alert('تم تحديث رابط ومعلومات الكتاب بنجاح! ✓');
+    } else {
+      addBook({
+        title: bookFormTitle.trim(),
+        gradeId: bookFormGradeId,
+        subjectId: bookFormSubjectId,
+        driveFileId: cleanId,
+        category: bookFormCategory,
+      });
+      playCorrectSound();
+      alert('تمت إضافة الكتاب الجديد بنجاح إلى المناهج! ✓');
+    }
+    setIsBookModalOpen(false);
+    setEditingBook(null);
+  };
+
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   const [previewVideo, setPreviewVideo] = useState<EducationalVideo | null>(null);
   const [videoTitle, setVideoTitle] = useState('');
@@ -573,6 +656,21 @@ export const AdminPanel: React.FC = () => {
         >
           <DollarSign className="w-4 h-4 text-emerald-400" />
           <span>تعديل سعر الاشتراك والمدفوعات</span>
+        </button>
+
+        <button
+          onClick={() => {
+            playClickSound();
+            setActiveTab('books');
+          }}
+          className={`px-4 py-3 rounded-2xl font-black text-xs sm:text-sm flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
+            activeTab === 'books'
+              ? 'bg-slate-900 text-white shadow-md'
+              : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+          }`}
+        >
+          <BookOpen className="w-4 h-4 text-sky-400" />
+          <span>إدارة الكتب والمناهج ({(curriculumBooks || []).length})</span>
         </button>
 
         <button
@@ -1223,6 +1321,265 @@ export const AdminPanel: React.FC = () => {
               حفظ اسم المشرف وكلمة المرور وتأمين النظام 🔒
             </button>
           </form>
+        </div>
+      )}
+
+      {/* Tab: إدارة الكتب والمناهج الدراسية */}
+      {activeTab === 'books' && (
+        <div className="space-y-6">
+          <div className="bg-gradient-to-r from-sky-950 via-slate-900 to-indigo-950 p-6 sm:p-8 rounded-3xl text-white shadow-lg border border-sky-500/20 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="space-y-1.5 text-center sm:text-right">
+              <span className="px-3 py-1 rounded-full bg-sky-500/20 text-sky-300 border border-sky-500/30 text-xs font-black inline-block mb-1">
+                📚 إدارة الكتب والملازم المدرسية (Google Drive)
+              </span>
+              <h3 className="text-xl sm:text-2xl font-black">تحديث وتعديل كتب المناهج الدراسية</h3>
+              <p className="text-xs sm:text-sm text-slate-300 font-medium max-w-xl">
+                يمكنك تحديث رابط أي كتاب قديم بنسخة جديدة من قوقل درايف، أو إضافة ملازم وكتب تمارين للمراحل الستة.
+              </p>
+            </div>
+
+            <button
+              onClick={handleOpenAddBook}
+              className="px-6 py-3.5 rounded-2xl bg-sky-600 hover:bg-sky-500 text-white font-black text-xs sm:text-sm shadow-lg flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap hover:scale-105 active:scale-95"
+            >
+              <PlusCircle className="w-5 h-5" />
+              <span>إضافة كتاب / ملزمة جديدة</span>
+            </button>
+          </div>
+
+          {/* Filter Bar */}
+          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <span className="text-xs font-bold text-slate-500 shrink-0">المرحلة:</span>
+              <select
+                value={bGradeFilter}
+                onChange={(e) => setBGradeFilter(e.target.value)}
+                className="p-2 rounded-xl border border-slate-200 text-xs font-bold bg-white text-slate-800"
+              >
+                <option value="all">كل المراحل الدراسية</option>
+                {GRADES_DATA.map((g) => (
+                  <option key={g.id} value={g.id}>
+                    {g.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="relative w-full sm:w-72">
+              <Search className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={bookSearchQuery}
+                onChange={(e) => setBookSearchQuery(e.target.value)}
+                placeholder="بحث في أسماء الكتب والملازم..."
+                className="w-full pr-9 pl-3 py-2 rounded-xl border border-slate-200 text-xs font-bold placeholder-slate-400 outline-none focus:border-sky-500"
+              />
+            </div>
+          </div>
+
+          {/* Books List / Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredBooks.map((book) => {
+              const driveViewUrl = 'https://drive.google.com/file/d/' + book.driveFileId + '/view';
+              return (
+                <div
+                  key={book.id}
+                  className="bg-white rounded-3xl border border-slate-200 p-5 shadow-xs hover:shadow-md transition-all flex flex-col justify-between space-y-4"
+                >
+                  <div>
+                    <div className="flex items-center justify-between gap-2 mb-2">
+                      <span className="px-2.5 py-0.5 rounded-lg bg-sky-50 text-sky-700 text-[10px] font-black border border-sky-200">
+                        {book.category === 'workbook'
+                          ? 'كتاب التمرينات'
+                          : book.category === 'activity'
+                          ? 'كتاب النشاط'
+                          : book.category === 'summary'
+                          ? 'ملزمة مراجعة'
+                          : 'كتاب رسمي'}
+                      </span>
+                      <span className="text-xs font-black text-slate-500">
+                        {getIraqiGradeName(book.gradeId)}
+                      </span>
+                    </div>
+
+                    <h4 className="font-black text-sm text-slate-900 leading-snug line-clamp-2">
+                      {book.title}
+                    </h4>
+
+                    <div className="mt-3 p-2.5 bg-slate-50 rounded-xl border border-slate-100 text-[11px] text-slate-500 space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-slate-700">معرف درايف:</span>
+                        <a
+                          href={driveViewUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sky-600 hover:underline font-mono text-[10px] flex items-center gap-1"
+                        >
+                          <span>فتح الملف</span>
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      </div>
+                      <p className="font-mono text-[10px] text-slate-400 truncate">{book.driveFileId}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 pt-3 border-t border-slate-100">
+                    <button
+                      onClick={() => handleOpenEditBook(book)}
+                      className="flex-1 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                    >
+                      <Edit3 className="w-3.5 h-3.5 text-amber-400" />
+                      <span>تعديل الرابط / الاسم</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        if (window.confirm('هل أنت متأكد من حذف هذا الكتاب: ' + book.title + '؟')) {
+                          deleteBook(book.id);
+                          playWrongSound();
+                        }
+                      }}
+                      className="p-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 transition-all cursor-pointer"
+                      title="حذف الكتاب"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Book Edit / Add Modal */}
+          {isBookModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in duration-200">
+              <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-100 max-h-[92vh] overflow-y-auto">
+                <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+                  <div className="flex items-center gap-2">
+                    <div className="w-9 h-9 rounded-xl bg-sky-100 text-sky-600 flex items-center justify-center">
+                      <BookOpen className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="font-black text-slate-900 text-base">
+                        {editingBook ? 'تعديل كتاب أو ملزمة' : 'إضافة كتاب أو ملزمة جديدة'}
+                      </h3>
+                      <p className="text-xs text-slate-500">حدث رابط قوقل درايف أو الاسم</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setIsBookModalOpen(false)}
+                    className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <form onSubmit={handleSaveBook} className="mt-5 space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      اسم الكتاب أو الملزمة: *
+                    </label>
+                    <input
+                      type="text"
+                      value={bookFormTitle}
+                      onChange={(e) => setBookFormTitle(e.target.value)}
+                      placeholder="مثال: كتاب قراءتي الأول الابتدائي (المنهج الجديد)"
+                      className="w-full p-3 rounded-xl border border-slate-200 text-xs font-bold"
+                      required
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">المرحلة الدراسية: *</label>
+                      <select
+                        value={bookFormGradeId}
+                        onChange={(e) => {
+                          const g = e.target.value as GradeId;
+                          setBookFormGradeId(g);
+                          const subjs = OFFICIAL_IRAQI_SUBJECTS[g] || [];
+                          if (subjs.length > 0) setBookFormSubjectId(subjs[0].id);
+                        }}
+                        className="w-full p-2.5 rounded-xl border border-slate-200 text-xs font-bold bg-white"
+                      >
+                        {GRADES_DATA.map((g) => (
+                          <option key={g.id} value={g.id}>
+                            {g.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">المادة الدراسية: *</label>
+                      <select
+                        value={bookFormSubjectId}
+                        onChange={(e) => setBookFormSubjectId(e.target.value)}
+                        className="w-full p-2.5 rounded-xl border border-slate-200 text-xs font-bold bg-white"
+                      >
+                        {(OFFICIAL_IRAQI_SUBJECTS[bookFormGradeId] || []).map((s) => (
+                          <option key={s.id} value={s.id}>
+                            {s.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      نوع المطبوع: *
+                    </label>
+                    <select
+                      value={bookFormCategory}
+                      onChange={(e) => setBookFormCategory(e.target.value as any)}
+                      className="w-full p-2.5 rounded-xl border border-slate-200 text-xs font-bold bg-white"
+                    >
+                      <option value="book">كتاب الوزارة المعتمد (رسمي)</option>
+                      <option value="workbook">كتاب التمرينات والحلول</option>
+                      <option value="activity">كتاب النشاط العملي</option>
+                      <option value="summary">ملزمة مراجعة مركزة</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      رابط أو معرّف ملف قوقل درايف (Google Drive Link or File ID): *
+                    </label>
+                    <input
+                      type="text"
+                      value={bookFormDriveId}
+                      onChange={(e) => setBookFormDriveId(e.target.value)}
+                      placeholder="الصق رابط مشاركة قوقل درايف أو الرمز (File ID) هنا"
+                      className="w-full p-3 rounded-xl border border-slate-200 text-xs font-bold text-left outline-none focus:border-sky-500 font-mono"
+                      dir="ltr"
+                      required
+                    />
+                    <p className="text-[11px] text-slate-400 mt-1">
+                      يقبل أي رابط مشاركة من قوقل درايف (مثال: https://drive.google.com/file/d/.../view) ويستخرج الرمز تلقائياً.
+                    </p>
+                  </div>
+
+                  <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+                    <button
+                      type="button"
+                      onClick={() => setIsBookModalOpen(false)}
+                      className="px-4 py-2.5 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold cursor-pointer"
+                    >
+                      إلغاء
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-6 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold shadow-md cursor-pointer flex items-center gap-1.5"
+                    >
+                      <Check className="w-4 h-4" />
+                      <span>{editingBook ? 'تحديث الكتاب ✓' : 'إضافة الكتاب ✓'}</span>
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

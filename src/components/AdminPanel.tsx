@@ -88,7 +88,7 @@ const VideoPlayerModal: React.FC<{
 }> = ({ video, onClose }) => {
   if (!video) return null;
 
-  const embedUrl = ;
+  const embedUrl = 'https://www.youtube-nocookie.com/embed/' + video.youtubeId + '?autoplay=1&rel=0';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-900/85 backdrop-blur-md animate-fadeIn">
@@ -101,7 +101,7 @@ const VideoPlayerModal: React.FC<{
             <div>
               <h3 className="text-base font-black text-white line-clamp-1">{video.title}</h3>
               <p className="text-xs text-slate-400 font-medium">
-                {video.teacherName ?  : 'شرح درس مرئي تفاعلي'}
+                {video.teacherName ? 'إعداد: ' + video.teacherName : 'شرح درس مرئي تفاعلي'}
               </p>
             </div>
           </div>
@@ -1311,7 +1311,7 @@ export const AdminPanel: React.FC = () => {
                       className="relative aspect-video bg-slate-900 cursor-pointer overflow-hidden group/thumb"
                     >
                       <img
-                        src={`https://img.youtube.com/vi/${video.youtubeId}/mqdefault.jpg`}
+                        src={'https://img.youtube.com/vi/' + video.youtubeId + '/mqdefault.jpg'}
                         alt={video.title}
                         className="w-full h-full object-cover group-hover/thumb:scale-105 transition-transform duration-300"
                         onError={(e) => {
@@ -1366,7 +1366,7 @@ export const AdminPanel: React.FC = () => {
 
                     <button
                       onClick={() => {
-                        if (window.confirm(`هل أنت متأكد من حذف فيديو: "${video.title}"؟`)) {
+                        if (window.confirm('هل أنت متأكد من حذف فيديو: ' + video.title + '؟')) {
                           deleteVideo(video.id);
                           playWrongSound();
                         }

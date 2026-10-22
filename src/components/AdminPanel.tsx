@@ -257,6 +257,24 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
   });
 
 
+  // مزامنة حية للفيديوهات عبر Firebase Firestore
+  useEffect(() => {
+    try {
+      const unsub = onSnapshot(collection(db, 'videos'), (snapshot) => {
+        if (!snapshot.empty) {
+          const remoteVids = snapshot.docs.map((d) => ({ id: d.id, ...d.data() })) as CustomVideo[];
+          setVideosList(remoteVids);
+          try {
+            localStorage.setItem(STORAGE_KEYS.CUSTOM_VIDEOS, JSON.stringify(remoteVids));
+          } catch {}
+        }
+      });
+      return () => unsub();
+    } catch (e) {
+      console.warn('Firestore live videos sync fallback:', e);
+    }
+  }, []);
+
   // مزامنة حية للتعليقات عبر Firebase Firestore
   useEffect(() => {
     try {
@@ -344,16 +362,37 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
       youtubeUrl: newVidUrl.trim(),
       chapter: newVidChapter.trim() || 'الفصل الأول',
     };
-    setVideosList((prev) => [...prev, newVid]);
+    const updated = [newVid, ...videosList];
+    setVideosList(updated);
+    try {
+      localStorage.setItem(STORAGE_KEYS.CUSTOM_VIDEOS, JSON.stringify(updated));
+    } catch {}
+    try {
+      await setDoc(doc(db, 'videos', newVid.id), newVid);
+    } catch (err) {
+      console.error('Error saving video to Firestore:', err);
+    }
     playCorrectSound();
     setNewVidTitle('');
     setNewVidUrl('');
+    alert('تمت إضافة الفيديو بنجاح وحفظه سحابياً ليظهر لجميع الطلاب فوراً ✓');
   };
 
 
-  const handleDeleteVideo = (id: string) => {
+  const handleDeleteVideo = async (id: string) => {
     playClickSound();
-    setVideosList((prev) => prev.filter((v) => v.id !== id));
+    if (confirm('هل أنت متأكد من حذف هذا الفيديو نهائياً؟')) {
+      const updated = videosList.filter((v) => v.id !== id);
+      setVideosList(updated);
+      try {
+        localStorage.setItem(STORAGE_KEYS.CUSTOM_VIDEOS, JSON.stringify(updated));
+      } catch {}
+      try {
+        await deleteDoc(doc(db, 'videos', id));
+      } catch (err) {
+        console.error('Error deleting video from Firestore:', err);
+      }
+    }
   };
 
 

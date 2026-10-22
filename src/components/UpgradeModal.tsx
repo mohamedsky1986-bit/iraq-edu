@@ -13,6 +13,7 @@ import {
   CheckCircle2,
   AlertCircle,
   HelpCircle,
+  MessageCircle,
 } from 'lucide-react';
 
 interface UpgradeModalProps {
@@ -34,12 +35,19 @@ export const UpgradeModal: React.FC<UpgradeModalProps> = ({
   } = useEdu();
 
   const [paymentMethod, setPaymentMethod] = useState<
-    'zain_cash' | 'qi_card' | 'asia_cell' | 'cash_school'
-  >('zain_cash');
+    'whatsapp' | 'zain_cash' | 'qi_card' | 'asia_cell' | 'cash_school'
+  >('whatsapp');
   const [senderInfo, setSenderInfo] = useState('');
   const [requestSubmitted, setRequestSubmitted] = useState(false);
 
   if (!isOpen) return null;
+
+  const whatsappNumber = '07707383565';
+  const whatsappUrl = `https://wa.me/9647707383565?text=${encodeURIComponent(
+    `السلام عليكم، أود الاشتراك وتفعيل باقة VIP الذهبية في منصة المتفوق التعليمية للطالب: ${
+      currentStudent?.fullName || 'طالب جديد'
+    } (اسم المستخدم: ${currentStudent?.username || ''}). يرجى تزويدي بمعلومات الدفع والتفعيل الفوري.`
+  )}`;
 
   const handleSubmitRequest = (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,7 +67,9 @@ export const UpgradeModal: React.FC<UpgradeModalProps> = ({
       paymentPhoneOrRef: senderInfo.trim(),
       amount: subscriptionConfig.price,
       notes: `طلب اشتراك VIP عبر ${
-        paymentMethod === 'zain_cash'
+        paymentMethod === 'whatsapp'
+          ? 'واتساب مباشر'
+          : paymentMethod === 'zain_cash'
           ? 'زين كاش'
           : paymentMethod === 'qi_card'
           ? 'كي كارد'
@@ -82,24 +92,25 @@ export const UpgradeModal: React.FC<UpgradeModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/75 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl border border-slate-100 max-h-[92vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-xs animate-in fade-in duration-200">
+      <div className="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl border border-slate-100 max-h-[92vh] overflow-y-auto text-center sm:text-right">
+        {/* Header */}
         <div className="flex items-center justify-between pb-4 border-b border-slate-100">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-400 text-white flex items-center justify-center shadow-md shadow-amber-500/20">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-400 text-white flex items-center justify-center shadow-md shadow-amber-500/20 shrink-0">
               <Crown className="w-7 h-7" />
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-lg font-black text-slate-900">
-                  طلب تفعيل اشتراك المنهاج (VIP)
+                  تفعيل اشتراك المنهاج الكامل (VIP)
                 </h2>
                 <span className="text-xs font-black px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
                   المميز ⭐
                 </span>
               </div>
-              <p className="text-xs text-slate-500 font-medium">
-                فتح بنك الأسئلة الوزارية الكامل، النطق اللامحدود، وشهادات التفوق
+              <p className="text-xs text-slate-500 font-bold mt-0.5">
+                فتح بنك الأسئلة والتعاريف والوزاريات، النطق اللامحدود، وشهادات التميز
               </p>
             </div>
           </div>
@@ -108,15 +119,41 @@ export const UpgradeModal: React.FC<UpgradeModalProps> = ({
               playClickSound();
               onClose();
             }}
-            className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+            className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all cursor-pointer"
             aria-label="إغلاق"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Pricing Card (Configurable from Admin Panel) */}
-        <div className="my-5 p-6 rounded-3xl bg-gradient-to-br from-amber-50 via-orange-50/50 to-amber-100/40 border-2 border-amber-300 relative overflow-hidden">
+        {/* PRIMARY WHATSAPP DIRECT BUTTON (الزر المباشر لتحويل الواتساب للدفع الفوري) */}
+        <div className="my-4">
+          <a
+            href={whatsappUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={playClickSound}
+            className="w-full p-4 rounded-2xl bg-gradient-to-r from-emerald-600 via-green-600 to-teal-600 hover:from-emerald-700 text-white font-black text-sm shadow-lg shadow-emerald-600/30 transition-all flex items-center justify-between gap-3 cursor-pointer group"
+          >
+            <div className="flex items-center gap-3 text-right">
+              <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
+                <MessageCircle className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <p className="font-black text-xs sm:text-sm">اضغط هنا للتواصل للدفع أو الاستفسار عبر واتساب 💬</p>
+                <p className="text-[11px] text-emerald-100 font-mono mt-0.5" dir="ltr">
+                  رقم الواتساب المعتمد: {whatsappNumber}
+                </p>
+              </div>
+            </div>
+            <span className="px-3 py-1.5 rounded-xl bg-white text-emerald-800 font-black text-xs shrink-0 group-hover:scale-105 transition-transform shadow-xs">
+              محادثة فورية 🚀
+            </span>
+          </a>
+        </div>
+
+        {/* Pricing Card */}
+        <div className="my-4 p-5 rounded-3xl bg-gradient-to-br from-amber-50 via-orange-50/50 to-amber-100/40 border-2 border-amber-300 relative overflow-hidden text-right">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <span className="text-xs font-black text-amber-900 uppercase tracking-wide">
@@ -134,7 +171,7 @@ export const UpgradeModal: React.FC<UpgradeModalProps> = ({
 
             <div className="text-xs font-bold text-emerald-800 bg-emerald-100/90 border border-emerald-300 px-3 py-1.5 rounded-xl flex items-center gap-1.5 self-start sm:self-auto">
               <Sparkles className="w-4 h-4 text-emerald-600" />
-              <span>اشتراك شامل لكافة المواد</span>
+              <span>اشتراك شامل لكافة المواد والصفوف</span>
             </div>
           </div>
 
@@ -151,14 +188,36 @@ export const UpgradeModal: React.FC<UpgradeModalProps> = ({
 
         {!requestSubmitted ? (
           /* Subscription Request Form */
-          <form onSubmit={handleSubmitRequest} className="space-y-4">
+          <form onSubmit={handleSubmitRequest} className="space-y-4 text-right">
             <h3 className="text-xs font-black text-slate-700 flex items-center gap-1.5">
               <CreditCard className="w-4 h-4 text-emerald-600" />
-              <span>اختر وسيلة الدفع المناسبة لتحويل المبلغ:</span>
+              <span>طرق الدفع المتوفرة والمتاحة:</span>
             </h3>
 
             {/* Payment Methods */}
-            <div className="grid grid-cols-2 gap-2.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <a
+                href={whatsappUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => {
+                  playClickSound();
+                  setPaymentMethod('whatsapp');
+                }}
+                className={`p-3 rounded-2xl border-2 text-right transition-all cursor-pointer block ${
+                  paymentMethod === 'whatsapp'
+                    ? 'border-emerald-500 bg-emerald-50/70 shadow-xs'
+                    : 'border-slate-200 bg-white hover:border-emerald-300'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <p className="font-extrabold text-xs text-emerald-900">💬 واتساب مباشر فوري</p>
+                  <span className="text-[10px] bg-emerald-200 text-emerald-900 px-1.5 py-0.5 rounded-md font-bold">أسرع تفعيل</span>
+                </div>
+                <p className="text-[10px] text-slate-600 mt-1">تواصل للدفع وإرسال وصل التحويل</p>
+                <p className="text-[10px] text-slate-800 font-mono mt-0.5" dir="ltr">{whatsappNumber}</p>
+              </a>
+
               <button
                 type="button"
                 onClick={() => {
@@ -208,23 +267,7 @@ export const UpgradeModal: React.FC<UpgradeModalProps> = ({
                 }`}
               >
                 <p className="font-extrabold text-xs text-slate-900">رصيد كارتات (آسيا / أثير)</p>
-                <p className="text-[10px] text-slate-500 mt-0.5">إرسال كود الكارت</p>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  playClickSound();
-                  setPaymentMethod('cash_school');
-                }}
-                className={`p-3 rounded-2xl border-2 text-right transition-all cursor-pointer ${
-                  paymentMethod === 'cash_school'
-                    ? 'border-amber-500 bg-amber-50/70 shadow-xs'
-                    : 'border-slate-200 bg-white hover:border-slate-300'
-                }`}
-              >
-                <p className="font-extrabold text-xs text-slate-900">الدفع نقداً في المدرسة</p>
-                <p className="text-[10px] text-slate-500 mt-0.5">تسليم الوصل للإدارة</p>
+                <p className="text-[10px] text-slate-500 mt-0.5">إرسال كود الكارت عبر واتساب</p>
               </button>
             </div>
 
@@ -257,7 +300,7 @@ export const UpgradeModal: React.FC<UpgradeModalProps> = ({
               <button
                 type="button"
                 onClick={handleInstantDemoActivate}
-                className="text-xs text-emerald-700 hover:text-emerald-800 font-bold underline"
+                className="text-xs text-emerald-700 hover:text-emerald-800 font-bold underline cursor-pointer"
               >
                 تفعيل تجريبي فوري بنقرة واحدة للتجربة
               </button>
@@ -269,9 +312,9 @@ export const UpgradeModal: React.FC<UpgradeModalProps> = ({
                   onClose();
                   onOpenAdminLogin();
                 }}
-                className="text-xs text-slate-500 hover:text-slate-800 underline"
+                className="text-xs text-slate-500 hover:text-slate-800 underline cursor-pointer"
               >
-                دخول لوحة الأدمن لتعديل الأسعار
+                دخول لوحة المشرف
               </button>
             </div>
           </form>
@@ -287,7 +330,16 @@ export const UpgradeModal: React.FC<UpgradeModalProps> = ({
                 تم إرسال طلب الاشتراك بنجاح! 🎉
               </h3>
               <p className="text-xs text-slate-600 font-medium max-w-md mx-auto mt-1 leading-relaxed">
-                سيقوم مشرف المنصة بمراجعة وتأكيد التحويل فورياً من لوحة التحكم وتفعيل اشتراكك كبطل VIP.
+                سيقوم مشرف المنصة بمراجعة وتأكيد التحويل فورياً. ويمكنك أيضاً مراسلتنا عبر الواتساب على الرقم{' '}
+                <a
+                  href={whatsappUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-mono text-emerald-700 font-bold underline"
+                >
+                  {whatsappNumber}
+                </a>{' '}
+                لتسريع التفعيل في دقيقة واحدة!
               </p>
             </div>
 
@@ -300,7 +352,7 @@ export const UpgradeModal: React.FC<UpgradeModalProps> = ({
               </button>
               <button
                 onClick={onClose}
-                className="px-5 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold"
+                className="px-5 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold cursor-pointer"
               >
                 إغلاق
               </button>
@@ -311,3 +363,4 @@ export const UpgradeModal: React.FC<UpgradeModalProps> = ({
     </div>
   );
 };
+

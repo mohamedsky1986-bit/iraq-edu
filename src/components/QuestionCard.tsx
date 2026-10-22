@@ -11,6 +11,7 @@ import {
   Lock,
   CheckCircle2,
   HelpCircle,
+  MessageCircle,
 } from 'lucide-react';
 
 interface QuestionCardProps {
@@ -20,63 +21,39 @@ interface QuestionCardProps {
   index: number;
 }
 
+/**
+ * Highlights keywords like "علل", "عرف", or blanks in question text
+ */
 function renderFormattedText(text: string) {
-  if (!text) return '';
-  const parts = text.split(/(\*\*.*?\*\*|==.*?==|«.*?»|[red].*?\[\/red\]|[blue].*?\[\/blue\]|[green].*?\[\/green\]|[purple].*?\[\/purple\]|[orange].*?\[\/orange\]|\.\.\.\.\.\.)/g);
+  const parts = text.split(/(علل|عرّف|عرف|ما المقصود|أكمل الفراغ|......)/g);
   return parts.map((part, i) => {
-    if (part.startsWith('**') && part.endsWith('**')) {
+    if (part === 'علل') {
       return (
-        <strong key={i} className="font-black text-slate-950 underline decoration-amber-400 decoration-2">
-          {part.slice(2, -2)}
-        </strong>
-      );
-    }
-    if (part.startsWith('==') && part.endsWith('==')) {
-      return (
-        <mark key={i} className="bg-amber-200 text-amber-950 px-1.5 py-0.5 rounded font-black">
-          {part.slice(2, -2)}
-        </mark>
-      );
-    }
-    if (part.startsWith('[red]') && part.endsWith('[/red]')) {
-      return (
-        <span key={i} className="text-rose-600 font-black">
-          {part.slice(5, -6)}
+        <span
+          key={i}
+          className="inline-block px-2 py-0.5 mx-1 rounded-md bg-rose-100 text-rose-800 font-black border border-rose-300"
+        >
+          علل 🧐
         </span>
       );
     }
-    if (part.startsWith('[blue]') && part.endsWith('[/blue]')) {
+    if (part === 'عرّف' || part === 'عرف' || part === 'ما المقصود') {
       return (
-        <span key={i} className="text-blue-600 font-black">
-          {part.slice(6, -7)}
+        <span
+          key={i}
+          className="inline-block px-2 py-0.5 mx-1 rounded-md bg-indigo-100 text-indigo-800 font-black border border-indigo-300"
+        >
+          {part} 📖
         </span>
       );
     }
-    if (part.startsWith('[green]') && part.endsWith('[/green]')) {
+    if (part === 'أكمل الفراغ') {
       return (
-        <span key={i} className="text-emerald-600 font-black">
-          {part.slice(7, -8)}
-        </span>
-      );
-    }
-    if (part.startsWith('[orange]') && part.endsWith('[/orange]')) {
-      return (
-        <span key={i} className="text-amber-600 font-black">
-          {part.slice(8, -9)}
-        </span>
-      );
-    }
-    if (part.startsWith('[purple]') && part.endsWith('[/purple]')) {
-      return (
-        <span key={i} className="text-purple-600 font-black">
-          {part.slice(8, -9)}
-        </span>
-      );
-    }
-    if (part.startsWith('«') && part.endsWith('»')) {
-      return (
-        <span key={i} className="text-emerald-800 font-bold font-serif">
-          {part}
+        <span
+          key={i}
+          className="inline-block px-2 py-0.5 mx-1 rounded-md bg-amber-100 text-amber-800 font-black border border-amber-300"
+        >
+          أكمل الفراغ ✏️
         </span>
       );
     }
@@ -104,6 +81,11 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
   const [isSpeaking, setIsSpeaking] = useState(false);
 
   const canAccess = canStudentAccessQuestion(question, studentSubscription);
+
+  const whatsappNumber = '07707383565';
+  const whatsappUrl = `https://wa.me/9647707383565?text=${encodeURIComponent(
+    `السلام عليكم، أود تفعيل اشتراك VIP في منصة المتفوق لفتح السؤال: "${question.questionText.slice(0, 60)}..." (للتواصل والدفع الفوري على الرقم ${whatsappNumber}).`
+  )}`;
 
   const handleSpeakQuestion = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -154,6 +136,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
                   • {question.lessonName}
                 </span>
               )}
+              {/* Ministerial / Smart Challenge badge */}
               {(question as any).badgeType === 'ministerial' ? (
                 <span className="text-[11px] font-black px-2.5 py-0.5 rounded-full bg-amber-400 text-amber-950 shadow-xs border border-amber-500 flex items-center gap-1 animate-pulse">
                   🌟 سؤال وزاري مرشح
@@ -167,6 +150,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
                   💡 فهم وتركيز
                 </span>
               ) : null}
+              {/* Question Format Badge */}
               {question.questionType === 'reasoning' || question.questionText.startsWith('علل') || question.questionText.includes('السبب') ? (
                 <span className="text-[11px] font-black px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-900 border border-rose-200 flex items-center gap-1">
                   🧐 تعليل وزاري (علل)
@@ -209,19 +193,55 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
                 />
               </div>
             )}
+
+            {/* VIP LOCKED BANNER WITH WHATSAPP LINK */}
+            {!canAccess && (
+              <div className="mt-3.5 p-3.5 rounded-2xl bg-amber-50 border border-amber-300 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-right">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-amber-200 text-amber-900 flex items-center justify-center shrink-0">
+                    <Lock className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-black text-amber-950">
+                      سؤال مخصص لمشتركي باقة VIP • الحل النموذجي والشرح مقفول
+                    </p>
+                    <p className="text-[11px] text-amber-800 font-medium">
+                      اضغط للتواصل المباشر للدفع والتفعيل الفوري عبر واتساب: {whatsappNumber}
+                    </p>
+                  </div>
+                </div>
+
+                <a
+                  href={whatsappUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    playClickSound();
+                  }}
+                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 text-white text-xs font-black flex items-center gap-1.5 shadow-xs shrink-0 cursor-pointer"
+                >
+                  <MessageCircle className="w-4 h-4" />
+                  <span>تواصل للدفع عبر واتساب 💬</span>
+                </a>
+              </div>
+            )}
           </div>
 
+          {/* Action tools */}
           <div className="flex items-center gap-1 shrink-0">
             {canAccess ? (
               <>
                 <button
+                  type="button"
                   onClick={handleSpeakQuestion}
                   className={`p-2.5 rounded-2xl transition-all cursor-pointer ${
                     isSpeaking
-                      ? 'bg-rose-100 text-rose-600 animate-pulse ring-2 ring-rose-300'
-                      : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                      ? 'bg-emerald-500 text-white shadow-md speaking-animation'
+                      : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700'
                   }`}
-                  title={isSpeaking ? 'إيقاف النطق' : 'استمع لنطق السؤال والجواب بصوت واضح'}
+                  title={isSpeaking ? 'إيقاف النطق' : 'استمع لنطق السؤال للأطفال'}
+                  aria-label="استمع لنطق السؤال للأطفال"
                 >
                   {isSpeaking ? (
                     <VolumeX className="w-5 h-5" />
@@ -229,7 +249,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
                     <Volume2 className="w-5 h-5" />
                   )}
                 </button>
-                <div className="p-2 rounded-2xl text-slate-400">
+                <div className="p-2 text-slate-400">
                   {isOpen ? (
                     <ChevronUp className="w-5 h-5" />
                   ) : (
@@ -238,37 +258,63 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
                 </div>
               </>
             ) : (
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-amber-100 text-amber-800 text-xs font-black">
-                <Lock className="w-4 h-4" />
-                <span>اشتراك VIP</span>
-              </div>
+              <a
+                href={whatsappUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  playClickSound();
+                }}
+                className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
+              >
+                <MessageCircle className="w-3.5 h-3.5" />
+                <span>دفع VIP واتساب</span>
+              </a>
             )}
           </div>
         </div>
+
+        {/* Tags */}
+        {question.tags && question.tags.length > 0 && (
+          <div className="flex flex-wrap justify-center sm:justify-start gap-1.5 mt-3">
+            {question.tags.map((tag, tIdx) => (
+              <span
+                key={tIdx}
+                className="text-[11px] font-medium text-slate-500 bg-slate-100/80 px-2 py-0.5 rounded-md"
+              >
+                #{tag}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
 
+      {/* Expanded Solution & Interactive Explanation */}
       {isOpen && canAccess && (
-        <div className="px-5 sm:px-6 pb-6 pt-2 border-t border-slate-100 bg-slate-50/50 space-y-3 animate-in fade-in text-center sm:text-right">
-          {question.options && question.options.length >= 2 && (
-            <div className="space-y-2">
-              <span className="text-xs font-bold text-slate-500 block mb-1">
-                الخيارات التفاعلية:
-              </span>
+        <div className="px-5 sm:px-6 pb-6 pt-2 border-t border-slate-100 bg-emerald-50/30 animate-in fade-in duration-200 space-y-3">
+          {/* Multiple choice options preview if present */}
+          {(question.questionType === 'multiple_choice' || (question.options && question.options.length >= 2 && question.questionType !== 'qa')) && (
+            <div>
+              <p className="text-xs font-bold text-slate-600 mb-2 flex items-center gap-1">
+                <HelpCircle className="w-3.5 h-3.5 text-emerald-600" />
+                <span>الخيارات المتاحة:</span>
+              </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {question.options.map((opt, optIdx) => {
-                  const isCorrect = optIdx === question.correctAnswerIndex;
+                {question.options.map((opt, oIdx) => {
+                  const isCorrect = oIdx === question.correctAnswerIndex;
                   return (
                     <div
-                      key={optIdx}
-                      className={`p-3 rounded-2xl text-xs sm:text-sm font-bold flex items-center justify-between border ${
+                      key={oIdx}
+                      className={`p-2.5 rounded-xl text-xs font-bold flex items-center justify-between border ${
                         isCorrect
-                          ? 'bg-emerald-50 border-emerald-300 text-emerald-950 font-black shadow-2xs'
+                          ? 'bg-emerald-100/70 border-emerald-300 text-emerald-900'
                           : 'bg-white border-slate-200 text-slate-600'
                       }`}
                     >
                       <span>{opt}</span>
                       {isCorrect && (
-                        <span className="px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[11px] font-black">
+                        <span className="text-[10px] bg-emerald-600 text-white px-2 py-0.5 rounded-full">
                           الإجابة الصحيحة ✓
                         </span>
                       )}
@@ -279,6 +325,22 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
             </div>
           )}
 
+          {/* If Fill in the Blank, show the missing word highlighted */}
+          {(question.questionType === 'fill_in_the_blank' || question.questionText.includes('......')) && (
+            <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-between">
+              <div>
+                <span className="text-xs font-bold text-amber-900 block">الكلمة أو العبارة الصحيحة لملء الفراغ:</span>
+                <span className="text-sm font-black text-amber-950 font-mono mt-0.5 inline-block">
+                  {question.answerText}
+                </span>
+              </div>
+              <span className="text-xs bg-amber-200 text-amber-900 px-2.5 py-1 rounded-xl font-bold">
+                الحل الصحيح ✓
+              </span>
+            </div>
+          )}
+
+          {/* Model Answer Box */}
           {question.questionType !== 'fill_in_the_blank' && (
             <div className="p-4 rounded-2xl bg-white border border-emerald-200 shadow-2xs">
               <div className="flex items-center gap-2 text-emerald-700 font-extrabold text-sm mb-1.5">
@@ -286,17 +348,18 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
                 <span>الجواب النموذجي المعتمد:</span>
               </div>
               <p className="text-sm font-bold text-slate-800 leading-relaxed">
-                {renderFormattedText(question.answerText)}
+                {question.answerText}
               </p>
             </div>
           )}
 
+          {/* Teacher Explanation */}
           {question.explanation && (
             <div className="text-xs text-slate-600 flex items-start gap-2 bg-slate-50 p-3 rounded-xl border border-slate-200">
               <Sparkles className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
               <div>
                 <span className="font-bold text-slate-800">توضيح المعلم: </span>
-                <span>{renderFormattedText(question.explanation)}</span>
+                <span>{question.explanation}</span>
               </div>
             </div>
           )}
@@ -305,3 +368,4 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
     </div>
   );
 };
+

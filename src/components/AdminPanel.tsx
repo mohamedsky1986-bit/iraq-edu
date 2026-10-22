@@ -5,7 +5,6 @@ import { GRADES_DATA } from '../data/initialData';
 import { getIraqiGradeName, formatIraqiDinar } from '../utils/edu-logic';
 import { playClickSound, playCorrectSound, playWrongSound } from '../utils/audio';
 import { EducationalVideo } from '../data/curriculumMedia';
-import { VideoPlayerModal } from './VideoPlayerModal';
 import {
   Users,
   BookOpen,
@@ -29,6 +28,7 @@ import {
   Image,
   LogOut,
   Tv,
+  ExternalLink,
   Play,
   Video,
 } from 'lucide-react';
@@ -79,6 +79,71 @@ const OFFICIAL_IRAQI_SUBJECTS: Record<GradeId, { id: string; name: string }[]> =
     { id: "isl-6", name: "التربية الإسلامية (وزاري)" },
     { id: "eng-6", name: "اللغة الإنجليزية (English for Iraq)" },
   ],
+};
+
+// نافذة تشغيل فيديو اليوتيوب المدمجة
+const VideoPlayerModal: React.FC<{
+  video: EducationalVideo | null;
+  onClose: () => void;
+}> = ({ video, onClose }) => {
+  if (!video) return null;
+
+  const embedUrl = ;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-900/85 backdrop-blur-md animate-fadeIn">
+      <div className="relative w-full max-w-4xl bg-slate-900 rounded-3xl overflow-hidden shadow-2xl flex flex-col border border-slate-700">
+        <div className="px-5 py-3.5 bg-slate-800 border-b border-slate-700 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-rose-500/20 text-rose-400 flex items-center justify-center">
+              <Tv className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-base font-black text-white line-clamp-1">{video.title}</h3>
+              <p className="text-xs text-slate-400 font-medium">
+                {video.teacherName ?  : 'شرح درس مرئي تفاعلي'}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <a
+              href={video.youtubeUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-3.5 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+            >
+              <ExternalLink className="w-4 h-4 text-rose-400" />
+              <span className="hidden sm:inline">مشاهدة على YouTube</span>
+            </a>
+            <button
+              onClick={onClose}
+              className="p-2 rounded-xl bg-rose-500/20 hover:bg-rose-500 text-rose-300 hover:text-white transition-all cursor-pointer"
+              title="إغلاق"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        <div className="w-full aspect-video bg-black">
+          <iframe
+            src={embedUrl}
+            className="w-full h-full border-0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowFullScreen
+            title={video.title}
+          />
+        </div>
+
+        {video.description && (
+          <div className="p-4 bg-slate-800/60 border-t border-slate-700">
+            <p className="text-xs text-slate-300 font-medium leading-relaxed">{video.description}</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 };
 
 export const AdminPanel: React.FC = () => {

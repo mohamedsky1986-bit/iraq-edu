@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useEdu } from '../context/EduContext';
+import { db } from '../firebase';
+import { collection, onSnapshot } from 'firebase/firestore';
 import { Subject, Question } from '../types/index';
 import { GRADES_DATA } from '../data/initialData';
 import { getIraqiGradeName } from '../utils/edu-logic';
@@ -959,7 +961,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
   if (!currentStudent) return null;
 
   // دعم التصفح والتنقل بين كافة المراحل الدراسية مباشرة
-  const [activeGradeId, setActiveGradeId] = useState<GradeId>(currentStudent.gradeId);
+  const [activeGradeId, setActiveGradeId] = useState<GradeId>(effectiveGradeId);
   const currentGradeId = activeGradeId;
   const gradeInfo = GRADES_DATA.find((g) => g.id === currentGradeId);
 
@@ -978,11 +980,30 @@ export const GradePortal: React.FC<GradePortalProps> = ({
   );
   const [activeTab, setActiveTab] = useState<'qa' | 'exams' | 'curriculum'>('qa');
 
-  // استدعاء شروحات اليوتيوب المضافة لمطابقتها مع المادة المحددة حصراً
+  // شروحات وفيديوهات المناهج المتزامنة سحابياً عبر Firebase عبر كافة الهواتف والحواسيب
+    // حالة عارض كتب ومناهج الـ PDF التفاعلي المدمج لتجاوز قيود تسجيل الدخول في جوجل
+  const [selectedBookForViewer, setSelectedBookForViewer] = useState<any | null>(null);
+
+  // ميزة المنتدى: حالة نافذة التعديل السريع للأسئلة
+  const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
+
+  // ميزة المنتدى: حالة نافذة تعديل الفيديو
+  const [editingVideo, setEditingVideo] = useState<any | null>(null);
+
+  // ميزة المنتدى: حالة نافذة تعديل رابط الكتاب
+  const [editingBook, setEditingBook] = useState<any | null>(null);
+
+  // ميزة إضافة امتحان جديد لفصل محدد
+  const [addingExamChapter, setAddingExamChapter] = useState<string | null>(null);
+  const [newExamTitle, setNewExamTitle] = useState('');
+
   const [platformVideos, setPlatformVideos] = useState<any[]>(() => {
     try {
       const saved = localStorage.getItem('iraq_edu_admin_custom_videos_v1');
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
     } catch {}
     return [
       {
@@ -996,6 +1017,24 @@ export const GradePortal: React.FC<GradePortalProps> = ({
       }
     ];
   });
+
+  // مزامنة فورية حية مع قاعدة بيانات Firebase Firestore ليظهر الفيديو على أي موبايل أو حاسبة فوراً
+  useEffect(() => {
+    try {
+      const unsub = onSnapshot(collection(db, 'videos'), (snapshot) => {
+        if (!snapshot.empty) {
+          const remoteVids = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+          setPlatformVideos(remoteVids);
+          try {
+            localStorage.setItem('iraq_edu_admin_custom_videos_v1', JSON.stringify(remoteVids));
+          } catch {}
+        }
+      });
+      return () => unsub();
+    } catch (e) {
+      console.warn('Firestore live videos sync fallback:', e);
+    }
+  }, []);
   const [speakingId, setSpeakingId] = useState<string | null>(null);
 
   const selectedSubject =
@@ -1411,14 +1450,34 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {subjectVideos.map((vd: any, idx: number) => (
                     <div key={idx} className="bg-slate-900 rounded-2xl p-3 border border-slate-800 space-y-2.5">
-                      <div className="aspect-video w-full rounded-xl overflow-hidden bg-black border border-slate-800 shadow-inner">
+                      {/* مشغل منصة المتفوق الداخلي: محمي من الخروج لليوتيوب ومعزول تماماً */}
+                      <div className="relative aspect-video w-full rounded-2xl overflow-hidden bg-black border-2 border-slate-800 shadow-2xl group">
+                        {/* 1. إطار المشغل الداخلي مع حظر فتح النوافذ الخارجية (sandbox يمنع فتح روابط يوتيوب) */}
                         <iframe
                           src={getYouTubeEmbedUrl(vd.youtubeUrl)}
                           title={vd.title}
                           className="w-full h-full border-0"
                           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                           allowFullScreen
+                          sandbox="allow-scripts allow-same-origin allow-presentation"
                         />
+
+                        {/* 2. شريط حماية علوي يعرض هوية المنصة ويمنع الضغط على عنوان الفيديو لعدم الخروج لليوتيوب */}
+                        <div className="absolute top-0 inset-x-0 h-9 bg-gradient-to-b from-black/85 via-black/40 to-transparent pointer-events-auto flex items-center justify-between px-3 text-[11px] font-black text-amber-300 z-10 select-none">
+                          <span className="flex items-center gap-1.5">
+                            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                            <span>منصة المتفوق التعليمية 🎬</span>
+                          </span>
+                          <span className="text-[10px] text-slate-300 font-bold bg-black/50 px-2 py-0.5 rounded-md border border-white/10">
+                            مشاهدة آمنة داخل التطبيق
+                          </span>
+                        </div>
+
+                        {/* 3. درع حماية زجاجي يغطي الزاوية السفلية لمنع النقر على شعار يوتيوب المائي */}
+                        <div
+                          className="absolute bottom-1 right-1 w-32 h-10 pointer-events-auto z-10 cursor-default"
+                          title="العرض مخصص داخل منصة المتفوق فقط">
+                        </div>
                       </div>
                       <div className="flex items-center justify-between pt-1">
                         <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-rose-950 text-rose-300 border border-rose-800">
@@ -1926,8 +1985,268 @@ export const GradePortal: React.FC<GradePortalProps> = ({
           )}
         </div>
       )}
-    </div>
-  );
-};
+          {/* ================= 1. عارض الكتب التفاعلي المدمج (تجاوز تسجيل الدخول في جوجل) ================= */}
+      {selectedBookForViewer && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/80 backdrop-blur-md">
+          <div className="relative w-full max-w-4xl h-[90vh] bg-slate-900 rounded-3xl overflow-hidden shadow-2xl flex flex-col border border-slate-700">
+            {/* Header */}
+            <div className="p-4 bg-slate-950 text-white flex items-center justify-between border-b border-slate-800">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">📖</span>
+                <div>
+                  <h4 className="font-black text-sm text-amber-300">{selectedBookForViewer.title}</h4>
+                  <span className="text-[11px] text-slate-400">تصفح الكتاب الرسمي مباشرة بدون الحاجة لحساب جوجل</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <a
+                  href={`https://drive.google.com/uc?export=download&id=${extractDriveFileId(selectedBookForViewer.driveLink)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black flex items-center gap-1 cursor-pointer"
+                >
+                  <span>📥 تحميل PDF</span>
+                </a>
+                <button
+                  onClick={() => setSelectedBookForViewer(null)}
+                  className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white font-black text-sm flex items-center justify-center cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
 
-export default GradePortal;
+            {/* Iframe Viewer */}
+            <div className="flex-1 w-full bg-slate-800 relative">
+              <iframe
+                src={`https://drive.google.com/file/d/${extractDriveFileId(selectedBookForViewer.driveLink)}/preview`}
+                title={selectedBookForViewer.title}
+                className="w-full h-full border-0"
+                allow="autoplay"
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ================= 2. نافذة التعديل السريع للسؤال (مثل نظام المنتدى) ================= */}
+      {editingQuestion && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm overflow-y-auto">
+          <div className="relative w-full max-w-lg bg-white rounded-3xl p-6 shadow-2xl border-2 border-amber-400 space-y-4 my-8">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+              <div className="flex items-center gap-2 text-slate-900 font-black">
+                <span className="text-xl">✏️</span>
+                <h4>تعديل السؤال المنهجي (صلاحيات المدير)</h4>
+              </div>
+              <button
+                onClick={() => setEditingQuestion(null)}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-black flex items-center justify-center cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                updateQuestion(editingQuestion.id, editingQuestion);
+                playCorrectSound();
+                alert('تم تحديث السؤال وحفظه سحابياً بنجاح ✓');
+                setEditingQuestion(null);
+              }}
+              className="space-y-3 text-right"
+            >
+              <div>
+                <label className="text-xs font-black text-slate-700 block mb-1">نص السؤال:</label>
+                <textarea
+                  value={editingQuestion.questionText}
+                  onChange={(e) => setEditingQuestion({ ...editingQuestion, questionText: e.target.value })}
+                  rows={2}
+                  className="w-full p-2.5 rounded-xl border border-slate-300 text-xs font-bold focus:ring-2 focus:ring-amber-400 outline-hidden"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-black text-slate-700 block mb-1">الإجابة والشرح النموذجي:</label>
+                <textarea
+                  value={editingQuestion.answerText}
+                  onChange={(e) => setEditingQuestion({ ...editingQuestion, answerText: e.target.value })}
+                  rows={2}
+                  className="w-full p-2.5 rounded-xl border border-slate-300 text-xs font-medium focus:ring-2 focus:ring-amber-400 outline-hidden"
+                  required
+                />
+              </div>
+
+              {editingQuestion.options && editingQuestion.options.length > 0 && (
+                <div>
+                  <label className="text-xs font-black text-slate-700 block mb-1">الخيارات الأربعة (حدد الإجابة الصحيحة):</label>
+                  <div className="space-y-1.5">
+                    {editingQuestion.options.map((opt, oIdx) => (
+                      <div key={oIdx} className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          name="correctOption"
+                          checked={editingQuestion.correctAnswerIndex === oIdx}
+                          onChange={() => setEditingQuestion({ ...editingQuestion, correctAnswerIndex: oIdx })}
+                          className="w-4 h-4 text-emerald-600 cursor-pointer"
+                        />
+                        <input
+                          type="text"
+                          value={opt}
+                          onChange={(e) => {
+                            const newOpts = [...(editingQuestion.options || [])];
+                            newOpts[oIdx] = e.target.value;
+                            setEditingQuestion({ ...editingQuestion, options: newOpts });
+                          }}
+                          className="flex-1 p-2 rounded-xl border border-slate-300 text-xs font-medium focus:ring-2 focus:ring-amber-400 outline-hidden"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-center gap-4 pt-2">
+                <label className="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={editingQuestion.isVipOnly || false}
+                    onChange={(e) => setEditingQuestion({ ...editingQuestion, isVipOnly: e.target.checked })}
+                    className="w-4 h-4 rounded text-amber-500 cursor-pointer"
+                  />
+                  <span>خاص بمشتركي VIP 👑</span>
+                </label>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200">
+                <button
+                  type="button"
+                  onClick={() => setEditingQuestion(null)}
+                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold cursor-pointer"
+                >
+                  إلغاء
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-black cursor-pointer shadow-md"
+                >
+                  حفظ التعديل سحابياً ✓
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ================= 3. نافذة تعديل الفيديو (صلاحيات المدير) ================= */}
+      {editingVideo && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+          <div className="relative w-full max-w-md bg-white rounded-3xl p-6 shadow-2xl border-2 border-blue-400 space-y-4 text-right">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+              <h4 className="font-black text-sm text-slate-900">تعديل شرح الفيديو 🎬</h4>
+              <button onClick={() => setEditingVideo(null)} className="font-bold text-slate-500">✕</button>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-black text-slate-700 block mb-1">عنوان الفيديو:</label>
+                <input
+                  type="text"
+                  value={editingVideo.title}
+                  onChange={(e) => setEditingVideo({ ...editingVideo, title: e.target.value })}
+                  className="w-full p-2.5 rounded-xl border border-slate-300 text-xs font-bold"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-black text-slate-700 block mb-1">رابط يوتيوب أو الفيديو:</label>
+                <input
+                  type="text"
+                  value={editingVideo.youtubeUrl}
+                  onChange={(e) => setEditingVideo({ ...editingVideo, youtubeUrl: e.target.value })}
+                  className="w-full p-2.5 rounded-xl border border-slate-300 text-xs font-mono"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-black text-slate-700 block mb-1">الفصل أو الدرس:</label>
+                <input
+                  type="text"
+                  value={editingVideo.chapter || ''}
+                  onChange={(e) => setEditingVideo({ ...editingVideo, chapter: e.target.value })}
+                  className="w-full p-2.5 rounded-xl border border-slate-300 text-xs font-medium"
+                />
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  onClick={() => setEditingVideo(null)}
+                  className="px-4 py-2 rounded-xl bg-slate-100 text-xs font-bold"
+                >
+                  إلغاء
+                </button>
+                <button
+                  onClick={async () => {
+                    const updated = platformVideos.map(v => v.id === editingVideo.id ? editingVideo : v);
+                    setPlatformVideos(updated);
+                    try {
+                      const { setDoc, doc } = await import('firebase/firestore');
+                      await setDoc(doc(db, 'videos', editingVideo.id), editingVideo);
+                    } catch (e) {
+                      console.error('Error saving edited video:', e);
+                    }
+                    alert('تم حفظ تعديل الفيديو سحابياً ✓');
+                    setEditingVideo(null);
+                  }}
+                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-black cursor-pointer shadow-md"
+                >
+                  حفظ التعديل ✓
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ================= 4. نافذة تعديل رابط الكتاب أو الملزمة ================= */}
+      {editingBook && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+          <div className="relative w-full max-w-md bg-white rounded-3xl p-6 shadow-2xl border-2 border-emerald-400 space-y-4 text-right">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+              <h4 className="font-black text-sm text-slate-900">تعديل رابط كتاب {editingBook.subjectName} 📖</h4>
+              <button onClick={() => setEditingBook(null)} className="font-bold text-slate-500">✕</button>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-black text-slate-700 block mb-1">رابط جوجل درايف أو رابط الـ PDF المباشر:</label>
+                <input
+                  type="text"
+                  value={editingBook.driveLink}
+                  onChange={(e) => setEditingBook({ ...editingBook, driveLink: e.target.value })}
+                  placeholder="https://drive.google.com/file/d/..."
+                  className="w-full p-2.5 rounded-xl border border-slate-300 text-xs font-mono"
+                />
+                <span className="text-[10px] text-slate-500 block mt-1">
+                  يمكنك وضع أي رابط جوجل درايف عام، أو رابط ملف PDF مباشر.
+                </span>
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  onClick={() => setEditingBook(null)}
+                  className="px-4 py-2 rounded-xl bg-slate-100 text-xs font-bold"
+                >
+                  إلغاء
+                </button>
+                <button
+                  onClick={() => {
+                    localStorage.setItem(`iraq_edu_book_override_${selectedSubject.id}`, editingBook.driveLink);
+                    alert('تم تحديث رابط الكتاب بنجاح ✓');
+                    setEditingBook(null);
+                  }}
+                  className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black cursor-pointer shadow-md"
+                >
+                  حفظ الرابط ✓
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>

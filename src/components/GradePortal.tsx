@@ -2250,3 +2250,5 @@ export const GradePortal: React.FC<GradePortalProps> = ({
         </div>
       )}
     </div>
+);
+};

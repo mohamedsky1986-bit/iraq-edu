@@ -697,26 +697,73 @@ export const AdminPanel: React.FC = () => {
                       <td className="p-4 font-bold text-slate-900 flex items-center gap-2.5">
                         <div className="relative shrink-0">
                           <span className="text-xl">{st.avatar}</span>
-                          {(st as any).isOnline && (
-                            <span
-                              className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 border-2 border-white rounded-full animate-pulse"
-                              title="متصل الآن"
-                            />
-                          )}
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <span>{st.fullName}</span>
-                            {(st as any).isOnline ? (
-                              <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md bg-emerald-100 text-emerald-800 border border-emerald-300">
-                                🟢 أونلاين
-                              </span>
-                            ) : (st as any).lastActiveAt ? (
-                              <span className="text-[9px] font-normal text-slate-400">
-                                آخر ظهور: {new Date((st as any).lastActiveAt).toLocaleTimeString('ar-IQ', { hour: '2-digit', minute: '2-digit' })}
-                              </span>
-                            ) : null}
-                          </div>
+                       {/* 1. النقطة الخضراء على الصورة: تشتعل فقط إذا كان متصلاً خلال آخر 5 دقائق */}
+{(() => {
+  const diffMinutes = (st as any).lastActiveAt 
+    ? (Date.now() - new Date((st as any).lastActiveAt).getTime()) / 60000 
+    : 999;
+  return diffMinutes <= 5 ? (
+    <span
+      className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white animate-pulse"
+      title="متصل الآن"
+    />
+  ) : null;
+})()}
+</div>
+
+<div>
+  <div className="flex items-center gap-1.5 flex-wrap">
+    <span>{st.fullName}</span>
+
+    {/* 2. شارة أونلاين الذكية ومكان تواجده أو آخر ظهور */}
+    {(() => {
+      if (!(st as any).lastActiveAt) {
+        return <span className="text-[10px] text-slate-400 font-bold">غير متصل</span>;
+      }
+
+      const diffMinutes = Math.floor((Date.now() - new Date((st as any).lastActiveAt).getTime()) / 60000);
+
+      // إذا كان التفاعل خلال 5 دقائق = أونلاين فعلياً
+      if (diffMinutes <= 5) {
+        return (
+          <div className="flex items-center gap-1">
+            <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              أونلاين
+            </span>
+            {(st as any).currentActivity && (
+              <span className="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                📍 {(st as any).currentActivity}
+              </span>
+            )}
+          </div>
+        );
+      }
+
+      // إذا مرت أكثر من 5 دقائق = آخر ظهور
+      if (diffMinutes < 60) {
+        return (
+          <span className="text-[10px] text-slate-400 font-bold">
+            آخر ظهور منذ {diffMinutes} دقيقة
+          </span>
+        );
+      }
+
+      const diffHours = Math.floor(diffMinutes / 60);
+      if (diffHours < 24) {
+        return (
+          <span className="text-[10px] text-slate-400 font-bold">
+            آخر ظهور منذ {diffHours} ساعة
+          </span>
+        );
+      }
+
+      return (
+        <span className="text-[10px] text-slate-400 font-bold">
+          آخر ظهور: {new Date((st as any).lastActiveAt).toLocaleDateString('ar-IQ')}
+        </span>
+      );
+    })()}
                           <span className="text-[10px] text-slate-400 font-normal block mt-0.5">
                             {st.city || 'العراق'} • {st.schoolName || 'مدرسة ابتدائية'}
                           </span>

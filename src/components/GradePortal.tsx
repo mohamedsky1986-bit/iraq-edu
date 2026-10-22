@@ -7,7 +7,6 @@ import { GRADES_DATA } from '../data/initialData';
 import { getIraqiGradeName } from '../utils/edu-logic';
 import { QuestionCard } from './QuestionCard';
 import { Grade1ArabicReading } from './Grade1ArabicReading';
-import { Grade1EnglishLetters } from './Grade1EnglishLetters';
 import {
   playClickSound,
   speakArabicText,
@@ -44,6 +43,12 @@ import {
 
 
 
+
+function extractDriveFileId(url?: string): string {
+  if (!url) return '';
+  const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
+  return match ? match[1] : '';
+}
 
 function getYouTubeEmbedUrl(url: string): string {
   if (!url) return '';
@@ -990,6 +995,44 @@ function sanitizeQuestionSubject(q: Question): Question {
 }
 
 
+export interface SelfEnglishLetter {
+  u: string;
+  l: string;
+  w: string;
+  ar: string;
+  em: string;
+  pr: string;
+}
+
+const SELF_CONTAINED_ENGLISH_LETTERS: SelfEnglishLetter[] = [
+  { u: 'A', l: 'a', w: 'Apple', ar: 'تفاحة', em: '🍎', pr: 'آبل' },
+  { u: 'B', l: 'b', w: 'Ball', ar: 'كرة', em: '⚽', pr: 'بول' },
+  { u: 'C', l: 'c', w: 'Cat', ar: 'قطة', em: '🐱', pr: 'كات' },
+  { u: 'D', l: 'd', w: 'Duck', ar: 'بطة', em: '🦆', pr: 'دَك' },
+  { u: 'E', l: 'e', w: 'Elephant', ar: 'فيل', em: '🐘', pr: 'إيليفانت' },
+  { u: 'F', l: 'f', w: 'Fish', ar: 'سمكة', em: '🐟', pr: 'فِش' },
+  { u: 'G', l: 'g', w: 'Giraffe', ar: 'زرافة', em: '🦒', pr: 'جيراف' },
+  { u: 'H', l: 'h', w: 'Horse', ar: 'حصان', em: '🐴', pr: 'هورس' },
+  { u: 'I', l: 'i', w: 'Ice cream', ar: 'مثلجات', em: '🍦', pr: 'آيس كريم' },
+  { u: 'J', l: 'j', w: 'Juice', ar: 'عصير', em: '🧃', pr: 'جوس' },
+  { u: 'K', l: 'k', w: 'Kite', ar: 'طائرة ورقية', em: '🪁', pr: 'كايت' },
+  { u: 'L', l: 'l', w: 'Lion', ar: 'أسد', em: '🦁', pr: 'لايون' },
+  { u: 'M', l: 'm', w: 'Moon', ar: 'قمر', em: '🌙', pr: 'مون' },
+  { u: 'N', l: 'n', w: 'Nest', ar: 'عش الطائر', em: '🪺', pr: 'نِست' },
+  { u: 'O', l: 'o', w: 'Orange', ar: 'برتقالة', em: '🍊', pr: 'أورنج' },
+  { u: 'P', l: 'p', w: 'Pen', ar: 'قلم', em: '🖊️', pr: 'بين' },
+  { u: 'Q', l: 'q', w: 'Queen', ar: 'ملكة', em: '👑', pr: 'كوين' },
+  { u: 'R', l: 'r', w: 'Rabbit', ar: 'أرنب', em: '🐰', pr: 'رابت' },
+  { u: 'S', l: 's', w: 'Sun', ar: 'شمس', em: '☀️', pr: 'صَن' },
+  { u: 'T', l: 't', w: 'Tiger', ar: 'نمر', em: '🐯', pr: 'تايغر' },
+  { u: 'U', l: 'u', w: 'Umbrella', ar: 'مظلة', em: '☂️', pr: 'أمبريلا' },
+  { u: 'V', l: 'v', w: 'Van', ar: 'حافلة', em: '🚐', pr: 'فان' },
+  { u: 'W', l: 'w', w: 'Water', ar: 'ماء', em: '💧', pr: 'ووتر' },
+  { u: 'X', l: 'x', w: 'Xylophone', ar: 'إكسيلوفون', em: '🎼', pr: 'زايلوفون' },
+  { u: 'Y', l: 'y', w: 'Yo-yo', ar: 'يويو', em: '🪀', pr: 'يويو' },
+  { u: 'Z', l: 'z', w: 'Zebra', ar: 'حمار وحشي', em: '🦓', pr: 'زيبرا' },
+];
+
 export const GradePortal: React.FC<GradePortalProps> = ({
   onStartQuiz,
   onOpenSearch,
@@ -1030,6 +1073,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
   // شروحات وفيديوهات المناهج المتزامنة سحابياً عبر Firebase عبر كافة الهواتف والحواسيب
     // حالة عارض كتب ومناهج الـ PDF التفاعلي المدمج لتجاوز قيود تسجيل الدخول في جوجل
   const [selectedBookForViewer, setSelectedBookForViewer] = useState<any | null>(null);
+  const [selectedEngLetter, setSelectedEngLetter] = useState<SelfEnglishLetter>(SELF_CONTAINED_ENGLISH_LETTERS[0]);
 
 
   // ميزة المنتدى: حالة نافذة التعديل السريع للأسئلة
@@ -1523,19 +1567,34 @@ export const GradePortal: React.FC<GradePortalProps> = ({
 
           {/* 2. شروحات وفيديوهات اليوتيوب الخاصة بهذه المادة حصراً (مشغل مدمج داخل التطبيق يمنع التشتت) */}
           {(() => {
-            // تصفية حصرية صارمة: فيديوهات هذه المرحلة وهذه المادة فقط!
-            const subjectVideos = platformVideos.filter(
-              (v: any) =>
-                v.gradeId === currentGradeId &&
-                (v.subjectId === selectedSubject.id ||
-                  v.subjectName === selectedSubject.name ||
-                  selectedSubject.name.includes(v.subjectName) ||
-                  v.subjectName.includes(selectedSubject.name))
-            );
-
+            // تصفية ذكية ومرنة لجميع الفيديوهات المضافة لهذه المادة
+            const subjectVideos = platformVideos.filter((v: any) => {
+              if (v.gradeId && v.gradeId !== currentGradeId) return false;
+              if (v.subjectId === selectedSubject.id) return true;
+              const vSub = (v.subjectName || '').toLowerCase().replace(/[()]/g, '').trim();
+              const sSub = (selectedSubject.name || '').toLowerCase().replace(/[()]/g, '').trim();
+              if (vSub && sSub && (vSub.includes(sSub) || sSub.includes(vSub))) return true;
+              if ((v.subjectId?.includes('eng') || vSub.includes('eng') || vSub.includes('إنجليز')) &&
+                  (selectedSubject.id.includes('eng') || sSub.includes('eng') || sSub.includes('إنجليز'))) return true;
+              if ((v.subjectId?.includes('ar') || vSub.includes('عرب') || vSub.includes('قراء')) &&
+                  (selectedSubject.id.includes('ar') || sSub.includes('عرب') || sSub.includes('قراء'))) return true;
+              if ((v.subjectId?.includes('math') || vSub.includes('رياض')) &&
+                  (selectedSubject.id.includes('math') || sSub.includes('رياض'))) return true;
+              if ((v.subjectId?.includes('sci') || vSub.includes('علوم')) &&
+                  (selectedSubject.id.includes('sci') || sSub.includes('علوم'))) return true;
+              if ((v.subjectId?.includes('isl') || vSub.includes('إسلام')) &&
+                  (selectedSubject.id.includes('isl') || sSub.includes('إسلام'))) return true;
+              return false;
+            });
 
             if (subjectVideos.length === 0) {
-              return null;
+              return isAdmin ? (
+                <div className="bg-slate-900 text-white rounded-3xl p-5 border border-dashed border-slate-700 text-center space-y-2">
+                  <span className="text-3xl block">🎬</span>
+                  <h4 className="font-black text-sm text-amber-300">لم تتم إضافة شروحات فيديو لمادة {selectedSubject.name} بعد</h4>
+                  <p className="text-xs text-slate-400">كمشرف للمنصة، يمكنك إضافة فيديو جديد لهذه المادة من تبويب (شروحات وفيديوهات المناهج) في لوحة الإدارة.</p>
+                </div>
+              ) : null;
             }
 
 
@@ -1815,7 +1874,63 @@ export const GradePortal: React.FC<GradePortalProps> = ({
 
 
               <div>
-                <Grade1EnglishLetters />
+                <div className="space-y-4">
+                  {/* شريط الحروف التفاعلية الكاملة من A إلى Z */}
+                  <div className="grid grid-cols-4 sm:grid-cols-7 lg:grid-cols-9 gap-2">
+                    {SELF_CONTAINED_ENGLISH_LETTERS.map((item) => {
+                      const isSel = selectedEngLetter.u === item.u;
+                      return (
+                        <button
+                          key={item.u}
+                          type="button"
+                          onClick={() => {
+                            playClickSound();
+                            setSelectedEngLetter(item);
+                            handleSpeakEnglish(`${item.u} - ${item.w}`, `letter_${item.u}`);
+                          }}
+                          className={`p-2.5 rounded-2xl border-2 transition-all flex flex-col items-center justify-center cursor-pointer ${
+                            isSel
+                              ? 'border-indigo-600 bg-indigo-50 shadow-md scale-105'
+                              : 'border-slate-200 bg-white hover:border-indigo-300'
+                          }`}
+                        >
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-xl font-black text-indigo-700 font-mono">{item.u}</span>
+                            <span className="text-sm font-bold text-slate-500 font-mono">{item.l}</span>
+                          </div>
+                          <span className="text-xl my-0.5">{item.em}</span>
+                          <span className="text-[10px] font-bold text-slate-700">{item.w}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* البطاقة التفاعلية للحرف المختار مع النطق الصوتي */}
+                  <div className="p-5 rounded-3xl bg-white border border-indigo-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                      <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-indigo-600 to-sky-500 text-white flex items-center justify-center font-mono font-black text-3xl shadow-md">
+                        {selectedEngLetter.u}{selectedEngLetter.l}
+                      </div>
+                      <div className="text-right">
+                        <h4 className="text-lg font-black text-slate-900 font-mono">
+                          Letter {selectedEngLetter.u} ({selectedEngLetter.w})
+                        </h4>
+                        <p className="text-xs font-bold text-slate-600 mt-0.5">
+                          النطق: <strong className="text-indigo-700">({selectedEngLetter.pr})</strong> • المعنى: <strong className="text-emerald-700">{selectedEngLetter.ar} {selectedEngLetter.em}</strong>
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handleSpeakEnglish(`${selectedEngLetter.u} - ${selectedEngLetter.w}`, `letter_${selectedEngLetter.u}`)}
+                      className="px-5 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs shadow-md transition-all cursor-pointer flex items-center gap-2"
+                    >
+                      <Volume2 className="w-4 h-4" />
+                      <span>🔊 استمع لنطق الحرف والكلمة</span>
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           )}

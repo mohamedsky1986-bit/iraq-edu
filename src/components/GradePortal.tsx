@@ -1,3 +1,13 @@
+
+function getYouTubeEmbedUrl(url: string): string {
+  if (!url) return '';
+  if (url.includes('embed/')) return url;
+  const matchShort = url.match(/youtu\.be\/([a-zA-Z0-9_-]+)/);
+  if (matchShort) return `https://www.youtube.com/embed/${matchShort[1]}`;
+  const matchLong = url.match(/[?&]v=([a-zA-Z0-9_-]+)/);
+  if (matchLong) return `https://www.youtube.com/embed/${matchLong[1]}`;
+  return url;
+}
 import React, { useState, useRef } from 'react';
 import { useEdu } from '../context/EduContext';
 import { Subject, Question } from '../types/index';
@@ -2218,6 +2228,72 @@ export const GradePortal: React.FC<GradePortalProps> = ({
             </div>
           )}
 
+          {activeTab === 'videos' && selectedSubject && (
+            <div className="space-y-4 pt-2 text-right">
+              <div className="flex items-center justify-between">
+                <h4 className="text-base font-black text-slate-900 flex items-center gap-2">
+                  <PlayCircle className="w-5 h-5 text-rose-600" />
+                  <span>الشروحات وفيديوهات اليوتيوب المعتمدة لمادة {selectedSubject.name}:</span>
+                </h4>
+                <span className="text-xs font-bold text-slate-500">
+                  {customVideos.filter(v => v.gradeId === currentGradeId && (v.subjectId === selectedSubject.id || v.subjectName === selectedSubject.name || selectedSubject.name.includes(v.subjectName) || v.subjectName.includes(selectedSubject.name))).length} فيديو تعليمي
+                </span>
+              </div>
+
+              {customVideos.filter(v => v.gradeId === currentGradeId && (v.subjectId === selectedSubject.id || v.subjectName === selectedSubject.name || selectedSubject.name.includes(v.subjectName) || v.subjectName.includes(selectedSubject.name))).length === 0 ? (
+                <div className="p-8 rounded-3xl bg-slate-50 border border-slate-200 text-center space-y-2">
+                  <span className="text-4xl block">🎥</span>
+                  <h5 className="font-black text-slate-800 text-sm">
+                    لم تتم إضافة شروحات فيديو لمادة {selectedSubject.name} بعد
+                  </h5>
+                  <p className="text-xs text-slate-500 font-medium">
+                    يتم إضافة الشروحات الخاصة بمادة {selectedSubject.name} من قبل المعلم والمشرف في لوحة التحكم، ولن تظهر فيديوهات أي مادة أخرى هنا.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {customVideos
+                    .filter(v => v.gradeId === currentGradeId && (v.subjectId === selectedSubject.id || v.subjectName === selectedSubject.name || selectedSubject.name.includes(v.subjectName) || v.subjectName.includes(selectedSubject.name)))
+                    .map((vd, vIdx) => (
+                      <div key={vIdx} className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-xs space-y-3">
+                        <div className="aspect-video w-full bg-slate-950">
+                          <iframe
+                            src={getYouTubeEmbedUrl(vd.youtubeUrl)}
+                            title={vd.title}
+                            className="w-full h-full border-0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                          />
+                        </div>
+                        <div className="p-4 space-y-2 text-right">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-rose-100 text-rose-800">
+                              {vd.chapter || 'درس مرئي'}
+                            </span>
+                            <span className="text-[10px] text-slate-400 font-medium">
+                              منهج {selectedSubject.name}
+                            </span>
+                          </div>
+                          <h5 className="font-black text-sm text-slate-900 leading-snug">
+                            {vd.title}
+                          </h5>
+                          <a
+                            href={vd.youtubeUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 text-xs font-bold text-rose-600 hover:text-rose-700 pt-1"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                            <span>فتح مباشرة على تطبيق YouTube</span>
+                          </a>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {activeTab === 'curriculum' && (
             <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 text-slate-700 text-xs sm:text-sm leading-relaxed space-y-3 text-right">
               <h4 className="font-black text-slate-900 text-base">
@@ -2228,6 +2304,48 @@ export const GradePortal: React.FC<GradePortalProps> = ({
               </p>
               <div className="p-4 rounded-xl bg-white border border-slate-200 font-medium">
                 💡 <strong>نصيحة للمتفوق:</strong> يمكنك الاستماع للنطق الصوتي للأشعار والآيات الكريمة والأسئلة لترسيخ المعلومات قبل خوض الامتحان المطول للحصول على وسام التفوق الذهبي.
+              </div>
+
+              {/* قسم الكتب والملازم المعتمدة */}
+              <div className="pt-4 border-t border-slate-200 space-y-3">
+                <h5 className="font-black text-slate-900 text-sm flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-emerald-600" />
+                  <span>الكتب والملازم والمناهج المرفوعة لمادة {selectedSubject.name}:</span>
+                </h5>
+
+                {customBooks.filter(b => b.gradeId === currentGradeId && (b.subjectName === selectedSubject.name || selectedSubject.name.includes(b.subjectName) || b.subjectName.includes(selectedSubject.name))).length === 0 ? (
+                  <p className="text-xs text-slate-500 font-medium bg-white p-3 rounded-xl border border-slate-200">
+                    لم يتم رفع ملازم أو كتب خاصة بهذه المادة بعد، يمكنك الاطلاع على كتاب الوزارة المعتمد أو رفعه من لوحة التحكم.
+                  </p>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {customBooks
+                      .filter(b => b.gradeId === currentGradeId && (b.subjectName === selectedSubject.name || selectedSubject.name.includes(b.subjectName) || b.subjectName.includes(selectedSubject.name)))
+                      .map((bk, bIdx) => (
+                        <div key={bIdx} className="p-4 rounded-2xl bg-white border border-slate-200 flex items-center justify-between gap-3 shadow-2xs">
+                          <div className="flex items-center gap-2.5">
+                            <FileText className="w-5 h-5 text-emerald-600 shrink-0" />
+                            <div className="text-right">
+                              <h6 className="text-xs font-black text-slate-900">{bk.title}</h6>
+                              <span className="text-[10px] text-slate-500">
+                                {bk.type === 'summary' ? 'ملزمة ملخصة' : 'كتاب الوزارة المعتمد'}
+                              </span>
+                            </div>
+                          </div>
+
+                          <a
+                            href={bk.driveUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-1 shrink-0 transition-all shadow-xs"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                            <span>قراءة الكتاب</span>
+                          </a>
+                        </div>
+                      ))}
+                  </div>
+                )}
               </div>
             </div>
           )}

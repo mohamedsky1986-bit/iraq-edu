@@ -33,7 +33,8 @@ import {
   Home,
   LogOut,
   Video,
-  ExternalLink
+  ExternalLink,
+  Download
 } from 'lucide-react';
 
 
@@ -47,6 +48,64 @@ function getYouTubeEmbedUrl(url: string): string {
   if (matchLong) return `https://www.youtube.com/embed/${matchLong[1]}`;
   return url;
 }
+
+const DEFAULT_DRIVE_FOLDER = 'https://drive.google.com/drive/folders/1Gdmm8qLT26-JA51h5FFpnBxagKJ_jjLL?usp=drive_link';
+
+interface GradeBookItem {
+  id: string;
+  gradeId: GradeId;
+  subjectName: string;
+  bookTitle: string;
+  edition: string;
+  icon: string;
+  driveUrl: string;
+}
+
+const GRADE_BOOKS_DATABASE: Record<GradeId, GradeBookItem[]> = {
+  'grade-1': [
+    { id: 'b-1-ar', gradeId: 'grade-1', subjectName: 'اللغة العربية', bookTitle: 'كتاب قراءتي للصف الأول الابتدائي (المنهج الجديد)', edition: 'طبعة وزارة التربية العراقية المعتمدة', icon: '📖', driveUrl: DEFAULT_DRIVE_FOLDER },
+    { id: 'b-1-math', gradeId: 'grade-1', subjectName: 'الرياضيات', bookTitle: 'كتاب الرياضيات للصف الأول الابتدائي', edition: 'طبعة وزارة التربية العراقية المعتمدة', icon: '🔢', driveUrl: DEFAULT_DRIVE_FOLDER },
+    { id: 'b-1-sci', gradeId: 'grade-1', subjectName: 'العلوم', bookTitle: 'كتاب العلوم للصف الأول الابتدائي (الكائنات الحية والبيئة)', edition: 'طبعة وزارة التربية العراقية المعتمدة', icon: '🌱', driveUrl: DEFAULT_DRIVE_FOLDER },
+    { id: 'b-1-isl', gradeId: 'grade-1', subjectName: 'التربية الإسلامية', bookTitle: 'كتاب التربية الإسلامية والقرآن الكريم للأول الابتدائي', edition: 'طبعة وزارة التربية العراقية المعتمدة', icon: '🕌', driveUrl: DEFAULT_DRIVE_FOLDER },
+    { id: 'b-1-eng', gradeId: 'grade-1', subjectName: 'اللغة الإنجليزية', bookTitle: 'English for Iraq - Pupil Book 1', edition: 'طبعة وزارة التربية العراقية المعتمدة', icon: '🔠', driveUrl: DEFAULT_DRIVE_FOLDER },
+  ],
+  'grade-2': [
+    { id: 'b-2-ar', gradeId: 'grade-2', subjectName: 'اللغة العربية', bookTitle: 'كتاب قراءتي للصف الثاني الابتدائي', edition: 'طبعة وزارة التربية العراقية المعتمدة', icon: '📖', driveUrl: DEFAULT_DRIVE_FOLDER },
+    { id: 'b-2-math', gradeId: 'grade-2', subjectName: 'الرياضيات', bookTitle: 'كتاب الرياضيات للصف الثاني الابتدائي', edition: 'طبعة وزارة التربية العراقية المعتمدة', icon: '➕', driveUrl: DEFAULT_DRIVE_FOLDER },
+    { id: 'b-2-sci', gradeId: 'grade-2', subjectName: 'العلوم', bookTitle: 'كتاب العلوم للصف الثاني الابتدائي', edition: 'طبعة وزارة التربية العراقية المعتمدة', icon: '🌱', driveUrl: DEFAULT_DRIVE_FOLDER },
+    { id: 'b-2-isl', gradeId: 'grade-2', subjectName: 'التربية الإسلامية', bookTitle: 'كتاب التربية الإسلامية للصف الثاني الابتدائي', edition: 'طبعة وزارة التربية العراقية المعتمدة', icon: '🕌', driveUrl: DEFAULT_DRIVE_FOLDER },
+  ],
+  'grade-3': [
+    { id: 'b-3-ar', gradeId: 'grade-3', subjectName: 'اللغة العربية', bookTitle: 'كتاب قراءتي للصف الثالث الابتدائي', edition: 'طبعة وزارة التربية العراقية المعتمدة', icon: '📖', driveUrl: DEFAULT_DRIVE_FOLDER },
+    { id: 'b-3-math', gradeId: 'grade-3', subjectName: 'الرياضيات', bookTitle: 'كتاب الرياضيات للصف الثالث الابتدائي (جدول الضرب)', edition: 'طبعة وزارة التربية العراقية المعتمدة', icon: '✖️', driveUrl: DEFAULT_DRIVE_FOLDER },
+    { id: 'b-3-sci', gradeId: 'grade-3', subjectName: 'العلوم', bookTitle: 'كتاب العلوم للصف الثالث الابتدائي', edition: 'طبعة وزارة التربية العراقية المعتمدة', icon: '🧲', driveUrl: DEFAULT_DRIVE_FOLDER },
+    { id: 'b-3-isl', gradeId: 'grade-3', subjectName: 'التربية الإسلامية', bookTitle: 'كتاب التربية الإسلامية للصف الثالث الابتدائي', edition: 'طبعة وزارة التربية العراقية المعتمدة', icon: '🕌', driveUrl: DEFAULT_DRIVE_FOLDER },
+  ],
+  'grade-4': [
+    { id: 'b-4-ar', gradeId: 'grade-4', subjectName: 'اللغة العربية', bookTitle: 'كتاب قواعد اللغة العربية للصف الرابع الابتدائي', edition: 'طبعة وزارة التربية العراقية المعتمدة', icon: '📚', driveUrl: DEFAULT_DRIVE_FOLDER },
+    { id: 'b-4-math', gradeId: 'grade-4', subjectName: 'الرياضيات', bookTitle: 'كتاب الرياضيات للصف الرابع الابتدائي (الملايين والكسور)', edition: 'طبعة وزارة التربية العراقية المعتمدة', icon: '📐', driveUrl: DEFAULT_DRIVE_FOLDER },
+    { id: 'b-4-sci', gradeId: 'grade-4', subjectName: 'العلوم', bookTitle: 'كتاب العلوم للصف الرابع الابتدائي', edition: 'طبعة وزارة التربية العراقية المعتمدة', icon: '🧬', driveUrl: DEFAULT_DRIVE_FOLDER },
+    { id: 'b-4-soc', gradeId: 'grade-4', subjectName: 'الاجتماعيات', bookTitle: 'كتاب الاجتماعيات للصف الرابع الابتدائي (تاريخ العراق العريق)', edition: 'طبعة وزارة التربية العراقية المعتمدة', icon: '🗺️', driveUrl: DEFAULT_DRIVE_FOLDER },
+    { id: 'b-4-isl', gradeId: 'grade-4', subjectName: 'التربية الإسلامية', bookTitle: 'كتاب التربية الإسلامية للصف الرابع الابتدائي', edition: 'طبعة وزارة التربية العراقية المعتمدة', icon: '🕌', driveUrl: DEFAULT_DRIVE_FOLDER },
+    { id: 'b-4-eng', gradeId: 'grade-4', subjectName: 'اللغة الإنجليزية', bookTitle: 'English for Iraq - Pupil Book 4', edition: 'طبعة وزارة التربية العراقية المعتمدة', icon: '🇬🇧', driveUrl: DEFAULT_DRIVE_FOLDER },
+  ],
+  'grade-5': [
+    { id: 'b-5-ar', gradeId: 'grade-5', subjectName: 'اللغة العربية', bookTitle: 'كتاب قواعد اللغة العربية للصف الخامس الابتدائي', edition: 'طبعة وزارة التربية العراقية المعتمدة', icon: '📖', driveUrl: DEFAULT_DRIVE_FOLDER },
+    { id: 'b-5-math', gradeId: 'grade-5', subjectName: 'الرياضيات', bookTitle: 'كتاب الرياضيات للصف الخامس الابتدائي (المليارات)', edition: 'طبعة وزارة التربية العراقية المعتمدة', icon: '📊', driveUrl: DEFAULT_DRIVE_FOLDER },
+    { id: 'b-5-sci', gradeId: 'grade-5', subjectName: 'العلوم', bookTitle: 'كتاب العلوم للصف الخامس الابتدائي (أجهزة الجسم)', edition: 'طبعة وزارة التربية العراقية المعتمدة', icon: '🔬', driveUrl: DEFAULT_DRIVE_FOLDER },
+    { id: 'b-5-soc', gradeId: 'grade-5', subjectName: 'الاجتماعيات', bookTitle: 'كتاب الاجتماعيات للصف الخامس الابتدائي (جغرافية العراق)', edition: 'طبعة وزارة التربية العراقية المعتمدة', icon: '🏛️', driveUrl: DEFAULT_DRIVE_FOLDER },
+    { id: 'b-5-isl', gradeId: 'grade-5', subjectName: 'التربية الإسلامية', bookTitle: 'كتاب التربية الإسلامية للصف الخامس الابتدائي', edition: 'طبعة وزارة التربية العراقية المعتمدة', icon: '🕌', driveUrl: DEFAULT_DRIVE_FOLDER },
+    { id: 'b-5-eng', gradeId: 'grade-5', subjectName: 'اللغة الإنجليزية', bookTitle: 'English for Iraq - Pupil Book 5', edition: 'طبعة وزارة التربية العراقية المعتمدة', icon: '🇬🇧', driveUrl: DEFAULT_DRIVE_FOLDER },
+  ],
+  'grade-6': [
+    { id: 'b-6-ar', gradeId: 'grade-6', subjectName: 'قواعد اللغة العربية', bookTitle: 'كتاب قواعد اللغة العربية الوزاري (السادس الابتدائي)', edition: 'المنهج الوزاري الرسمي المعتمد', icon: '👑', driveUrl: DEFAULT_DRIVE_FOLDER },
+    { id: 'b-6-math', gradeId: 'grade-6', subjectName: 'الرياضيات', bookTitle: 'كتاب الرياضيات الوزاري للصف السادس الابتدائي (المطور)', edition: 'المنهج الوزاري الرسمي المعتمد', icon: '🧮', driveUrl: DEFAULT_DRIVE_FOLDER },
+    { id: 'b-6-sci', gradeId: 'grade-6', subjectName: 'العلوم', bookTitle: 'كتاب العلوم الوزاري للصف السادس الابتدائي', edition: 'المنهج الوزاري الرسمي المعتمد', icon: '⚡', driveUrl: DEFAULT_DRIVE_FOLDER },
+    { id: 'b-6-soc', gradeId: 'grade-6', subjectName: 'الاجتماعيات', bookTitle: 'كتاب الاجتماعيات الوزاري (محافظات العراق الثماني عشرة)', edition: 'المنهج الوزاري الرسمي المعتمد', icon: '🗺️', driveUrl: DEFAULT_DRIVE_FOLDER },
+    { id: 'b-6-isl', gradeId: 'grade-6', subjectName: 'التربية الإسلامية', bookTitle: 'كتاب التربية الإسلامية الوزاري للصف السادس الابتدائي', edition: 'المنهج الوزاري الرسمي المعتمد', icon: '🕌', driveUrl: DEFAULT_DRIVE_FOLDER },
+    { id: 'b-6-eng', gradeId: 'grade-6', subjectName: 'اللغة الإنجليزية', bookTitle: 'English for Iraq - Pupil Book 6 (Ministerial)', edition: 'المنهج الوزاري الرسمي المعتمد', icon: '🌐', driveUrl: DEFAULT_DRIVE_FOLDER },
+  ],
+};
 
 export const ALL_IRAQI_OFFICIAL_SUBJECTS: Subject[] = [
   // ================= الصف الأول الابتدائي =================
@@ -939,14 +998,29 @@ export const GradePortal: React.FC<GradePortalProps> = ({
   const [selectedSubjectId, setSelectedSubjectId] = useState<string>(
     gradeSubjects[0]?.id || ''
   );
-  const [activeTab, setActiveTab] = useState<'qa' | 'exams' | 'videos' | 'curriculum'>('qa');
+  const [activeTab, setActiveTab] = useState<'qa' | 'exams' | 'curriculum'>('qa');
 
-  const [customVideos, setCustomVideos] = useState<any[]>(() => {
+  // فيديوهات الشروحات المضافة
+  const [gradeVideos, setGradeVideos] = useState<any[]>(() => {
     try {
       const saved = localStorage.getItem('iraq_edu_admin_custom_videos_v1');
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
     } catch {}
-    return [];
+    // فيديو افتراضي تعليمي معتمد
+    return [
+      {
+        id: 'vid-default-1',
+        gradeId: 'grade-1',
+        subjectId: 'ar-1',
+        subjectName: 'قراءتي والرياضيات',
+        title: 'شرح تعليمي تفاعلي للمرحلة الابتدائية',
+        youtubeUrl: 'https://youtu.be/sW8cpXQU0sY',
+        chapter: 'الدرس الأول',
+      }
+    ];
   });
   const [speakingId, setSpeakingId] = useState<string | null>(null);
 
@@ -1197,6 +1271,146 @@ export const GradePortal: React.FC<GradePortalProps> = ({
               <p className="text-[11px] text-emerald-100 font-bold">النقاط الكلية</p>
             </div>
           </div>
+        </div>
+      </div>
+
+            {/* 1. قسم شروحات وفيديوهات اليوتيوب المعتمدة (يظهر في واجهة المرحلة مباشرة) */}
+      <div className="bg-gradient-to-r from-rose-50 via-pink-50 to-amber-50 rounded-3xl border-2 border-rose-200 p-5 sm:p-6 shadow-xs space-y-4 text-right">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-rose-200/80">
+          <div className="flex items-center gap-3">
+            <span className="text-3xl p-2 rounded-2xl bg-rose-600 text-white shadow-xs">🎥</span>
+            <div>
+              <h3 className="text-base sm:text-lg font-black text-rose-950">
+                الشروحات المرئية وفيديوهات اليوتيوب المعتمدة لـ {gradeInfo?.name}
+              </h3>
+              <p className="text-xs text-rose-800/80 font-medium">
+                شروحات متميزة تفتح مباشرة أمام الطالب بلمسة واحدة
+              </p>
+            </div>
+          </div>
+          <a
+            href="https://youtu.be/sW8cpXQU0sY"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-4 py-2 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-rose-600/20 transition-all cursor-pointer shrink-0"
+          >
+            <ExternalLink className="w-3.5 h-3.5" />
+            <span>مشاهدة شروحات اليوتيوب 📺</span>
+          </a>
+        </div>
+
+        {/* عرض الفيديوهات المخصصة لهذه المرحلة */}
+        {(() => {
+          const vids = gradeVideos.filter(v => v.gradeId === currentGradeId);
+          const displayVids = vids.length > 0 ? vids : [
+            {
+              id: 'vid-math-demo',
+              gradeId: currentGradeId,
+              subjectName: 'شرح المنهج المعتمد',
+              title: `شرح تفاعلي مرئي لمنهج ${gradeInfo?.name}`,
+              youtubeUrl: 'https://youtu.be/sW8cpXQU0sY',
+              chapter: 'الدرس التعليمي الأول',
+            }
+          ];
+
+          return (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+              {displayVids.map((vd, vIdx) => (
+                <div key={vIdx} className="bg-white rounded-2xl border border-rose-200 overflow-hidden shadow-2xs space-y-2.5 p-3">
+                  <div className="aspect-video w-full rounded-xl overflow-hidden bg-slate-950 border border-slate-200">
+                    <iframe
+                      src={getYouTubeEmbedUrl(vd.youtubeUrl)}
+                      title={vd.title}
+                      className="w-full h-full border-0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    />
+                  </div>
+                  <div className="flex items-center justify-between pt-1">
+                    <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-rose-100 text-rose-800">
+                      {vd.subjectName || 'شرح معتمد'}
+                    </span>
+                    <a
+                      href={vd.youtubeUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs font-bold text-rose-600 hover:text-rose-700 flex items-center gap-1"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      <span>فتح في تطبيق YouTube</span>
+                    </a>
+                  </div>
+                  <h4 className="font-black text-xs sm:text-sm text-slate-900 leading-snug">
+                    {vd.title}
+                  </h4>
+                </div>
+              ))}
+            </div>
+          );
+        })()}
+      </div>
+
+      {/* 2. قسم الكتب والمناهج والملازم الرسمية (PDF) لـ هذه المرحلة */}
+      <div className="bg-gradient-to-r from-sky-50 via-indigo-50 to-emerald-50 rounded-3xl border-2 border-sky-200 p-5 sm:p-6 shadow-xs space-y-4 text-right">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-sky-200/80">
+          <div className="flex items-center gap-3">
+            <span className="text-3xl p-2 rounded-2xl bg-sky-600 text-white shadow-xs">📚</span>
+            <div>
+              <h3 className="text-base sm:text-lg font-black text-sky-950">
+                الكتب المنهجية والملازم الدراسية الرسمية لـ {gradeInfo?.name} (PDF)
+              </h3>
+              <p className="text-xs text-sky-800/80 font-medium">
+                اضغط على أي كتاب ليفتح مباشرة على Google Drive في صفحة ثانية للقراءة والتحميل
+              </p>
+            </div>
+          </div>
+
+          <a
+            href={DEFAULT_DRIVE_FOLDER}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-4 py-2 rounded-2xl bg-sky-600 hover:bg-sky-700 text-white font-extrabold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-sky-600/20 transition-all cursor-pointer shrink-0"
+          >
+            <Folder className="w-4 h-4" />
+            <span>فتح مجلد كتب Google Drive بالكامل 📂</span>
+          </a>
+        </div>
+
+        {/* شبكة الكتب المنهجية */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pt-1">
+          {(GRADE_BOOKS_DATABASE[currentGradeId] || GRADE_BOOKS_DATABASE['grade-1']).map((bk) => (
+            <div
+              key={bk.id}
+              className="bg-white rounded-2xl p-4 border border-sky-200 hover:border-sky-400 transition-all shadow-2xs flex flex-col justify-between gap-3"
+            >
+              <div className="flex items-start gap-3">
+                <span className="text-3xl p-2 rounded-xl bg-sky-50 border border-sky-100 shrink-0">
+                  {bk.icon}
+                </span>
+                <div>
+                  <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 inline-block mb-1">
+                    {bk.subjectName}
+                  </span>
+                  <h4 className="font-black text-xs sm:text-sm text-slate-900 leading-snug">
+                    {bk.bookTitle}
+                  </h4>
+                  <p className="text-[10px] text-slate-400 font-medium mt-0.5">
+                    {bk.edition}
+                  </p>
+                </div>
+              </div>
+
+              <a
+                href={bk.driveUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full py-2 rounded-xl bg-slate-900 hover:bg-sky-600 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-colors shadow-2xs"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                <span>تصفح وقراءة الكتاب (Google Drive)</span>
+              </a>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -1749,72 +1963,6 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                   })}
                 </div>
               </div>
-            </div>
-          )}
-
-                    {activeTab === 'videos' && (
-            <div className="space-y-4 pt-2 text-right">
-              <div className="flex items-center justify-between">
-                <h4 className="text-base font-black text-slate-900 flex items-center gap-2">
-                  <PlayCircle className="w-5 h-5 text-rose-600" />
-                  <span>الشروحات وفيديوهات اليوتيوب المعتمدة لمادة {selectedSubject.name}:</span>
-                </h4>
-                <span className="text-xs font-bold text-slate-500">
-                  {customVideos.filter(v => v.gradeId === currentGradeId && (v.subjectId === selectedSubject.id || v.subjectName === selectedSubject.name || selectedSubject.name.includes(v.subjectName) || v.subjectName.includes(selectedSubject.name))).length} فيديو تعليمي
-                </span>
-              </div>
-
-              {customVideos.filter(v => v.gradeId === currentGradeId && (v.subjectId === selectedSubject.id || v.subjectName === selectedSubject.name || selectedSubject.name.includes(v.subjectName) || v.subjectName.includes(selectedSubject.name))).length === 0 ? (
-                <div className="p-8 rounded-3xl bg-slate-50 border border-slate-200 text-center space-y-2">
-                  <span className="text-4xl block">🎥</span>
-                  <h5 className="font-black text-slate-800 text-sm">
-                    لم تتم إضافة شروحات فيديو لمادة {selectedSubject.name} بعد
-                  </h5>
-                  <p className="text-xs text-slate-500 font-medium">
-                    يتم إضافة الشروحات الخاصة بمادة {selectedSubject.name} من قبل المعلم والمشرف في لوحة التحكم، ولن تظهر فيديوهات أي مادة أخرى هنا.
-                  </p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {customVideos
-                    .filter(v => v.gradeId === currentGradeId && (v.subjectId === selectedSubject.id || v.subjectName === selectedSubject.name || selectedSubject.name.includes(v.subjectName) || v.subjectName.includes(selectedSubject.name)))
-                    .map((vd, vIdx) => (
-                      <div key={vIdx} className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-xs space-y-3">
-                        <div className="aspect-video w-full bg-slate-950">
-                          <iframe
-                            src={getYouTubeEmbedUrl(vd.youtubeUrl)}
-                            title={vd.title}
-                            className="w-full h-full border-0"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                            allowFullScreen
-                          />
-                        </div>
-                        <div className="p-4 space-y-2 text-right">
-                          <div className="flex items-center justify-between">
-                            <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-rose-100 text-rose-800">
-                              {vd.chapter || 'درس مرئي'}
-                            </span>
-                            <span className="text-[10px] text-slate-400 font-medium">
-                              منهج {selectedSubject.name}
-                            </span>
-                          </div>
-                          <h5 className="font-black text-sm text-slate-900 leading-snug">
-                            {vd.title}
-                          </h5>
-                          <a
-                            href={vd.youtubeUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 text-xs font-bold text-rose-600 hover:text-rose-700 pt-1"
-                          >
-                            <ExternalLink className="w-3.5 h-3.5" />
-                            <span>فتح مباشرة على تطبيق YouTube</span>
-                          </a>
-                        </div>
-                      </div>
-                    ))}
-                </div>
-              )}
             </div>
           )}
 

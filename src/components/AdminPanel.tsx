@@ -173,17 +173,7 @@ export const AdminPanel: React.FC = () => {
       const saved = localStorage.getItem(STORAGE_KEYS.CUSTOM_VIDEOS);
       if (saved) return JSON.parse(saved);
     } catch {}
-    return [
-      {
-        id: 'vid-1',
-        gradeId: 'grade-1',
-        subjectId: 'ar-1',
-        subjectName: 'قراءتي',
-        title: 'شرح وتدريب قراءة درس دادا دور وحرف الدال',
-        youtubeUrl: 'https://youtu.be/sW8cpXQU0sY',
-        chapter: 'الفصل الأول',
-      },
-    ];
+    return [];
   });
 
   const [newVidGrade, setNewVidGrade] = useState<GradeId>('grade-1');
@@ -370,21 +360,35 @@ export const AdminPanel: React.FC = () => {
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={() => {
-            playClickSound();
-            logoutAdmin();
-          }}
-          className="px-4 py-2.5 rounded-2xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 text-xs font-black flex items-center gap-2 cursor-pointer transition-all"
-        >
-          <LogOut className="w-4 h-4" />
-          <span>خروج المشرف</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              playClickSound();
+              setActiveTab('security');
+            }}
+            className="px-4 py-2.5 rounded-2xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 text-xs font-black flex items-center gap-2 cursor-pointer transition-all"
+          >
+            <KeyRound className="w-4 h-4 text-amber-400" />
+            <span>تغيير باسورد المشرف 🔒</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              playClickSound();
+              logoutAdmin();
+            }}
+            className="px-4 py-2.5 rounded-2xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 text-xs font-black flex items-center gap-2 cursor-pointer transition-all"
+          >
+            <LogOut className="w-4 h-4" />
+            <span>خروج المشرف</span>
+          </button>
+        </div>
       </div>
 
-      {/* Navigation Tabs */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+      {/* Navigation Tabs - Fully wrapped with flex-wrap so nothing is hidden */}
+      <div className="flex flex-wrap items-center gap-2 pb-2">
         <button
           type="button"
           onClick={() => {
@@ -857,7 +861,7 @@ export const AdminPanel: React.FC = () => {
               <span>إضافة وتخصيص شروحات يوتيوب حسب المادة المحددة</span>
             </h2>
             <p className="text-xs text-slate-500 font-medium mt-0.5">
-              كل فيديو تضيفه سيرتبط بمادته حصراً (مثلاً فيديو العربي يظهر فقط في العربي، ولا يظهر لبقية المواد)
+              كل فيديو تضيفه سيرتبط بمادته حصراً (مثلاً فيديو الرياضيات يظهر فقط في الرياضيات، وفيديو العربي يظهر فقط في العربي)
             </p>
           </div>
 
@@ -905,8 +909,8 @@ export const AdminPanel: React.FC = () => {
                 type="text"
                 value={newVidTitle}
                 onChange={(e) => setNewVidTitle(e.target.value)}
-                placeholder="مثال: شرح درس دادا دور وحرف الدال"
-                className="w-full p-2.5 rounded-xl border border-slate-200 text-xs font-bold outline-none"
+                placeholder="اكتب عنوان الشرح هنا..."
+                className="w-full p-2.5 rounded-xl border border-slate-200 text-xs font-bold outline-none focus:border-emerald-500"
                 required
               />
             </div>
@@ -939,40 +943,47 @@ export const AdminPanel: React.FC = () => {
           {/* List of current videos */}
           <div className="pt-4 border-t border-slate-100 space-y-3">
             <h3 className="text-xs font-black text-slate-800">قائمة الفيديوهات المسجلة حسب الأقسام:</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {videosList.map((vd) => (
-                <div key={vd.id} className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Video className="w-6 h-6 text-rose-600 shrink-0" />
-                    <div>
-                      <h4 className="text-xs font-black text-slate-900">{vd.title}</h4>
-                      <p className="text-[10px] text-slate-500 font-medium">
-                        {getIraqiGradeName(vd.gradeId)} • قسم: <strong className="text-emerald-700">{vd.subjectName}</strong>
-                      </p>
+            {videosList.length === 0 ? (
+              <p className="text-xs text-slate-500 p-4 bg-slate-50 rounded-2xl border border-slate-200 text-center">
+                لا توجد فيديوهات مسجلة حالياً. أضف شروحات جديدة من النموذج أعلاه.
+              </p>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {videosList.map((vd) => (
+                  <div key={vd.id} className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Video className="w-6 h-6 text-rose-600 shrink-0" />
+                      <div>
+                        <h4 className="text-xs font-black text-slate-900">{vd.title}</h4>
+                        <p className="text-[10px] text-slate-500 font-medium">
+                          {getIraqiGradeName(vd.gradeId)} • قسم: <strong className="text-emerald-700">{vd.subjectName}</strong>
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <a
+                        href={vd.youtubeUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-2.5 py-1.5 rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-100 text-xs font-bold flex items-center gap-1"
+                      >
+                        <PlayCircle className="w-3.5 h-3.5" />
+                        <span>مشاهدة</span>
+                      </a>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteVideo(vd.id)}
+                        className="p-1.5 rounded-xl text-slate-400 hover:text-rose-600 cursor-pointer"
+                        title="حذف الفيديو نهائياً"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
-
-                  <div className="flex items-center gap-2">
-                    <a
-                      href={vd.youtubeUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="px-2.5 py-1.5 rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-100 text-xs font-bold flex items-center gap-1"
-                    >
-                      <PlayCircle className="w-3.5 h-3.5" />
-                      <span>مشاهدة</span>
-                    </a>
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteVideo(vd.id)}
-                      className="p-1.5 rounded-xl text-slate-400 hover:text-rose-600 cursor-pointer"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}

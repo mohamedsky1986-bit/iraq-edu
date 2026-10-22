@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { GRADES_DATA, DEFAULT_SUBJECTS } from '../data/initialData';
 import { GradeId } from '../types/index';
 import { playClickSound, playCorrectSound } from '../utils/audio';
+import { db } from '../firebase';
+import { collection, onSnapshot, doc, setDoc } from 'firebase/firestore';
 import {
   Sparkles,
   BookOpen,
@@ -89,11 +91,67 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
   const [newCommentText, setNewCommentText] = useState('');
   const [commentSentFeedback, setCommentSentFeedback] = useState(false);
 
+  // مزامنة حية للتعليقات عبر قاعدة بيانات Firebase السحابية
   useEffect(() => {
-    localStorage.setItem(COMMENTS_STORAGE_KEY, JSON.stringify(comments));
+    try {
+      localStorage.setItem(COMMENTS_STORAGE_KEY, JSON.stringify(comments));
+    } catch {}
   }, [comments]);
 
-  const handleAddComment = (e: React.FormEvent) => {
+  useEffect(() => {
+    try {
+      const unsub = onSnapshot(collection(db, 'comments'), (snapshot) => {
+        if (!snapshot.empty) {
+          const remoteComments = snapshot.docs.map((d) => ({ id: d.id, ...d.data() })) as StudentComment[];
+          setComments(remoteComments);
+          try {
+            localStorage.setItem(COMMENTS_STORAGE_KEY, JSON.stringify(remoteComments));
+          } catch {}
+        }
+      });
+      return () => unsub();
+    } catch (e) {
+      console.warn('Firestore comments listener fallback:', e);
+    }
+  }, []);
+
+    // ميزة المنتدى: تعديل وحذف التعليقات مباشرة من الواجهة للأدمن
+  const handleAdminDeleteComment = async (id: string) => {
+    playClickSound();
+    if (confirm('هل تريد حذف هذا التعليق نهائياً؟')) {
+      const updated = comments.filter((c) => c.id !== id);
+      setComments(updated);
+      try {
+        localStorage.setItem(COMMENTS_STORAGE_KEY, JSON.stringify(updated));
+      } catch {}
+      try {
+        const { deleteDoc } = await import('firebase/firestore');
+        await deleteDoc(doc(db, 'comments', id));
+      } catch (e) {
+        console.error('Error deleting comment:', e);
+      }
+    }
+  };
+
+  const handleAdminEditComment = async (comm: StudentComment) => {
+    playClickSound();
+    const newText = prompt('تعديل نص تعليق الطالب كمدير:', comm.commentText);
+    if (newText && newText.trim()) {
+      const updatedComm = { ...comm, commentText: newText.trim() };
+      const updated = comments.map((c) => (c.id === comm.id ? updatedComm : c));
+      setComments(updated);
+      try {
+        localStorage.setItem(COMMENTS_STORAGE_KEY, JSON.stringify(updated));
+      } catch {}
+      try {
+        await setDoc(doc(db, 'comments', comm.id), updatedComm);
+      } catch (e) {
+        console.error('Error updating comment:', e);
+      }
+    }
+  };
+
+  const handleAddComment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newAuthor.trim() || !newCommentText.trim()) return;
 
@@ -108,7 +166,16 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
 
     const updated = [newCommentItem, ...comments];
     setComments(updated);
-    localStorage.setItem(COMMENTS_STORAGE_KEY, JSON.stringify(updated));
+    try {
+      localStorage.setItem(COMMENTS_STORAGE_KEY, JSON.stringify(updated));
+    } catch {}
+
+    // حفظ التعليق سحابياً في Firebase ليظهر للجميع فوراً
+    try {
+      await setDoc(doc(db, 'comments', newCommentItem.id), newCommentItem);
+    } catch (e) {
+      console.error('Error saving comment to Firestore:', e);
+    }
 
     playCorrectSound();
     setNewAuthor('');
@@ -150,16 +217,7 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
               <ArrowLeft className="w-4 h-4" />
             </button>
 
-            <button
-              onClick={() => {
-                playClickSound();
-                onOpenZipModal();
-              }}
-              className="px-5 py-4 rounded-2xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 font-bold text-xs flex items-center gap-2 transition-all cursor-pointer"
-            >
-              <Download className="w-4 h-4 text-amber-400" />
-              <span>تحميل المشروع كاملاً (ZIP)</span>
-            </button>
+
 
             <button
               onClick={() => {

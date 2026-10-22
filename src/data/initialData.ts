@@ -6385,4 +6385,5 @@ export const GRADE6_ISLAMIC_QUESTIONS: Question[] = [
     isVipOnly: false
   }
 ];
-export const INITIAL_STUDENTS: Student[] = [
+export const INITIAL_QUESTIONS: Question[] = [
+];

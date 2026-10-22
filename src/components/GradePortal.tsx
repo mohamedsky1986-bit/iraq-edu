@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useEdu } from '../context/EduContext';
 import { db } from '../firebase';
 import { collection, onSnapshot } from 'firebase/firestore';

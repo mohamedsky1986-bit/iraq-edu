@@ -6223,3 +6223,4 @@ export const INITIAL_STUDENTS: Student[] = [
     city: 'صلاح الدين',
   },
 ];
+initialData.ts

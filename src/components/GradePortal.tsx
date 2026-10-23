@@ -1795,41 +1795,91 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                       <span>📑 الملازم والأنشطة الإضافية التابعة لهذه المادة ({extraMaterials.length}):</span>
                     </span>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                      {extraMaterials.map((mat) => (
-                        <div key={mat.id} className="p-3 bg-white rounded-xl border border-amber-200 shadow-2xs flex items-center justify-between gap-2">
-                          <div className="min-w-0 text-right">
-                            <h5 className="font-bold text-xs text-slate-900 truncate">{mat.title}</h5>
-                            <span className="text-[10px] text-slate-400 font-bold">
-                              {mat.category === 'workbook' ? 'كراسة تمرينات' : mat.category === 'activity' ? 'نشاط صفي' : 'ملزمة مراجعة'}
-                            </span>
+                      {extraMaterials.map((mat) => {
+                        const isMatVip = mat.isVipOnly === true;
+                        const isLocked = isMatVip && !isAdmin && currentStudent?.subscription !== 'paid';
+
+                        return (
+                          <div key={mat.id} className="p-3.5 bg-white rounded-2xl border border-amber-200 shadow-2xs flex items-center justify-between gap-2">
+                            <div className="min-w-0 text-right">
+                              <div className="flex items-center gap-1.5">
+                                <h5 className="font-bold text-xs text-slate-900 truncate">{mat.title}</h5>
+                                {isMatVip && (
+                                  <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full bg-amber-400 text-amber-950 shrink-0 shadow-2xs">
+                                    👑 VIP
+                                  </span>
+                                )}
+                              </div>
+                              <span className="text-[10px] text-slate-400 font-bold block mt-0.5">
+                                {mat.category === 'workbook' ? 'كراسة تمرينات' : mat.category === 'activity' ? 'نشاط صفي' : mat.category === 'ministerial' ? 'أسئلة وزارية' : 'ملزمة مراجعة'}
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              {isLocked ? (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    playClickSound();
+                                    onOpenUpgradeModal();
+                                  }}
+                                  className="px-3 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-500 text-slate-950 font-black text-[11px] shadow-xs cursor-pointer flex items-center gap-1"
+                                >
+                                  <span>🔒 قفل VIP</span>
+                                </button>
+                              ) : (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      playClickSound();
+                                      setSelectedBookForViewer({
+                                        title: mat.title,
+                                        driveLink: `https://drive.google.com/file/d/${mat.driveFileId}/preview`,
+                                        downloadUrl: `https://drive.google.com/uc?export=download&id=${mat.driveFileId}&confirm=t`,
+                                        subjectName: selectedSubject.name,
+                                      });
+                                    }}
+                                    className="px-2.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-[11px] cursor-pointer shadow-2xs"
+                                  >
+                                    قراءة 📖
+                                  </button>
+                                  <a
+                                    href={`https://drive.google.com/uc?export=download&id=${mat.driveFileId}&confirm=t`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="px-2.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-[11px] shadow-2xs"
+                                    title="تحميل PDF"
+                                  >
+                                    📥
+                                  </a>
+                                </>
+                              )}
+
+                              {isAdmin && (
+                                <button
+                                  type="button"
+                                  onClick={async () => {
+                                    if (confirm('هل تريد حذف هذه الملزمة نهائياً؟')) {
+                                      const updated = customMaterialsList.filter(m => m.id !== mat.id);
+                                      setCustomMaterialsList(updated);
+                                      try { localStorage.setItem('iraq_edu_custom_materials_v1', JSON.stringify(updated)); } catch {}
+                                      try {
+                                        const { deleteDoc, doc } = await import('firebase/firestore');
+                                        await deleteDoc(doc(db, 'materials', mat.id));
+                                      } catch (err) {}
+                                    }
+                                  }}
+                                  className="p-1.5 rounded-lg bg-rose-100 hover:bg-rose-200 text-rose-700 text-xs cursor-pointer"
+                                  title="حذف"
+                                >
+                                  🗑️
+                                </button>
+                              )}
+                            </div>
                           </div>
-                          <div className="flex items-center gap-1.5 shrink-0">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                playClickSound();
-                                setSelectedBookForViewer({
-                                  title: mat.title,
-                                  driveLink: `https://drive.google.com/file/d/${mat.driveFileId}/preview`,
-                                  downloadUrl: `https://drive.google.com/uc?export=download&id=${mat.driveFileId}`,
-                                  subjectName: selectedSubject.name,
-                                });
-                              }}
-                              className="px-2.5 py-1.5 rounded-lg bg-emerald-600 text-white font-black text-[11px] cursor-pointer"
-                            >
-                              قراءة 📖
-                            </button>
-                            <a
-                              href={`https://drive.google.com/uc?export=download&id=${mat.driveFileId}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="px-2 py-1.5 rounded-lg bg-slate-900 text-white font-bold text-[11px]"
-                            >
-                              📥
-                            </a>
-                          </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -1921,13 +1971,19 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                             </div>
                           ) : (
                             /* المشغل المباشر النظيف */
-                            <iframe
-                              src={getYouTubeEmbedUrl(vd.youtubeUrl)}
-                              title={vd.title}
-                              style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 0 }}
-                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                              allowFullScreen
-                            />
+                            <div className="absolute inset-0 w-full h-full relative">
+                              <iframe
+                                src={getYouTubeEmbedUrl(vd.youtubeUrl)}
+                                title={vd.title}
+                                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 0 }}
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowFullScreen
+                                sandbox="allow-scripts allow-same-origin allow-presentation"
+                              />
+                              {/* دروع حماية شفافة لمنع النقر على العنوان أو شعار يوتيوب للخروج من المنصة */}
+                              <div className="absolute top-0 inset-x-0 h-10 pointer-events-auto z-10 cursor-default" title="مشاهدة داخل المنصة حصراً" />
+                              <div className="absolute bottom-0 right-0 w-28 h-10 pointer-events-auto z-10 cursor-default" title="مشاهدة داخل المنصة حصراً" />
+                            </div>
                           )}
                         </div>
 
@@ -2917,6 +2973,19 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                   className="w-full p-2.5 rounded-xl border border-slate-300 text-xs font-medium"
                 />
               </div>
+              <div className="flex items-center gap-2 p-3 rounded-xl bg-amber-50 border border-amber-200">
+                <input
+                  type="checkbox"
+                  id="editVidVipCheck"
+                  checked={editingVideo.isVipOnly || false}
+                  onChange={(e) => setEditingVideo({ ...editingVideo, isVipOnly: e.target.checked })}
+                  className="w-4 h-4 rounded text-amber-600 cursor-pointer accent-amber-600"
+                />
+                <label htmlFor="editVidVipCheck" className="text-xs font-black text-amber-950 cursor-pointer">
+                  👑 قفل هذا الشرح كـ فيديو VIP للمشتركين فقط
+                </label>
+              </div>
+
               <div className="flex justify-end gap-2 pt-2">
                 <button
                   onClick={() => setEditingVideo(null)}

@@ -44,6 +44,44 @@ import {
 
 
 
+function getDriveEmbedUrl(url?: string): { embedUrl: string; isFolder: boolean; downloadUrl: string } {
+  if (!url) return { embedUrl: '', isFolder: false, downloadUrl: '' };
+
+  const folderMatch = url.match(/\/folders\/([a-zA-Z0-9_-]+)/);
+  if (folderMatch) {
+    const folderId = folderMatch[1];
+    return {
+      embedUrl: `https://drive.google.com/embeddedfolderview?id=${folderId}#grid`,
+      isFolder: true,
+      downloadUrl: url,
+    };
+  }
+
+  const fileMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
+  if (fileMatch) {
+    const fileId = fileMatch[1];
+    return {
+      embedUrl: `https://drive.google.com/file/d/${fileId}/preview`,
+      isFolder: false,
+      downloadUrl: `https://drive.google.com/uc?export=download&id=${fileId}`,
+    };
+  }
+
+  if (url.toLowerCase().endsWith('.pdf')) {
+    return {
+      embedUrl: `https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true`,
+      isFolder: false,
+      downloadUrl: url,
+    };
+  }
+
+  return {
+    embedUrl: url,
+    isFolder: false,
+    downloadUrl: url,
+  };
+}
+
 function extractDriveFileId(url?: string): string {
   if (!url) return '';
   const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
@@ -1643,7 +1681,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
 
 
             return (
-              <div className="bg-slate-950 text-white rounded-3xl p-5 sm:p-6 shadow-md border border-slate-800 space-y-4 text-right">
+              <div className="bg-slate-950 text-white rounded-3xl p-3 sm:p-5 shadow-md border border-slate-800 space-y-4 text-right w-full">
                 <div className="flex items-center justify-between pb-3 border-b border-slate-800">
                   <div className="flex items-center gap-2.5">
                     <span className="text-2xl p-1.5 rounded-xl bg-rose-600 text-white shadow-xs">🎬</span>
@@ -1664,7 +1702,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {subjectVideos.map((vd: any, idx: number) => (
-                    <div key={idx} className="bg-slate-900 rounded-2xl p-3 border border-slate-800 space-y-2.5">
+                    <div key={idx} className="bg-slate-900 rounded-2xl p-2 sm:p-3 border border-slate-800 space-y-2.5 w-full">
                       {/* مشغل الفيديو الصافي والمكبر بدون أي كتابة تغطي الشاشة */}
                       <div className="relative aspect-video w-full min-h-[220px] sm:min-h-[300px] md:min-h-[360px] rounded-2xl overflow-hidden bg-black border-2 border-slate-800 shadow-2xl">
                         <iframe
@@ -2307,55 +2345,62 @@ export const GradePortal: React.FC<GradePortalProps> = ({
           )}
         </div>
       )}
-          {/* ================= 1. عارض الكتب التفاعلي المدمج (تجاوز تسجيل الدخول في جوجل) ================= */}
-      {selectedBookForViewer && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/80 backdrop-blur-md">
-          <div className="relative w-full max-w-4xl h-[90vh] bg-slate-900 rounded-3xl overflow-hidden shadow-2xl flex flex-col border border-slate-700">
-            {/* Header */}
-            <div className="p-4 bg-slate-950 text-white flex items-center justify-between border-b border-slate-800">
-              <div className="flex items-center gap-2">
-                <span className="text-xl">📖</span>
-                <div>
-                  <h4 className="font-black text-sm text-amber-300">{selectedBookForViewer.title}</h4>
-                  <span className="text-[11px] text-slate-400">تصفح الكتاب الرسمي مباشرة بدون الحاجة لحساب جوجل</span>
+          {/* ================= 1. عارض الكتب والمناهج التفاعلي المدمج (تجاوز قيود تسجيل الدخول) ================= */}
+      {selectedBookForViewer && (() => {
+        const driveInfo = getDriveEmbedUrl(selectedBookForViewer.driveLink);
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/85 backdrop-blur-md">
+            <div className="relative w-full max-w-5xl h-[92vh] bg-slate-900 rounded-3xl overflow-hidden shadow-2xl flex flex-col border border-slate-700">
+              {/* Header */}
+              <div className="p-3.5 sm:p-4 bg-slate-950 text-white flex items-center justify-between border-b border-slate-800 gap-2">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <span className="text-2xl shrink-0">📖</span>
+                  <div className="min-w-0 text-right">
+                    <h4 className="font-black text-xs sm:text-sm text-amber-300 truncate">
+                      {selectedBookForViewer.title}
+                    </h4>
+                    <span className="text-[10px] sm:text-[11px] text-slate-400 block">
+                      {driveInfo.isFolder ? 'مجلد كتب المنهج الرسمي على Google Drive' : 'قراءة وتصفح الكتاب مباشرة داخل التطبيق'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <a
+                    href={driveInfo.downloadUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 sm:px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black flex items-center gap-1.5 shadow-md transition-all cursor-pointer"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">{driveInfo.isFolder ? 'فتح المجلد في Drive' : 'تحميل PDF مباشر'}</span>
+                    <span className="sm:hidden">{driveInfo.isFolder ? 'المجلد' : 'تحميل'}</span>
+                  </a>
+
+                  <button
+                    type="button"
+                    onClick={() => setSelectedBookForViewer(null)}
+                    className="w-8 h-8 rounded-full bg-white/10 hover:bg-rose-600 text-white font-black text-sm flex items-center justify-center transition-colors cursor-pointer"
+                    title="إغلاق"
+                  >
+                    ✕
+                  </button>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <a
-                  href={`https://drive.google.com/uc?export=download&id=${extractDriveFileId(selectedBookForViewer.driveLink)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black flex items-center gap-1 cursor-pointer"
-                >
-                  <span>📥 تحميل PDF</span>
-                </a>
-                <button
-                  onClick={() => setSelectedBookForViewer(null)}
-                  className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white font-black text-sm flex items-center justify-center cursor-pointer"
-                >
-                  ✕
-                </button>
+
+              {/* Reader / Embed frame */}
+              <div className="flex-1 w-full bg-white relative">
+                <iframe
+                  src={driveInfo.embedUrl}
+                  title={selectedBookForViewer.title}
+                  className="w-full h-full border-0"
+                  allow="autoplay"
+                />
               </div>
             </div>
-
-
-            {/* Iframe Viewer */}
-            <div className="flex-1 w-full bg-slate-800 relative">
-              <iframe
-                src={
-                  selectedBookForViewer.driveLink.includes('drive.google.com')
-                    ? `https://drive.google.com/file/d/${extractDriveFileId(selectedBookForViewer.driveLink)}/preview`
-                    : `https://docs.google.com/viewer?url=${encodeURIComponent(selectedBookForViewer.driveLink)}&embedded=true`
-                }
-                title={selectedBookForViewer.title}
-                className="w-full h-full border-0"
-                allow="autoplay"
-              />
-            </div>
           </div>
-        </div>
-      )}
-
+        );
+      })()}
 
       {/* ================= 2. نافذة التعديل السريع للسؤال (مثل نظام المنتدى) ================= */}
       {editingQuestion && (

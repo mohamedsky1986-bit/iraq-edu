@@ -113,6 +113,72 @@ interface SubjectBookItem {
 }
 
 
+export const ALL_CURRICULUM_BOOKS: CurriculumBook[] = [
+  // ================= الصف الأول الابتدائي =================
+  { id: 'b-g1-ar', title: 'كتاب قراءتي الأول الابتدائي', gradeId: 'grade-1', subjectId: 'ar-1', driveFileId: '1zM3D1AUpzxzhiytq3vVmyYOnSGJqM4lP', category: 'book' },
+  { id: 'b-g1-math', title: 'كتاب الرياضيات الأول الابتدائي', gradeId: 'grade-1', subjectId: 'math-1', driveFileId: '1ohJZlWvvnZ-d_fQSVL7iTjdEY5EeaQU6', category: 'book' },
+  { id: 'b-g1-sci', title: 'كتاب العلوم الأول الابتدائي', gradeId: 'grade-1', subjectId: 'sci-1', driveFileId: '1w0_8y7osEzGCST5Kj_b8HtL9gRnHqBcu', category: 'book' },
+  { id: 'b-g1-isl', title: 'كتاب الإسلامية الأول الابتدائي', gradeId: 'grade-1', subjectId: 'isl-1', driveFileId: '1nVM1dhoZJJ2kwYwMLRMlFfo3a70rOKrD', category: 'book' },
+  { id: 'b-g1-eng', title: 'كتاب الإنكليزي الطالب الأول الابتدائي (الوحدة الأولى)', gradeId: 'grade-1', subjectId: 'eng-1', driveFileId: '1AXlhEx5zeA2PUfiDsxJGQXaksFyQiVsc', category: 'book' },
+
+  // ================= الصف الثاني الابتدائي =================
+  { id: 'b-g2-ar', title: 'كتاب قراءتي الثاني الابتدائي', gradeId: 'grade-2', subjectId: 'ar-2', driveFileId: '1VO_mNLIlG8O20Q-7wyQKnnpiKZE7Pwcu', category: 'book' },
+  { id: 'b-g2-math', title: 'كتاب الرياضيات الثاني الابتدائي', gradeId: 'grade-2', subjectId: 'math-2', driveFileId: '1ULBDqrbLm7Fi4UQ58yHa5d-grRegMfgv', category: 'book' },
+  { id: 'b-g2-math-ex', title: 'كتاب تمرينات الرياضيات الثاني الابتدائي', gradeId: 'grade-2', subjectId: 'math-2', driveFileId: '1469ed-o-1RFyYO26RW_6FnEVfEMz7l9E', category: 'workbook' },
+  { id: 'b-g2-sci', title: 'كتاب العلوم الثاني الابتدائي', gradeId: 'grade-2', subjectId: 'sci-2', driveFileId: '15UjYgCCyInuCg5HsLlvxaBRi3Adz5fyZ', category: 'book' },
+  { id: 'b-g2-isl', title: 'كتاب الإسلامية الثاني الابتدائي', gradeId: 'grade-2', subjectId: 'isl-2', driveFileId: '1z6nWPbSYSyscIdmj5y5ZSN4InZdjrMFF', category: 'book' },
+  { id: 'b-g2-eng-s', title: 'كتاب الإنكليزي الطالب الصف الثاني الابتدائي', gradeId: 'grade-2', subjectId: 'eng-2', driveFileId: '1SYE2y2MDmEyWnVSvV-Gi7d_1QF7Gjgig', category: 'book' },
+  { id: 'b-g2-eng-a', title: 'كتاب الإنكليزي النشاط الصف الثاني الابتدائي', gradeId: 'grade-2', subjectId: 'eng-2', driveFileId: '1F0nM5sgSZIaDwRNyJWy7yJ4b4yqcut2Q', category: 'activity' },
+  { id: 'b-g2-ethic', title: 'كتاب التربية الأخلاقية الثاني الابتدائي', gradeId: 'grade-2', subjectId: 'ar-2', driveFileId: '1sfs2ocYVKGNYYnXqtWns4V_kQskkTLMH', category: 'book' },
+
+  // ================= الصف الثالث الابتدائي =================
+  { id: 'b-g3-ar', title: 'كتاب قراءتي الثالث الابتدائي', gradeId: 'grade-3', subjectId: 'ar-3', driveFileId: '1lqez6Tkst8tzI6qBetlK3abntD9HZ-zm', category: 'book' },
+  { id: 'b-g3-math', title: 'كتاب الرياضيات الثالث الابتدائي', gradeId: 'grade-3', subjectId: 'math-3', driveFileId: '1AliEFZIfWRogOEyL6sI7gmbSk-cc1pYB', category: 'book' },
+  { id: 'b-g3-math-ex', title: 'كتاب تمرينات الرياضيات الثالث الابتدائي', gradeId: 'grade-3', subjectId: 'math-3', driveFileId: '1tDG-XJDg91764kbVsQykF7wXds1EQ1ri', category: 'workbook' },
+  { id: 'b-g3-sci', title: 'كتاب العلوم الثالث الابتدائي', gradeId: 'grade-3', subjectId: 'sci-3', driveFileId: '17wO2yr_lmkeyiWuvWg1nuub0cVk0xCPf', category: 'book' },
+  { id: 'b-g3-sci-act', title: 'كتاب نشاط العلوم الثالث الابتدائي', gradeId: 'grade-3', subjectId: 'sci-3', driveFileId: '12FcEOqc22Fze0z8M_HCq8QOQHvy_yaPa', category: 'activity' },
+  { id: 'b-g3-isl', title: 'كتاب الإسلامية الثالث الابتدائي', gradeId: 'grade-3', subjectId: 'isl-3', driveFileId: '1bnNPv-3md7BytCrwottscSYKM0W1q27e', category: 'book' },
+  { id: 'b-g3-eng-s', title: 'كتاب الإنكليزي الطالب الصف الثالث الابتدائي', gradeId: 'grade-3', subjectId: 'eng-3', driveFileId: '1Nw_mjNjpskAbD6t-FsK6Os-ITCBm2Myi', category: 'book' },
+  { id: 'b-g3-eng-a', title: 'كتاب الإنكليزي النشاط الصف الثالث الابتدائي', gradeId: 'grade-3', subjectId: 'eng-3', driveFileId: '10o4V2WuhtNzspwjLG5jasQ2oFgA02wjf', category: 'activity' },
+
+  // ================= الصف الرابع الابتدائي =================
+  { id: 'b-g4-read', title: 'كتاب القراءة الرابع الابتدائي', gradeId: 'grade-4', subjectId: 'ar-4', driveFileId: '1wCJkyH2hebu5nCH_56DAz7CczFTdMI1y', category: 'book' },
+  { id: 'b-g4-gram', title: 'كتاب القواعد الرابع الابتدائي', gradeId: 'grade-4', subjectId: 'ar-4', driveFileId: '1PHz7uxND4E_dEgoTR9yrLW9DzciBUpFu', category: 'book' },
+  { id: 'b-g4-math', title: 'كتاب الرياضيات الرابع الابتدائي', gradeId: 'grade-4', subjectId: 'math-4', driveFileId: '14xpyQJapAprPSDqWC1Enp_xrXWZMz9HY', category: 'book' },
+  { id: 'b-g4-sci', title: 'كتاب العلوم الرابع الابتدائي', gradeId: 'grade-4', subjectId: 'sci-4', driveFileId: '1KiNiEadbUeEEjXca2V5b9LwLL1a13Lf5', category: 'book' },
+  { id: 'b-g4-sci-act', title: 'كتاب نشاط العلوم الرابع الابتدائي', gradeId: 'grade-4', subjectId: 'sci-4', driveFileId: '1AA7QNMWC3xc6B8g9E0wu_md4jsY1WT22', category: 'activity' },
+  { id: 'b-g4-soc', title: 'كتاب الاجتماعيات الرابع الابتدائي', gradeId: 'grade-4', subjectId: 'soc-4', driveFileId: '1NYMwTthzNT99wWi1A8zC5uQLtP_axeud', category: 'book' },
+  { id: 'b-g4-isl', title: 'كتاب الإسلامية الرابع الابتدائي', gradeId: 'grade-4', subjectId: 'isl-4', driveFileId: '1tJrNc7JewKZObB0puWK1b4AvQOvDZA3G', category: 'book' },
+  { id: 'b-g4-eng-s', title: 'كتاب الإنكليزي الطالب الصف الرابع الابتدائي', gradeId: 'grade-4', subjectId: 'eng-4', driveFileId: '1VbDI6nXOPVpjNTV0bJszBLYh06S15Srf', category: 'book' },
+  { id: 'b-g4-eng-a', title: 'كتاب الإنكليزي النشاط الصف الرابع الابتدائي', gradeId: 'grade-4', subjectId: 'eng-4', driveFileId: '1KDRgTta7iQLnuyF-yzxXRoxNITepGZwS', category: 'activity' },
+
+  // ================= الصف الخامس الابتدائي =================
+  { id: 'b-g5-read', title: 'كتاب القراءة الخامس الابتدائي', gradeId: 'grade-5', subjectId: 'ar-5', driveFileId: '1ZwtpjfOxrx_4OA8grijeQs1O77OFLXTc', category: 'book' },
+  { id: 'b-g5-gram', title: 'كتاب القواعد الخامس الابتدائي', gradeId: 'grade-5', subjectId: 'ar-5', driveFileId: '1iy18IIhNqEiB9FZ3d5FKIVsjlmuRHyFf', category: 'book' },
+  { id: 'b-g5-math', title: 'كتاب الرياضيات الخامس الابتدائي', gradeId: 'grade-5', subjectId: 'math-5', driveFileId: '1ncX3jmvh-RXZBOCupgE7SgNiyVfp8CTm', category: 'book' },
+  { id: 'b-g5-math-ex', title: 'كتاب تمرينات الرياضيات الخامس الابتدائي', gradeId: 'grade-5', subjectId: 'math-5', driveFileId: '1d1Ln1xO6GZt7yWiYIgCSryqmR_CIu_m0', category: 'workbook' },
+  { id: 'b-g5-math-mal', title: 'ملزمة الرياضيات الخامس الابتدائي (الفصول الأولى)', gradeId: 'grade-5', subjectId: 'math-5', driveFileId: '1OzdvaXBDR-5J8FMXLePMkhUX9P9n0VPa', category: 'summary' },
+  { id: 'b-g5-sci', title: 'كتاب العلوم الخامس الابتدائي', gradeId: 'grade-5', subjectId: 'sci-5', driveFileId: '1hTK4-_fDcKOxWKh9pZhp-IBXVsQHejjI', category: 'book' },
+  { id: 'b-g5-sci-act', title: 'كتاب نشاط العلوم الخامس الابتدائي', gradeId: 'grade-5', subjectId: 'sci-5', driveFileId: '1x6qMzWAqhdREqntfgdeP8jN5iTCn37Ct', category: 'activity' },
+  { id: 'b-g5-soc', title: 'كتاب الاجتماعيات الخامس الابتدائي', gradeId: 'grade-5', subjectId: 'soc-5', driveFileId: '1TeIIIcHae7t8kPvqK5lyJrxoHVyHQs0m', category: 'book' },
+  { id: 'b-g5-isl', title: 'كتاب الإسلامية الخامس الابتدائي', gradeId: 'grade-5', subjectId: 'isl-5', driveFileId: '1HiHzrsj2yVe8vU79Oeq95t3kh0DnUV3i', category: 'book' },
+  { id: 'b-g5-eng-s', title: 'كتاب الإنكليزي الطالب الصف الخامس الابتدائي', gradeId: 'grade-5', subjectId: 'eng-5', driveFileId: '1V1sISBUTc87SvCcohQHtiLCF00vMJr1d', category: 'book' },
+  { id: 'b-g5-eng-a', title: 'كتاب الإنكليزي النشاط الصف الخامس الابتدائي', gradeId: 'grade-5', subjectId: 'eng-5', driveFileId: '1wA0lpRK84ApCq6MDuyFJVQa3wwAksQrB', category: 'activity' },
+
+  // ================= الصف السادس الابتدائي (الوزاري) =================
+  { id: 'b-g6-read', title: 'كتاب القراءة السادس الابتدائي', gradeId: 'grade-6', subjectId: 'ar-6', driveFileId: '1_W-v_p_g6WKaQ-wWFLt5_0Binfecuy0R', category: 'book' },
+  { id: 'b-g6-gram', title: 'كتاب القواعد السادس الابتدائي', gradeId: 'grade-6', subjectId: 'ar-6', driveFileId: '1T9MtFjDuvP71737xCJAooDiTPkzO9j0e', category: 'book' },
+  { id: 'b-g6-math', title: 'كتاب الرياضيات السادس الابتدائي', gradeId: 'grade-6', subjectId: 'math-6', driveFileId: '18GyhO1itnnub7gFHyqanHyBEZl9SgA6S', category: 'book' },
+  { id: 'b-g6-math-ex', title: 'كتاب تمرينات الرياضيات السادس الابتدائي', gradeId: 'grade-6', subjectId: 'math-6', driveFileId: '1RcfalqC-aUh3CGUNs3WJnczh88zV-Jz5', category: 'workbook' },
+  { id: 'b-g6-sci', title: 'كتاب العلوم السادس الابتدائي', gradeId: 'grade-6', subjectId: 'sci-6', driveFileId: '1bGxlQhStzoOCQsqpf-hYvVMlFfWt2g2h', category: 'book' },
+  { id: 'b-g6-sci-act', title: 'كتاب نشاط العلوم السادس الابتدائي', gradeId: 'grade-6', subjectId: 'sci-6', driveFileId: '1E2wNWq18YSUC3m5xWbqNFy2QQTU93Hvg', category: 'activity' },
+  { id: 'b-g6-soc', title: 'كتاب الاجتماعيات السادس الابتدائي', gradeId: 'grade-6', subjectId: 'soc-6', driveFileId: '1viOGcooz2yuH_EGzPwfHeZfVGyP_CVBD', category: 'book' },
+  { id: 'b-g6-soc-mal', title: 'ملزمة مراجعة الاجتماعيات السادس الابتدائي (كاملة)', gradeId: 'grade-6', subjectId: 'soc-6', driveFileId: '1tIlt93BXDIgZAPHqHzfnIx9t17xdrLtN', category: 'summary' },
+  { id: 'b-g6-isl', title: 'كتاب الإسلامية السادس الابتدائي', gradeId: 'grade-6', subjectId: 'isl-6', driveFileId: '1ITwL2VL1ShgcV5LMArHSotKPvA-Gut24', category: 'book' },
+  { id: 'b-g6-eng-s', title: 'كتاب الإنكليزي الطالب الملون للصف السادس الابتدائي', gradeId: 'grade-6', subjectId: 'eng-6', driveFileId: '1fxFdrtbLFrNC6QwTsPMC7aNp8tMyHOfg', category: 'book' },
+  { id: 'b-g6-eng-a', title: 'كتاب الإنكليزي النشاط للصف السادس الابتدائي', gradeId: 'grade-6', subjectId: 'eng-6', driveFileId: '1OXfTvB2-2_JiT25smow4gqkBTDpEX8vF', category: 'activity' },
+];
+
 const SUBJECT_BOOKS_MAP: Record<string, SubjectBookItem> = {
   // Grade 1
   'ar-1': { bookTitle: 'كتاب قراءتي للصف الأول الابتدائي (المنهج الرسمي المطور)', edition: 'طبعة وزارة التربية العراقية المعتمدة', driveUrl: DEFAULT_DRIVE_FOLDER },
@@ -1560,71 +1626,80 @@ export const GradePortal: React.FC<GradePortalProps> = ({
           </div>
 
 
-          {/* 1. كتاب وملزمة المادة الرسمية (PDF) - يفتح داخل نفس المادة مباشرة */}
+                    {/* 1. كتب وملازم المادة الرسمية (PDF) مع المعرفات الحقيقية والتصفح والتحميل المباشر */}
           {(() => {
-            const currentBook = SUBJECT_BOOKS_MAP[selectedSubject.id] || {
-              bookTitle: `كتاب ومنهاج ${selectedSubject.name} الرسمي`,
-              edition: 'طبعة وزارة التربية العراقية المعتمدة',
-              driveUrl: DEFAULT_DRIVE_FOLDER,
+            // جلب الكتب والملازم المعتمدة لهذه المادة من قاعدة البيانات
+            const subjectBooks = ALL_CURRICULUM_BOOKS.filter(
+              (b) => b.gradeId === currentGradeId && b.subjectId === selectedSubject.id
+            );
+
+            // الكتاب الرئيسي الافتراضي
+            const primaryBook = subjectBooks.find((b) => b.category === 'book') || subjectBooks[0] || {
+              id: `book-${selectedSubject.id}`,
+              title: `كتاب ${selectedSubject.name} الرسمي`,
+              driveFileId: '1zM3D1AUpzxzhiytq3vVmyYOnSGJqM4lP',
+              category: 'book',
             };
 
+            // بقية الملازم وكراسات الأنشطة التابعة للمادة
+            const extraMaterials = subjectBooks.filter((b) => b.id !== primaryBook.id);
 
             return (
-              <div className="bg-gradient-to-r from-sky-50 via-indigo-50 to-emerald-50 rounded-3xl border border-sky-200 p-4 sm:p-5 shadow-xs space-y-3 text-right">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <span className="text-3xl p-2 rounded-2xl bg-sky-600 text-white shadow-xs shrink-0">📚</span>
-                    <div>
-                      <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-sky-200 text-sky-900 inline-block mb-0.5">
-                        كتاب {selectedSubject.name} الرسمي
-                      </span>
-                      <h4 className="font-black text-sm sm:text-base text-slate-900 leading-snug">
-                        {currentBook.bookTitle}
-                      </h4>
-                      <p className="text-[11px] text-slate-500 font-medium">
-                        {currentBook.edition} • متاح للقراءة والتحميل المباشر
-                      </p>
+              <div className="space-y-4">
+                <div className="bg-gradient-to-r from-sky-50 via-indigo-50 to-emerald-50 rounded-3xl border border-sky-200 p-4 sm:p-5 shadow-xs space-y-3 text-right">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <span className="text-3xl p-2 rounded-2xl bg-sky-600 text-white shadow-xs shrink-0">📚</span>
+                      <div>
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-sky-200 text-sky-900">
+                            الكتاب الوزاري المعتمد
+                          </span>
+                          <span className="text-[10px] font-bold text-slate-500">طبعة وزارة التربية العراقية</span>
+                        </div>
+                        <h4 className="font-black text-sm sm:text-base text-slate-900 leading-snug">
+                          {primaryBook.title}
+                        </h4>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          playClickSound();
+                          setSelectedBookForViewer({
+                            title: primaryBook.title,
+                            driveLink: `https://drive.google.com/file/d/${primaryBook.driveFileId}/preview`,
+                            downloadUrl: `https://drive.google.com/uc?export=download&id=${primaryBook.driveFileId}`,
+                            subjectName: selectedSubject.name,
+                          });
+                        }}
+                        className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs flex items-center justify-center gap-1.5 transition-colors shadow-sm shrink-0 cursor-pointer"
+                      >
+                        <BookOpen className="w-4 h-4" />
+                        <span>تصفح وقراءة الكتاب كاملاً داخل المنصة 📖</span>
+                      </button>
+
+                      <a
+                        href={`https://drive.google.com/uc?export=download&id=${primaryBook.driveFileId}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-black text-xs flex items-center justify-center gap-1.5 transition-colors shadow-sm shrink-0 cursor-pointer"
+                        title="تحميل نسخة PDF كاملة"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        <span>تحميل PDF 📥</span>
+                      </a>
                     </div>
                   </div>
 
-
-                  <div className="flex flex-wrap items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        playClickSound();
-                        setSelectedBookForViewer({
-                          title: currentBook.bookTitle,
-                          driveLink: currentBook.driveUrl,
-                          subjectName: selectedSubject.name,
-                        });
-                      }}
-                      className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs flex items-center justify-center gap-1.5 transition-colors shadow-sm shrink-0 cursor-pointer"
-                    >
-                      <BookOpen className="w-4 h-4" />
-                      <span>تصفح وقراءة الكتاب داخل المنصة 📖</span>
-                    </button>
-
-                    <a
-                      href={currentBook.driveUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="px-3.5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-black text-xs flex items-center justify-center gap-1.5 transition-colors shadow-sm shrink-0 cursor-pointer"
-                      title="تحميل نسخة PDF"
-                    >
-                      <Download className="w-3.5 h-3.5" />
-                      <span>تحميل PDF 📥</span>
-                    </a>
-                  </div>
-                </div>
-
-                {/* تحكم المشرف بالكتاب والملزمة */}
-                {isAdmin && (
-                  <div className="pt-3 border-t border-sky-200/60 flex flex-wrap items-center justify-between gap-2">
-                    <span className="text-[11px] font-black text-slate-700">
-                      🛡️ تحكم المشرف بالكتب والملازم:
-                    </span>
-                    <div className="flex items-center gap-2">
+                  {/* تحكم المشرف بالكتاب */}
+                  {isAdmin && (
+                    <div className="pt-3 border-t border-sky-200/60 flex flex-wrap items-center justify-between gap-2">
+                      <span className="text-[11px] font-black text-slate-700">
+                        🛡️ تحكم المشرف بالكتاب الرسمي:
+                      </span>
                       <button
                         type="button"
                         onClick={() => {
@@ -1632,20 +1707,65 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                           setEditingBook({
                             subjectId: selectedSubject.id,
                             subjectName: selectedSubject.name,
-                            driveLink: currentBook.driveUrl,
+                            driveLink: `https://drive.google.com/file/d/${primaryBook.driveFileId}/view`,
                           });
                         }}
                         className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-black text-xs cursor-pointer shadow-xs flex items-center gap-1"
                       >
-                        ✏️ تعديل رابط الكتاب أو الملزمة
+                        ✏️ تعديل رابط هذا الكتاب
                       </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* عرض الملازم وكراسات الأنشطة الإضافية إن وجدت */}
+                {extraMaterials.length > 0 && (
+                  <div className="p-4 rounded-2xl bg-amber-50/70 border border-amber-200 space-y-2.5 text-right">
+                    <span className="text-xs font-black text-amber-900 flex items-center gap-1.5">
+                      <span>📑 الملازم والأنشطة الإضافية التابعة لهذه المادة ({extraMaterials.length}):</span>
+                    </span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      {extraMaterials.map((mat) => (
+                        <div key={mat.id} className="p-3 bg-white rounded-xl border border-amber-200 shadow-2xs flex items-center justify-between gap-2">
+                          <div className="min-w-0 text-right">
+                            <h5 className="font-bold text-xs text-slate-900 truncate">{mat.title}</h5>
+                            <span className="text-[10px] text-slate-400 font-bold">
+                              {mat.category === 'workbook' ? 'كراسة تمرينات' : mat.category === 'activity' ? 'نشاط صفي' : 'ملزمة مراجعة'}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                playClickSound();
+                                setSelectedBookForViewer({
+                                  title: mat.title,
+                                  driveLink: `https://drive.google.com/file/d/${mat.driveFileId}/preview`,
+                                  downloadUrl: `https://drive.google.com/uc?export=download&id=${mat.driveFileId}`,
+                                  subjectName: selectedSubject.name,
+                                });
+                              }}
+                              className="px-2.5 py-1.5 rounded-lg bg-emerald-600 text-white font-black text-[11px] cursor-pointer"
+                            >
+                              قراءة 📖
+                            </button>
+                            <a
+                              href={`https://drive.google.com/uc?export=download&id=${mat.driveFileId}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="px-2 py-1.5 rounded-lg bg-slate-900 text-white font-bold text-[11px]"
+                            >
+                              📥
+                            </a>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 )}
               </div>
             );
           })()}
-
 
           {/* 2. شروحات وفيديوهات اليوتيوب الخاصة بهذه المادة حصراً (مشغل مدمج داخل التطبيق يمنع التشتت) */}
           {(() => {
@@ -1701,41 +1821,84 @@ export const GradePortal: React.FC<GradePortalProps> = ({
 
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {subjectVideos.map((vd: any, idx: number) => (
-                    <div key={idx} className="bg-slate-900 rounded-2xl p-2 sm:p-3 border border-slate-800 space-y-2.5 w-full">
-                      {/* مشغل الفيديو الصافي والمكبر بدون أي كتابة تغطي الشاشة */}
-                      <div className="relative aspect-video w-full min-h-[220px] sm:min-h-[300px] md:min-h-[360px] rounded-2xl overflow-hidden bg-black border-2 border-slate-800 shadow-2xl">
-                        <iframe
-                          src={getYouTubeEmbedUrl(vd.youtubeUrl)}
-                          title={vd.title}
-                          className="w-full h-full border-0"
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                          allowFullScreen
-                        />
-                      </div>
-                      <div className="flex items-center justify-between pt-1">
-                        <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-rose-950 text-rose-300 border border-rose-800">
-                          {vd.chapter || 'درس مرئي'}
-                        </span>
-                        <span className="text-[10px] text-slate-400 font-bold">
-                          منصة المتفوق التعليمية 🎬
-                        </span>
-                      </div>
-                      <h5 className="font-black text-xs sm:text-sm text-slate-100 leading-snug">
-                        {vd.title}
-                      </h5>
-                      {isAdmin && (
-                        <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">
-                          <button
-                            onClick={() => setEditingVideo(vd)}
-                            className="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-bold shadow-xs cursor-pointer flex items-center gap-1"
-                          >
-                            ✏️ تعديل هذا الفيديو
-                          </button>
+                                    {subjectVideos.map((vd: any, idx: number) => {
+                    const isVideoVip = vd.isVipOnly === true;
+                    const isLockedForStudent = isVideoVip && !isAdmin && currentStudent?.subscription !== 'paid';
+
+                    return (
+                      <div key={idx} className="bg-slate-900 rounded-3xl p-3 sm:p-4 border border-slate-800 space-y-3 w-full">
+                        {/* مشغل الفيديو بنسبة 16:9 الهندسية الدقيقة بدون أي حواف سوداء من الأعلى أو الأسفل */}
+                        <div
+                          className="relative w-full rounded-2xl overflow-hidden bg-black shadow-2xl"
+                          style={{ paddingTop: '56.25%' }}
+                        >
+                          {isLockedForStudent ? (
+                            /* بطاقة قفل الـ VIP للشرح */
+                            <div className="absolute inset-0 bg-slate-950/95 flex flex-col items-center justify-center p-4 text-center space-y-2">
+                              <span className="text-3xl">👑</span>
+                              <h5 className="font-black text-sm text-amber-300">هذا الشرح المرئي مخصص لمشتركي VIP 🔒</h5>
+                              <p className="text-xs text-slate-300 max-w-xs">اشترك الآن لفتح كافة الشروحات المرئية والأسئلة الوزارية</p>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  playClickSound();
+                                  onOpenUpgradeModal();
+                                }}
+                                className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-950 font-black text-xs shadow-md cursor-pointer mt-1"
+                              >
+                                تفعيل اشتراك VIP ⚡
+                              </button>
+                            </div>
+                          ) : (
+                            /* المشغل المباشر النظيف */
+                            <iframe
+                              src={getYouTubeEmbedUrl(vd.youtubeUrl)}
+                              title={vd.title}
+                              style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 0 }}
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                              allowFullScreen
+                            />
+                          )}
                         </div>
-                      )}
-                    </div>
-                  ))}
+
+                        {/* معلومات الفيديو والتحكم */}
+                        <div className="flex items-center justify-between pt-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-rose-950 text-rose-300 border border-rose-800">
+                              {vd.chapter || 'درس مرئي'}
+                            </span>
+                            {isVideoVip && (
+                              <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-amber-400 text-amber-950 shadow-xs flex items-center gap-1">
+                                👑 VIP
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-[10px] text-slate-400 font-bold">
+                            منصة المتفوق التعليمية 🎬
+                          </span>
+                        </div>
+
+                        <h5 className="font-black text-xs sm:text-sm text-slate-100 leading-snug text-right">
+                          {vd.title}
+                        </h5>
+
+                        {isAdmin && (
+                          <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                playClickSound();
+                                setEditingVideo(vd);
+                              }}
+                              className="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-bold shadow-xs cursor-pointer flex items-center gap-1"
+                            >
+                              ✏️ تعديل هذا الفيديو
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             );
@@ -2360,21 +2523,20 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                       {selectedBookForViewer.title}
                     </h4>
                     <span className="text-[10px] sm:text-[11px] text-slate-400 block">
-                      {driveInfo.isFolder ? 'مجلد كتب المنهج الرسمي على Google Drive' : 'قراءة وتصفح الكتاب مباشرة داخل التطبيق'}
+                      قراءة وتصفح كافة صفحات الكتاب مباشرة داخل المنصة
                     </span>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
                   <a
-                    href={driveInfo.downloadUrl}
+                    href={selectedBookForViewer.downloadUrl || driveInfo.downloadUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="px-3 sm:px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black flex items-center gap-1.5 shadow-md transition-all cursor-pointer"
                   >
                     <Download className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">{driveInfo.isFolder ? 'فتح المجلد في Drive' : 'تحميل PDF مباشر'}</span>
-                    <span className="sm:hidden">{driveInfo.isFolder ? 'المجلد' : 'تحميل'}</span>
+                    <span>تحميل نسخة PDF 📥</span>
                   </a>
 
                   <button
@@ -2389,9 +2551,9 @@ export const GradePortal: React.FC<GradePortalProps> = ({
               </div>
 
               {/* Reader / Embed frame */}
-              <div className="flex-1 w-full bg-white relative">
+              <div className="flex-1 w-full bg-slate-900 relative">
                 <iframe
-                  src={driveInfo.embedUrl}
+                  src={selectedBookForViewer.driveLink || driveInfo.embedUrl}
                   title={selectedBookForViewer.title}
                   className="w-full h-full border-0"
                   allow="autoplay"

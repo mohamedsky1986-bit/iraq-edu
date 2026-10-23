@@ -17,7 +17,6 @@ import {
   INITIAL_SUBSCRIPTION_REQUESTS,
 } from '../data/initialData';
 import { setSoundEnabled } from '../utils/audio';
-import { EducationalVideo, INITIAL_VIDEOS, extractYouTubeId, CurriculumBook, ALL_CURRICULUM_BOOKS, extractDriveFileId } from '../data/curriculumMedia';
 import { db } from '../firebase';
 import {
   collection,
@@ -197,23 +196,6 @@ interface EduContextType {
   updateQuestion: (questionOrId: any, partialQuestion?: any) => void;
   deleteQuestion: (questionId: string) => void;
 
-  videos: EducationalVideo[];
-  addVideo: (video: {
-    title: string;
-    gradeId: GradeId;
-    subjectId: string;
-    youtubeUrl: string;
-    description?: string;
-    teacherName?: string;
-    isVipOnly?: boolean;
-  }) => EducationalVideo;
-  deleteVideo: (videoId: string) => void;
-
-  curriculumBooks: CurriculumBook[];
-  updateBook: (bookId: string, updated: Partial<CurriculumBook>) => void;
-  addBook: (book: Omit<CurriculumBook, 'id'>) => CurriculumBook;
-  deleteBook: (bookId: string) => void;
-
   recordQuizAttempt: (attempt: {
     studentId: string;
     studentName: string;
@@ -342,8 +324,20 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   });
 
-  const [adminUsername, setAdminUsername] = useState<string>('mohamedsky1986@gmail.com');
-  const [adminPassword, setAdminPassword] = useState<string>('admin123');
+  const [adminUsername, setAdminUsername] = useState<string>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEYS.ADMIN_USER);
+      if (saved && saved.trim()) return saved.trim();
+    } catch {}
+    return 'mohamedsky1986@gmail.com';
+  });
+  const [adminPassword, setAdminPassword] = useState<string>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEYS.ADMIN_PASS);
+      if (saved && saved.trim()) return saved.trim();
+    } catch {}
+    return 'admin123';
+  });
 
   const [subscriptionConfig, setSubscriptionConfig] = useState<SubscriptionConfig>(() => {
     try {
@@ -389,28 +383,6 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   });
 
-  const [videos, setVideos] = useState<EducationalVideo[]>(() => {
-    try {
-      const saved = localStorage.getItem('iraq_edu_videos');
-      return saved ? JSON.parse(saved) : INITIAL_VIDEOS;
-    } catch {
-      return INITIAL_VIDEOS;
-    }
-  });
-
-  const [curriculumBooks, setCurriculumBooks] = useState<CurriculumBook[]>(() => {
-    try {
-      const saved = localStorage.getItem('iraq_edu_books_v2');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-      return ALL_CURRICULUM_BOOKS;
-    } catch {
-      return ALL_CURRICULUM_BOOKS;
-    }
-  });
-
   // Sync Students Collection
   useEffect(() => {
     try {
@@ -437,56 +409,6 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, []);
 
   // Sync Questions Collection (safely merge so curriculum is never empty)
-  // Sync Videos from Firebase Firestore
-  useEffect(() => {
-    try {
-      const unsubscribe = onSnapshot(collection(db, 'videos'), (snapshot) => {
-        if (!snapshot.empty) {
-          const remoteVideos: EducationalVideo[] = snapshot.docs.map((docSnap) => ({
-            id: docSnap.id,
-            ...(docSnap.data() as any),
-          }));
-          setVideos(remoteVideos);
-          localStorage.setItem('iraq_edu_videos', JSON.stringify(remoteVideos));
-        }
-      });
-      return () => unsubscribe();
-    } catch (e) {
-      console.warn('Firebase videos sync warning:', e);
-    }
-  }, []);
-
-  // Sync Curriculum Books from Firebase Firestore
-  useEffect(() => {
-    try {
-      const unsubscribe = onSnapshot(collection(db, 'curriculum_books'), (snapshot) => {
-        if (!snapshot.empty) {
-          const remoteMap = new Map();
-          snapshot.docs.forEach((d) => remoteMap.set(d.id, { id: d.id, ...d.data() }));
-
-          setCurriculumBooks((prev) => {
-            const merged = ALL_CURRICULUM_BOOKS.map((defaultBook) => {
-              return remoteMap.has(defaultBook.id) ? { ...defaultBook, ...remoteMap.get(defaultBook.id) } : defaultBook;
-            });
-
-            // add any custom new books
-            remoteMap.forEach((val, key) => {
-              if (!merged.some((m) => m.id === key)) {
-                merged.push(val as CurriculumBook);
-              }
-            });
-
-            localStorage.setItem('iraq_edu_books_v2', JSON.stringify(merged));
-            return merged;
-          });
-        }
-      });
-      return () => unsubscribe();
-    } catch (e) {
-      console.warn('Firebase books sync warning:', e);
-    }
-  }, []);
-
   useEffect(() => {
     try {
       const unsubscribe = onSnapshot(collection(db, 'questions'), (snapshot) => {
@@ -827,6 +749,11 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setAdminUsername(cleanUser);
     setAdminPassword(cleanPass);
 
+    try {
+      localStorage.setItem(STORAGE_KEYS.ADMIN_USER, cleanUser);
+      localStorage.setItem(STORAGE_KEYS.ADMIN_PASS, cleanPass);
+    } catch {}
+
     setDoc(
       doc(db, 'settings', 'admin'),
       {
@@ -1068,84 +995,6 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return newAttempt;
   };
 
-  const addVideo = (videoData: {
-    title: string;
-    gradeId: GradeId;
-    subjectId: string;
-    youtubeUrl: string;
-    description?: string;
-    teacherName?: string;
-    isVipOnly?: boolean;
-  }): EducationalVideo => {
-    const ytId = extractYouTubeId(videoData.youtubeUrl);
-    const newVideo: EducationalVideo = {
-      ...videoData,
-      id: 'vid-' + Date.now(),
-      youtubeId: ytId,
-      createdAt: new Date().toLocaleDateString('ar-IQ'),
-    };
-
-    setVideos((prev) => {
-      const updated = [newVideo, ...prev];
-      localStorage.setItem('iraq_edu_videos', JSON.stringify(updated));
-      return updated;
-    });
-
-    setDoc(doc(db, 'videos', newVideo.id), newVideo).catch(console.error);
-    return newVideo;
-  };
-
-  const deleteVideo = (videoId: string) => {
-    setVideos((prev) => {
-      const updated = prev.filter((v) => v.id !== videoId);
-      localStorage.setItem('iraq_edu_videos', JSON.stringify(updated));
-      return updated;
-    });
-
-    deleteDoc(doc(db, 'videos', videoId)).catch(console.error);
-  };
-
-  const updateBook = (bookId: string, updatedData: Partial<CurriculumBook>) => {
-    const cleanDriveId = updatedData.driveFileId ? extractDriveFileId(updatedData.driveFileId) : undefined;
-    const finalData = cleanDriveId ? { ...updatedData, driveFileId: cleanDriveId } : updatedData;
-
-    setCurriculumBooks((prev) => {
-      const updated = prev.map((b) => (b.id === bookId ? { ...b, ...finalData } : b));
-      localStorage.setItem('iraq_edu_books_v2', JSON.stringify(updated));
-      return updated;
-    });
-
-    setDoc(doc(db, 'curriculum_books', bookId), finalData, { merge: true }).catch(console.error);
-  };
-
-  const addBook = (bookData: Omit<CurriculumBook, 'id'>): CurriculumBook => {
-    const cleanDriveId = extractDriveFileId(bookData.driveFileId);
-    const newBook: CurriculumBook = {
-      ...bookData,
-      id: 'book-' + Date.now(),
-      driveFileId: cleanDriveId,
-    };
-
-    setCurriculumBooks((prev) => {
-      const updated = [newBook, ...prev];
-      localStorage.setItem('iraq_edu_books_v2', JSON.stringify(updated));
-      return updated;
-    });
-
-    setDoc(doc(db, 'curriculum_books', newBook.id), newBook).catch(console.error);
-    return newBook;
-  };
-
-  const deleteBook = (bookId: string) => {
-    setCurriculumBooks((prev) => {
-      const updated = prev.filter((b) => b.id !== bookId);
-      localStorage.setItem('iraq_edu_books_v2', JSON.stringify(updated));
-      return updated;
-    });
-
-    deleteDoc(doc(db, 'curriculum_books', bookId)).catch(console.error);
-  };
-
   const toggleSound = () => {
     setSoundOn((prev) => !prev);
   };
@@ -1181,13 +1030,6 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         updateQuestion,
         deleteQuestion,
         recordQuizAttempt,
-        videos,
-        addVideo,
-        deleteVideo,
-        curriculumBooks,
-        updateBook,
-        addBook,
-        deleteBook,
         toggleSound,
       }}
     >

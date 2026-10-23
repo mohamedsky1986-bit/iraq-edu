@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { GRADES_DATA, DEFAULT_SUBJECTS } from '../data/initialData';
 import { GradeId } from '../types/index';
 import { playClickSound, playCorrectSound } from '../utils/audio';
@@ -22,12 +22,14 @@ import {
   Quote,
 } from 'lucide-react';
 
+
 interface HomeHeroProps {
   onSelectGrade: (gradeId: GradeId) => void;
   onOpenAuth: () => void;
   onOpenAdminLogin: () => void;
   onOpenZipModal: () => void;
 }
+
 
 export interface StudentComment {
   id: string;
@@ -38,7 +40,9 @@ export interface StudentComment {
   date: string;
 }
 
+
 const COMMENTS_STORAGE_KEY = 'iraq_edu_platform_comments_v1';
+
 
 const INITIAL_COMMENTS: StudentComment[] = [
   {
@@ -67,6 +71,55 @@ const INITIAL_COMMENTS: StudentComment[] = [
   },
 ];
 
+
+const OFFICIAL_HOMEPAGE_SUBJECTS: Record<string, { name: string; icon: string }[]> = {
+  'grade-1': [
+    { name: 'قراءتي والحروف', icon: '🔤' },
+    { name: 'الرياضيات', icon: '🔢' },
+    { name: 'العلوم', icon: '🌿' },
+    { name: 'اللغة الإنجليزية', icon: '🔠' },
+    { name: 'التربية الإسلامية', icon: '🕌' },
+  ],
+  'grade-2': [
+    { name: 'قراءتي', icon: '📖' },
+    { name: 'الرياضيات', icon: '➕' },
+    { name: 'العلوم', icon: '🌱' },
+    { name: 'التربية الإسلامية', icon: '🕌' },
+    { name: 'اللغة الإنجليزية', icon: '🇬🇧' },
+  ],
+  'grade-3': [
+    { name: 'قراءتي', icon: '📝' },
+    { name: 'الرياضيات', icon: '✖️' },
+    { name: 'العلوم', icon: '🧲' },
+    { name: 'التربية الإسلامية', icon: '🕌' },
+    { name: 'اللغة الإنجليزية', icon: '🇬🇧' },
+  ],
+  'grade-4': [
+    { name: 'قواعد اللغة العربية', icon: '📚' },
+    { name: 'الرياضيات', icon: '📐' },
+    { name: 'العلوم', icon: '🧬' },
+    { name: 'الاجتماعيات', icon: '🗺️' },
+    { name: 'التربية الإسلامية', icon: '🕌' },
+    { name: 'اللغة الإنجليزية', icon: '🇬🇧' },
+  ],
+  'grade-5': [
+    { name: 'قواعد اللغة العربية', icon: '📖' },
+    { name: 'الرياضيات', icon: '📊' },
+    { name: 'العلوم', icon: '🔬' },
+    { name: 'الاجتماعيات', icon: '🏛️' },
+    { name: 'التربية الإسلامية', icon: '🕌' },
+    { name: 'اللغة الإنجليزية', icon: '🇬🇧' },
+  ],
+  'grade-6': [
+    { name: 'قواعد اللغة العربية', icon: '👑' },
+    { name: 'الرياضيات (وزاري)', icon: '🧮' },
+    { name: 'العلوم (وزاري)', icon: '⚡' },
+    { name: 'الاجتماعيات (وزاري)', icon: '🗺️' },
+    { name: 'التربية الإسلامية', icon: '🕌' },
+    { name: 'اللغة الإنجليزية', icon: '🌐' },
+  ],
+};
+
 export const HomeHero: React.FC<HomeHeroProps> = ({
   onSelectGrade,
   onOpenAuth,
@@ -84,6 +137,7 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
     return INITIAL_COMMENTS;
   });
 
+
   // State for adding a new comment
   const [newAuthor, setNewAuthor] = useState('');
   const [newGrade, setNewGrade] = useState('الصف الأول الابتدائي');
@@ -91,12 +145,14 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
   const [newCommentText, setNewCommentText] = useState('');
   const [commentSentFeedback, setCommentSentFeedback] = useState(false);
 
+
   // مزامنة حية للتعليقات عبر قاعدة بيانات Firebase السحابية
   useEffect(() => {
     try {
       localStorage.setItem(COMMENTS_STORAGE_KEY, JSON.stringify(comments));
     } catch {}
   }, [comments]);
+
 
   useEffect(() => {
     try {
@@ -114,6 +170,7 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
       console.warn('Firestore comments listener fallback:', e);
     }
   }, []);
+
 
     // ميزة المنتدى: تعديل وحذف التعليقات مباشرة من الواجهة للأدمن
   const handleAdminDeleteComment = async (id: string) => {
@@ -133,6 +190,7 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
     }
   };
 
+
   const handleAdminEditComment = async (comm: StudentComment) => {
     playClickSound();
     const newText = prompt('تعديل نص تعليق الطالب كمدير:', comm.commentText);
@@ -151,9 +209,11 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
     }
   };
 
+
   const handleAddComment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newAuthor.trim() || !newCommentText.trim()) return;
+
 
     const newCommentItem: StudentComment = {
       id: `comm-${Date.now()}`,
@@ -164,11 +224,13 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
       date: new Date().toISOString().split('T')[0],
     };
 
+
     const updated = [newCommentItem, ...comments];
     setComments(updated);
     try {
       localStorage.setItem(COMMENTS_STORAGE_KEY, JSON.stringify(updated));
     } catch {}
+
 
     // حفظ التعليق سحابياً في Firebase ليظهر للجميع فوراً
     try {
@@ -177,12 +239,14 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
       console.error('Error saving comment to Firestore:', e);
     }
 
+
     playCorrectSound();
     setNewAuthor('');
     setNewCommentText('');
     setCommentSentFeedback(true);
     setTimeout(() => setCommentSentFeedback(false), 4000);
   };
+
 
   return (
     <div className="space-y-12 animate-in fade-in duration-300">
@@ -194,6 +258,7 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
             <span>المنصة التفاعلية الرسمية للتعليم الابتدائي في العراق</span>
           </div>
 
+
           <h1 className="text-3xl sm:text-5xl font-black leading-tight tracking-tight">
             تعلّم، تدرّب وتفوّق في منهاجك الابتدائي مع{' '}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-emerald-300 to-teal-300">
@@ -201,9 +266,11 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
             </span>
           </h1>
 
+
           <p className="text-sm sm:text-base text-slate-300 leading-relaxed font-medium">
             من الصف الأول إلى الصف السادس الابتدائي: مناهج دراسية معتمدة، نطق صوتي مخصص للأطفال، بنك أسئلة وأجوبة مع خيار البحث السريع، اختبارات تفاعلية بنظام أصوات تشجيعية، ولوحة تحكم شاملة للمشرف.
           </p>
+
 
           <div className="flex flex-wrap items-center gap-3 pt-2">
             <button
@@ -216,6 +283,9 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
               <span>دخول الطالب / تسجيل حساب جديد</span>
               <ArrowLeft className="w-4 h-4" />
             </button>
+
+
+
 
 
 
@@ -232,10 +302,12 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
           </div>
         </div>
 
+
         {/* Decorative subtle glows */}
         <div className="absolute top-0 left-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-0 right-0 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
       </div>
+
 
       {/* Grade Selection Grid */}
       <div className="space-y-4">
@@ -247,6 +319,7 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
             تفتح المنصة لكل طالب المواد والاختبارات المقررة لمرحلته حصراً
           </p>
         </div>
+
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {GRADES_DATA.map((grade) => (
@@ -268,6 +341,7 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
                   </span>
                 </div>
 
+
                 <h3 className="text-lg font-black text-slate-900 mb-1.5 group-hover:text-emerald-700 transition-colors">
                   {grade.name}
                 </h3>
@@ -275,29 +349,36 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
                   {grade.description}
                 </p>
 
+
                 {/* عرض المواد الدراسية المعتمدة للصف مباشرة بالصفحة الرئيسية */}
-                <div className="mt-4 pt-3.5 border-t border-slate-100">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-[11px] font-black text-slate-700">
-                      المواد المقررة:
-                    </span>
-                    <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                      {DEFAULT_SUBJECTS.filter((s) => s.gradeId === grade.id).length} مواد دراسية
-                    </span>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {DEFAULT_SUBJECTS.filter((s) => s.gradeId === grade.id).map((subj) => (
-                      <span
-                        key={subj.id}
-                        className="px-2.5 py-1 rounded-xl bg-slate-50 text-slate-800 text-[11px] font-bold border border-slate-200/80 flex items-center gap-1 group-hover:bg-emerald-50 group-hover:text-emerald-900 group-hover:border-emerald-200 transition-colors"
-                      >
-                        <span>{subj.icon}</span>
-                        <span>{subj.name.replace(/\s*\(.*\)/, '').trim()}</span>
-                      </span>
-                    ))}
-                  </div>
-                </div>
+                {(() => {
+                  const gradeSubjs = OFFICIAL_HOMEPAGE_SUBJECTS[grade.id] || [];
+                  return (
+                    <div className="mt-4 pt-3.5 border-t border-slate-100">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-[11px] font-black text-slate-700">
+                          المواد المقررة:
+                        </span>
+                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                          {gradeSubjs.length} مواد دراسية
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {gradeSubjs.map((subj, sIdx) => (
+                          <span
+                            key={sIdx}
+                            className="px-2.5 py-1 rounded-xl bg-slate-50 text-slate-800 text-[11px] font-bold border border-slate-200/80 flex items-center gap-1 group-hover:bg-emerald-50 group-hover:text-emerald-900 group-hover:border-emerald-200 transition-colors"
+                          >
+                            <span>{subj.icon}</span>
+                            <span>{subj.name}</span>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
+
 
               <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
                 <span className="text-xs font-bold text-slate-400">
@@ -313,6 +394,7 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
         </div>
       </div>
 
+
       {/* Highlights / Features Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="p-5 rounded-3xl bg-white border border-slate-200 space-y-2">
@@ -325,6 +407,7 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
           </p>
         </div>
 
+
         <div className="p-5 rounded-3xl bg-white border border-slate-200 space-y-2">
           <div className="w-10 h-10 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center">
             <Sparkles className="w-5 h-5 text-amber-600" />
@@ -334,6 +417,7 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
             مؤثرات صوتية محفزة للإجابات الصحيحة والتقييم بالنجوم والأوسمة وشهادات التفوق المدرسية.
           </p>
         </div>
+
 
         <div className="p-5 rounded-3xl bg-white border border-slate-200 space-y-2">
           <div className="w-10 h-10 rounded-2xl bg-sky-100 text-sky-800 flex items-center justify-center">
@@ -345,6 +429,7 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
           </p>
         </div>
 
+
         <div className="p-5 rounded-3xl bg-white border border-slate-200 space-y-2">
           <div className="w-10 h-10 rounded-2xl bg-purple-100 text-purple-800 flex items-center justify-center">
             <ShieldCheck className="w-5 h-5 text-purple-600" />
@@ -355,6 +440,7 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
           </p>
         </div>
       </div>
+
 
       {/* قسم التعليقات وآراء الطلبة وأولياء الأمور في الصفحة الرئيسية */}
       <div className="bg-white rounded-3xl p-6 sm:p-10 border border-slate-200 shadow-sm space-y-8 text-right">
@@ -374,6 +460,7 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
             {comments.length} تقييم مسجل ⭐
           </span>
         </div>
+
 
         {/* عرض بطاقات التعليقات */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -400,10 +487,12 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
                   </div>
                 </div>
 
+
                 <p className="text-xs text-slate-600 leading-relaxed font-medium pt-1">
                   "{comm.commentText}"
                 </p>
               </div>
+
 
               <span className="text-[10px] text-slate-400 font-mono block pt-2 border-t border-slate-200/60">
                 {comm.date}
@@ -412,11 +501,13 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
           ))}
         </div>
 
+
         {/* نموذج إضافة تعليق جديد للطالب */}
         <div className="bg-gradient-to-r from-emerald-50 via-teal-50 to-sky-50 p-6 rounded-2xl border border-emerald-200 space-y-4">
           <h3 className="text-sm font-black text-emerald-950 flex items-center gap-2">
             <span>✍️ أضف رأيك وتجربتك في منصة المتفوق:</span>
           </h3>
+
 
           <form onSubmit={handleAddComment} className="space-y-3">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -431,6 +522,7 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
                   required
                 />
               </div>
+
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">المرحلة الدراسية:</label>
@@ -448,6 +540,7 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
                 </select>
               </div>
 
+
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">التقييم بالنجوم:</label>
                 <select
@@ -462,6 +555,7 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
               </div>
             </div>
 
+
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">رأيك واقتراحك في المنصة:</label>
               <textarea
@@ -474,12 +568,14 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
               />
             </div>
 
+
             {commentSentFeedback && (
               <div className="p-2.5 rounded-xl bg-emerald-100 text-emerald-800 text-xs font-bold flex items-center gap-1.5">
                 <CheckCircle className="w-4 h-4 text-emerald-600" />
                 <span>شكراً لمشاركتك! تم نشر تعليقك بنجاح وسيظهر لجميع زوار المنصة ✓</span>
               </div>
             )}
+
 
             <button
               type="submit"
@@ -494,4 +590,3 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
     </div>
   );
 };
-

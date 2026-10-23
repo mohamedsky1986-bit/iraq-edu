@@ -96,6 +96,7 @@ interface CustomVideo {
   title: string;
   youtubeUrl: string;
   chapter: string;
+  isVipOnly?: boolean;
 }
 
 
@@ -247,6 +248,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
   const [newVidTitle, setNewVidTitle] = useState('');
   const [newVidUrl, setNewVidUrl] = useState('');
   const [newVidChapter, setNewVidChapter] = useState('الفصل الأول');
+  const [newVidIsVip, setNewVidIsVip] = useState(false);
 
 
   // إدارة تعليقات وآراء الطلبة والزوار المتزامنة سحابياً
@@ -363,6 +365,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
       title: newVidTitle.trim(),
       youtubeUrl: newVidUrl.trim(),
       chapter: newVidChapter.trim() || 'الفصل الأول',
+      isVipOnly: newVidIsVip,
     };
     const updated = [newVid, ...videosList];
     setVideosList(updated);

@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useEdu } from '../context/EduContext';
+import { db } from '../firebase';
+import { collection, onSnapshot } from 'firebase/firestore';
 import { Subject, Question } from '../types/index';
 import { GRADES_DATA } from '../data/initialData';
 import { getIraqiGradeName } from '../utils/edu-logic';
 import { QuestionCard } from './QuestionCard';
 import { Grade1ArabicReading } from './Grade1ArabicReading';
-import { Grade1EnglishLetters } from './Grade1EnglishLetters';
 import {
   playClickSound,
   speakArabicText,
@@ -31,8 +32,199 @@ import {
   Music,
   Bookmark,
   Home,
-  LogOut
+  LogOut,
+  Video,
+  ExternalLink,
+  Download,
+  Play
 } from 'lucide-react';
+
+
+
+
+
+
+function getDriveEmbedUrl(url?: string): { embedUrl: string; isFolder: boolean; downloadUrl: string } {
+  if (!url) return { embedUrl: '', isFolder: false, downloadUrl: '' };
+
+  const folderMatch = url.match(/\/folders\/([a-zA-Z0-9_-]+)/);
+  if (folderMatch) {
+    const folderId = folderMatch[1];
+    return {
+      embedUrl: `https://drive.google.com/embeddedfolderview?id=${folderId}#grid`,
+      isFolder: true,
+      downloadUrl: url,
+    };
+  }
+
+  const fileMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
+  if (fileMatch) {
+    const fileId = fileMatch[1];
+    return {
+      embedUrl: `https://drive.google.com/file/d/${fileId}/preview`,
+      isFolder: false,
+      downloadUrl: `https://drive.google.com/uc?export=download&id=${fileId}`,
+    };
+  }
+
+  if (url.toLowerCase().endsWith('.pdf')) {
+    return {
+      embedUrl: `https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true`,
+      isFolder: false,
+      downloadUrl: url,
+    };
+  }
+
+  return {
+    embedUrl: url,
+    isFolder: false,
+    downloadUrl: url,
+  };
+}
+
+function extractDriveFileId(url?: string): string {
+  if (!url) return '';
+  const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
+  return match ? match[1] : '';
+}
+
+function getYouTubeEmbedUrl(url: string): string {
+  if (!url) return '';
+  const clean = url.trim();
+  const match = clean.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
+  const id = match ? match[1] : (clean.length === 11 ? clean : '');
+  if (!id) return clean;
+  return `https://www.youtube.com/embed/${id}?autoplay=0&rel=0&modestbranding=1&playsinline=1&controls=1`;
+}
+
+
+const DEFAULT_DRIVE_FOLDER = 'https://drive.google.com/drive/folders/1Gdmm8qLT26-JA51h5FFpnBxagKJ_jjLL?usp=drive_link';
+
+
+interface SubjectBookItem {
+  bookTitle: string;
+  edition: string;
+  driveUrl: string;
+}
+
+
+export const ALL_CURRICULUM_BOOKS: CurriculumBook[] = [
+  // ================= الصف الأول الابتدائي =================
+  { id: 'b-g1-ar', title: 'كتاب قراءتي الأول الابتدائي', gradeId: 'grade-1', subjectId: 'ar-1', driveFileId: '1zM3D1AUpzxzhiytq3vVmyYOnSGJqM4lP', category: 'book' },
+  { id: 'b-g1-math', title: 'كتاب الرياضيات الأول الابتدائي', gradeId: 'grade-1', subjectId: 'math-1', driveFileId: '1ohJZlWvvnZ-d_fQSVL7iTjdEY5EeaQU6', category: 'book' },
+  { id: 'b-g1-sci', title: 'كتاب العلوم الأول الابتدائي', gradeId: 'grade-1', subjectId: 'sci-1', driveFileId: '1w0_8y7osEzGCST5Kj_b8HtL9gRnHqBcu', category: 'book' },
+  { id: 'b-g1-isl', title: 'كتاب الإسلامية الأول الابتدائي', gradeId: 'grade-1', subjectId: 'isl-1', driveFileId: '1nVM1dhoZJJ2kwYwMLRMlFfo3a70rOKrD', category: 'book' },
+  { id: 'b-g1-eng', title: 'كتاب الإنكليزي الطالب الأول الابتدائي (الوحدة الأولى)', gradeId: 'grade-1', subjectId: 'eng-1', driveFileId: '1AXlhEx5zeA2PUfiDsxJGQXaksFyQiVsc', category: 'book' },
+
+  // ================= الصف الثاني الابتدائي =================
+  { id: 'b-g2-ar', title: 'كتاب قراءتي الثاني الابتدائي', gradeId: 'grade-2', subjectId: 'ar-2', driveFileId: '1VO_mNLIlG8O20Q-7wyQKnnpiKZE7Pwcu', category: 'book' },
+  { id: 'b-g2-math', title: 'كتاب الرياضيات الثاني الابتدائي', gradeId: 'grade-2', subjectId: 'math-2', driveFileId: '1ULBDqrbLm7Fi4UQ58yHa5d-grRegMfgv', category: 'book' },
+  { id: 'b-g2-math-ex', title: 'كتاب تمرينات الرياضيات الثاني الابتدائي', gradeId: 'grade-2', subjectId: 'math-2', driveFileId: '1469ed-o-1RFyYO26RW_6FnEVfEMz7l9E', category: 'workbook' },
+  { id: 'b-g2-sci', title: 'كتاب العلوم الثاني الابتدائي', gradeId: 'grade-2', subjectId: 'sci-2', driveFileId: '15UjYgCCyInuCg5HsLlvxaBRi3Adz5fyZ', category: 'book' },
+  { id: 'b-g2-isl', title: 'كتاب الإسلامية الثاني الابتدائي', gradeId: 'grade-2', subjectId: 'isl-2', driveFileId: '1z6nWPbSYSyscIdmj5y5ZSN4InZdjrMFF', category: 'book' },
+  { id: 'b-g2-eng-s', title: 'كتاب الإنكليزي الطالب الصف الثاني الابتدائي', gradeId: 'grade-2', subjectId: 'eng-2', driveFileId: '1SYE2y2MDmEyWnVSvV-Gi7d_1QF7Gjgig', category: 'book' },
+  { id: 'b-g2-eng-a', title: 'كتاب الإنكليزي النشاط الصف الثاني الابتدائي', gradeId: 'grade-2', subjectId: 'eng-2', driveFileId: '1F0nM5sgSZIaDwRNyJWy7yJ4b4yqcut2Q', category: 'activity' },
+  { id: 'b-g2-ethic', title: 'كتاب التربية الأخلاقية الثاني الابتدائي', gradeId: 'grade-2', subjectId: 'ar-2', driveFileId: '1sfs2ocYVKGNYYnXqtWns4V_kQskkTLMH', category: 'book' },
+
+  // ================= الصف الثالث الابتدائي =================
+  { id: 'b-g3-ar', title: 'كتاب قراءتي الثالث الابتدائي', gradeId: 'grade-3', subjectId: 'ar-3', driveFileId: '1lqez6Tkst8tzI6qBetlK3abntD9HZ-zm', category: 'book' },
+  { id: 'b-g3-math', title: 'كتاب الرياضيات الثالث الابتدائي', gradeId: 'grade-3', subjectId: 'math-3', driveFileId: '1AliEFZIfWRogOEyL6sI7gmbSk-cc1pYB', category: 'book' },
+  { id: 'b-g3-math-ex', title: 'كتاب تمرينات الرياضيات الثالث الابتدائي', gradeId: 'grade-3', subjectId: 'math-3', driveFileId: '1tDG-XJDg91764kbVsQykF7wXds1EQ1ri', category: 'workbook' },
+  { id: 'b-g3-sci', title: 'كتاب العلوم الثالث الابتدائي', gradeId: 'grade-3', subjectId: 'sci-3', driveFileId: '17wO2yr_lmkeyiWuvWg1nuub0cVk0xCPf', category: 'book' },
+  { id: 'b-g3-sci-act', title: 'كتاب نشاط العلوم الثالث الابتدائي', gradeId: 'grade-3', subjectId: 'sci-3', driveFileId: '12FcEOqc22Fze0z8M_HCq8QOQHvy_yaPa', category: 'activity' },
+  { id: 'b-g3-isl', title: 'كتاب الإسلامية الثالث الابتدائي', gradeId: 'grade-3', subjectId: 'isl-3', driveFileId: '1bnNPv-3md7BytCrwottscSYKM0W1q27e', category: 'book' },
+  { id: 'b-g3-eng-s', title: 'كتاب الإنكليزي الطالب الصف الثالث الابتدائي', gradeId: 'grade-3', subjectId: 'eng-3', driveFileId: '1Nw_mjNjpskAbD6t-FsK6Os-ITCBm2Myi', category: 'book' },
+  { id: 'b-g3-eng-a', title: 'كتاب الإنكليزي النشاط الصف الثالث الابتدائي', gradeId: 'grade-3', subjectId: 'eng-3', driveFileId: '10o4V2WuhtNzspwjLG5jasQ2oFgA02wjf', category: 'activity' },
+
+  // ================= الصف الرابع الابتدائي =================
+  { id: 'b-g4-read', title: 'كتاب القراءة الرابع الابتدائي', gradeId: 'grade-4', subjectId: 'ar-4', driveFileId: '1wCJkyH2hebu5nCH_56DAz7CczFTdMI1y', category: 'book' },
+  { id: 'b-g4-gram', title: 'كتاب القواعد الرابع الابتدائي', gradeId: 'grade-4', subjectId: 'ar-4', driveFileId: '1PHz7uxND4E_dEgoTR9yrLW9DzciBUpFu', category: 'book' },
+  { id: 'b-g4-math', title: 'كتاب الرياضيات الرابع الابتدائي', gradeId: 'grade-4', subjectId: 'math-4', driveFileId: '14xpyQJapAprPSDqWC1Enp_xrXWZMz9HY', category: 'book' },
+  { id: 'b-g4-sci', title: 'كتاب العلوم الرابع الابتدائي', gradeId: 'grade-4', subjectId: 'sci-4', driveFileId: '1KiNiEadbUeEEjXca2V5b9LwLL1a13Lf5', category: 'book' },
+  { id: 'b-g4-sci-act', title: 'كتاب نشاط العلوم الرابع الابتدائي', gradeId: 'grade-4', subjectId: 'sci-4', driveFileId: '1AA7QNMWC3xc6B8g9E0wu_md4jsY1WT22', category: 'activity' },
+  { id: 'b-g4-soc', title: 'كتاب الاجتماعيات الرابع الابتدائي', gradeId: 'grade-4', subjectId: 'soc-4', driveFileId: '1NYMwTthzNT99wWi1A8zC5uQLtP_axeud', category: 'book' },
+  { id: 'b-g4-isl', title: 'كتاب الإسلامية الرابع الابتدائي', gradeId: 'grade-4', subjectId: 'isl-4', driveFileId: '1tJrNc7JewKZObB0puWK1b4AvQOvDZA3G', category: 'book' },
+  { id: 'b-g4-eng-s', title: 'كتاب الإنكليزي الطالب الصف الرابع الابتدائي', gradeId: 'grade-4', subjectId: 'eng-4', driveFileId: '1VbDI6nXOPVpjNTV0bJszBLYh06S15Srf', category: 'book' },
+  { id: 'b-g4-eng-a', title: 'كتاب الإنكليزي النشاط الصف الرابع الابتدائي', gradeId: 'grade-4', subjectId: 'eng-4', driveFileId: '1KDRgTta7iQLnuyF-yzxXRoxNITepGZwS', category: 'activity' },
+
+  // ================= الصف الخامس الابتدائي =================
+  { id: 'b-g5-read', title: 'كتاب القراءة الخامس الابتدائي', gradeId: 'grade-5', subjectId: 'ar-5', driveFileId: '1ZwtpjfOxrx_4OA8grijeQs1O77OFLXTc', category: 'book' },
+  { id: 'b-g5-gram', title: 'كتاب القواعد الخامس الابتدائي', gradeId: 'grade-5', subjectId: 'ar-5', driveFileId: '1iy18IIhNqEiB9FZ3d5FKIVsjlmuRHyFf', category: 'book' },
+  { id: 'b-g5-math', title: 'كتاب الرياضيات الخامس الابتدائي', gradeId: 'grade-5', subjectId: 'math-5', driveFileId: '1ncX3jmvh-RXZBOCupgE7SgNiyVfp8CTm', category: 'book' },
+  { id: 'b-g5-math-ex', title: 'كتاب تمرينات الرياضيات الخامس الابتدائي', gradeId: 'grade-5', subjectId: 'math-5', driveFileId: '1d1Ln1xO6GZt7yWiYIgCSryqmR_CIu_m0', category: 'workbook' },
+  { id: 'b-g5-math-mal', title: 'ملزمة الرياضيات الخامس الابتدائي (الفصول الأولى)', gradeId: 'grade-5', subjectId: 'math-5', driveFileId: '1OzdvaXBDR-5J8FMXLePMkhUX9P9n0VPa', category: 'summary' },
+  { id: 'b-g5-sci', title: 'كتاب العلوم الخامس الابتدائي', gradeId: 'grade-5', subjectId: 'sci-5', driveFileId: '1hTK4-_fDcKOxWKh9pZhp-IBXVsQHejjI', category: 'book' },
+  { id: 'b-g5-sci-act', title: 'كتاب نشاط العلوم الخامس الابتدائي', gradeId: 'grade-5', subjectId: 'sci-5', driveFileId: '1x6qMzWAqhdREqntfgdeP8jN5iTCn37Ct', category: 'activity' },
+  { id: 'b-g5-soc', title: 'كتاب الاجتماعيات الخامس الابتدائي', gradeId: 'grade-5', subjectId: 'soc-5', driveFileId: '1TeIIIcHae7t8kPvqK5lyJrxoHVyHQs0m', category: 'book' },
+  { id: 'b-g5-isl', title: 'كتاب الإسلامية الخامس الابتدائي', gradeId: 'grade-5', subjectId: 'isl-5', driveFileId: '1HiHzrsj2yVe8vU79Oeq95t3kh0DnUV3i', category: 'book' },
+  { id: 'b-g5-eng-s', title: 'كتاب الإنكليزي الطالب الصف الخامس الابتدائي', gradeId: 'grade-5', subjectId: 'eng-5', driveFileId: '1V1sISBUTc87SvCcohQHtiLCF00vMJr1d', category: 'book' },
+  { id: 'b-g5-eng-a', title: 'كتاب الإنكليزي النشاط الصف الخامس الابتدائي', gradeId: 'grade-5', subjectId: 'eng-5', driveFileId: '1wA0lpRK84ApCq6MDuyFJVQa3wwAksQrB', category: 'activity' },
+
+  // ================= الصف السادس الابتدائي (الوزاري) =================
+  { id: 'b-g6-read', title: 'كتاب القراءة السادس الابتدائي', gradeId: 'grade-6', subjectId: 'ar-6', driveFileId: '1_W-v_p_g6WKaQ-wWFLt5_0Binfecuy0R', category: 'book' },
+  { id: 'b-g6-gram', title: 'كتاب القواعد السادس الابتدائي', gradeId: 'grade-6', subjectId: 'ar-6', driveFileId: '1T9MtFjDuvP71737xCJAooDiTPkzO9j0e', category: 'book' },
+  { id: 'b-g6-math', title: 'كتاب الرياضيات السادس الابتدائي', gradeId: 'grade-6', subjectId: 'math-6', driveFileId: '18GyhO1itnnub7gFHyqanHyBEZl9SgA6S', category: 'book' },
+  { id: 'b-g6-math-ex', title: 'كتاب تمرينات الرياضيات السادس الابتدائي', gradeId: 'grade-6', subjectId: 'math-6', driveFileId: '1RcfalqC-aUh3CGUNs3WJnczh88zV-Jz5', category: 'workbook' },
+  { id: 'b-g6-sci', title: 'كتاب العلوم السادس الابتدائي', gradeId: 'grade-6', subjectId: 'sci-6', driveFileId: '1bGxlQhStzoOCQsqpf-hYvVMlFfWt2g2h', category: 'book' },
+  { id: 'b-g6-sci-act', title: 'كتاب نشاط العلوم السادس الابتدائي', gradeId: 'grade-6', subjectId: 'sci-6', driveFileId: '1E2wNWq18YSUC3m5xWbqNFy2QQTU93Hvg', category: 'activity' },
+  { id: 'b-g6-soc', title: 'كتاب الاجتماعيات السادس الابتدائي', gradeId: 'grade-6', subjectId: 'soc-6', driveFileId: '1viOGcooz2yuH_EGzPwfHeZfVGyP_CVBD', category: 'book' },
+  { id: 'b-g6-soc-mal', title: 'ملزمة مراجعة الاجتماعيات السادس الابتدائي (كاملة)', gradeId: 'grade-6', subjectId: 'soc-6', driveFileId: '1tIlt93BXDIgZAPHqHzfnIx9t17xdrLtN', category: 'summary' },
+  { id: 'b-g6-isl', title: 'كتاب الإسلامية السادس الابتدائي', gradeId: 'grade-6', subjectId: 'isl-6', driveFileId: '1ITwL2VL1ShgcV5LMArHSotKPvA-Gut24', category: 'book' },
+  { id: 'b-g6-eng-s', title: 'كتاب الإنكليزي الطالب الملون للصف السادس الابتدائي', gradeId: 'grade-6', subjectId: 'eng-6', driveFileId: '1fxFdrtbLFrNC6QwTsPMC7aNp8tMyHOfg', category: 'book' },
+  { id: 'b-g6-eng-a', title: 'كتاب الإنكليزي النشاط للصف السادس الابتدائي', gradeId: 'grade-6', subjectId: 'eng-6', driveFileId: '1OXfTvB2-2_JiT25smow4gqkBTDpEX8vF', category: 'activity' },
+];
+
+const SUBJECT_BOOKS_MAP: Record<string, SubjectBookItem> = {
+  // Grade 1
+  'ar-1': { bookTitle: 'كتاب قراءتي للصف الأول الابتدائي (المنهج الرسمي المطور)', edition: 'طبعة وزارة التربية العراقية المعتمدة', driveUrl: DEFAULT_DRIVE_FOLDER },
+  'math-1': { bookTitle: 'كتاب الرياضيات للصف الأول الابتدائي', edition: 'طبعة وزارة التربية العراقية المعتمدة', driveUrl: DEFAULT_DRIVE_FOLDER },
+  'sci-1': { bookTitle: 'كتاب العلوم للصف الأول الابتدائي (الكائنات الحية والبيئة)', edition: 'طبعة وزارة التربية العراقية المعتمدة', driveUrl: DEFAULT_DRIVE_FOLDER },
+  'isl-1': { bookTitle: 'كتاب التربية الإسلامية والقرآن الكريم للأول الابتدائي', edition: 'طبعة وزارة التربية العراقية المعتمدة', driveUrl: DEFAULT_DRIVE_FOLDER },
+  'eng-1': { bookTitle: 'English for Iraq - Pupil Book 1', edition: 'طبعة وزارة التربية العراقية المعتمدة', driveUrl: DEFAULT_DRIVE_FOLDER },
+
+
+  // Grade 2
+  'ar-2': { bookTitle: 'كتاب قراءتي للصف الثاني الابتدائي', edition: 'طبعة وزارة التربية العراقية المعتمدة', driveUrl: DEFAULT_DRIVE_FOLDER },
+  'math-2': { bookTitle: 'كتاب الرياضيات للصف الثاني الابتدائي', edition: 'طبعة وزارة التربية العراقية المعتمدة', driveUrl: DEFAULT_DRIVE_FOLDER },
+  'sci-2': { bookTitle: 'كتاب العلوم للصف الثاني الابتدائي', edition: 'طبعة وزارة التربية العراقية المعتمدة', driveUrl: DEFAULT_DRIVE_FOLDER },
+  'isl-2': { bookTitle: 'كتاب التربية الإسلامية للصف الثاني الابتدائي', edition: 'طبعة وزارة التربية العراقية المعتمدة', driveUrl: DEFAULT_DRIVE_FOLDER },
+  'eng-2': { bookTitle: 'English for Iraq - Pupil Book 2', edition: 'طبعة وزارة التربية العراقية المعتمدة', driveUrl: DEFAULT_DRIVE_FOLDER },
+
+
+  // Grade 3
+  'ar-3': { bookTitle: 'كتاب قراءتي للصف الثالث الابتدائي', edition: 'طبعة وزارة التربية العراقية المعتمدة', driveUrl: DEFAULT_DRIVE_FOLDER },
+  'math-3': { bookTitle: 'كتاب الرياضيات للصف الثالث الابتدائي (جدول الضرب والكسور)', edition: 'طبعة وزارة التربية العراقية المعتمدة', driveUrl: DEFAULT_DRIVE_FOLDER },
+  'sci-3': { bookTitle: 'كتاب العلوم للصف الثالث الابتدائي', edition: 'طبعة وزارة التربية العراقية المعتمدة', driveUrl: DEFAULT_DRIVE_FOLDER },
+  'isl-3': { bookTitle: 'كتاب التربية الإسلامية للصف الثالث الابتدائي', edition: 'طبعة وزارة التربية العراقية المعتمدة', driveUrl: DEFAULT_DRIVE_FOLDER },
+  'eng-3': { bookTitle: 'English for Iraq - Pupil Book 3', edition: 'طبعة وزارة التربية العراقية المعتمدة', driveUrl: DEFAULT_DRIVE_FOLDER },
+
+
+  // Grade 4
+  'ar-4': { bookTitle: 'كتاب قواعد اللغة العربية للصف الرابع الابتدائي', edition: 'طبعة وزارة التربية العراقية المعتمدة', driveUrl: DEFAULT_DRIVE_FOLDER },
+  'math-4': { bookTitle: 'كتاب الرياضيات للصف الرابع الابتدائي', edition: 'طبعة وزارة التربية العراقية المعتمدة', driveUrl: DEFAULT_DRIVE_FOLDER },
+  'sci-4': { bookTitle: 'كتاب العلوم للصف الرابع الابتدائي', edition: 'طبعة وزارة التربية العراقية المعتمدة', driveUrl: DEFAULT_DRIVE_FOLDER },
+  'soc-4': { bookTitle: 'كتاب الاجتماعيات للصف الرابع الابتدائي (تاريخ وحضارة بلاد الرافدين)', edition: 'طبعة وزارة التربية العراقية المعتمدة', driveUrl: DEFAULT_DRIVE_FOLDER },
+  'isl-4': { bookTitle: 'كتاب التربية الإسلامية للصف الرابع الابتدائي', edition: 'طبعة وزارة التربية العراقية المعتمدة', driveUrl: DEFAULT_DRIVE_FOLDER },
+  'eng-4': { bookTitle: 'English for Iraq - Pupil Book 4', edition: 'طبعة وزارة التربية العراقية المعتمدة', driveUrl: DEFAULT_DRIVE_FOLDER },
+
+
+  // Grade 5
+  'ar-5': { bookTitle: 'كتاب قواعد اللغة العربية للصف الخامس الابتدائي', edition: 'طبعة وزارة التربية العراقية المعتمدة', driveUrl: DEFAULT_DRIVE_FOLDER },
+  'math-5': { bookTitle: 'كتاب الرياضيات للصف الخامس الابتدائي', edition: 'طبعة وزارة التربية العراقية المعتمدة', driveUrl: DEFAULT_DRIVE_FOLDER },
+  'sci-5': { bookTitle: 'كتاب العلوم للصف الخامس الابتدائي', edition: 'طبعة وزارة التربية العراقية المعتمدة', driveUrl: DEFAULT_DRIVE_FOLDER },
+  'soc-5': { bookTitle: 'كتاب الاجتماعيات للصف الخامس الابتدائي (جغرافية العراق وموارده)', edition: 'طبعة وزارة التربية العراقية المعتمدة', driveUrl: DEFAULT_DRIVE_FOLDER },
+  'isl-5': { bookTitle: 'كتاب التربية الإسلامية للصف الخامس الابتدائي', edition: 'طبعة وزارة التربية العراقية المعتمدة', driveUrl: DEFAULT_DRIVE_FOLDER },
+  'eng-5': { bookTitle: 'English for Iraq - Pupil Book 5', edition: 'طبعة وزارة التربية العراقية المعتمدة', driveUrl: DEFAULT_DRIVE_FOLDER },
+
+
+  // Grade 6
+  'ar-6': { bookTitle: 'كتاب قواعد اللغة العربية الوزاري (السادس الابتدائي)', edition: 'المنهج الوزاري الرسمي المعتمد', driveUrl: DEFAULT_DRIVE_FOLDER },
+  'math-6': { bookTitle: 'كتاب الرياضيات الوزاري المطور للصف السادس الابتدائي', edition: 'المنهج الوزاري الرسمي المعتمد', driveUrl: DEFAULT_DRIVE_FOLDER },
+  'sci-6': { bookTitle: 'كتاب العلوم الوزاري للصف السادس الابتدائي', edition: 'المنهج الوزاري الرسمي المعتمد', driveUrl: DEFAULT_DRIVE_FOLDER },
+  'soc-6': { bookTitle: 'كتاب الاجتماعيات الوزاري (محافظات العراق الثماني عشرة)', edition: 'المنهج الوزاري الرسمي المعتمد', driveUrl: DEFAULT_DRIVE_FOLDER },
+  'isl-6': { bookTitle: 'كتاب التربية الإسلامية الوزاري للصف السادس الابتدائي', edition: 'المنهج الوزاري الرسمي المعتمد', driveUrl: DEFAULT_DRIVE_FOLDER },
+  'eng-6': { bookTitle: 'English for Iraq - Pupil Book 6 (Ministerial)', edition: 'المنهج الوزاري الرسمي المعتمد', driveUrl: DEFAULT_DRIVE_FOLDER },
+};
 
 
 export const ALL_IRAQI_OFFICIAL_SUBJECTS: Subject[] = [
@@ -45,8 +237,8 @@ export const ALL_IRAQI_OFFICIAL_SUBJECTS: Subject[] = [
     icon: '🔤',
     themeColor: 'emerald',
     description: 'منهج قراءتي التفاعلي: الحركات، الحروف الهجائية، المقاطع الصوتية ونطق دار ودور وبابا وماما',
-    lessonsCount: 16,
-    questionsCount: 15,
+    lessonsCount: 20,
+    questionsCount: 25,
     isSpecialInteractive: true,
   },
   {
@@ -57,8 +249,8 @@ export const ALL_IRAQI_OFFICIAL_SUBJECTS: Subject[] = [
     icon: '🔠',
     themeColor: 'sky',
     description: 'English for Iraq: Letters A to Z, Phonics, Sounds, Numbers and Words with interactive audio',
-    lessonsCount: 12,
-    questionsCount: 12,
+    lessonsCount: 16,
+    questionsCount: 20,
     isSpecialInteractive: true,
   },
   {
@@ -69,8 +261,8 @@ export const ALL_IRAQI_OFFICIAL_SUBJECTS: Subject[] = [
     icon: '🌿',
     themeColor: 'lime',
     description: 'العلوم للصف الأول: الكائنات الحية، أجزاء النبات، الحواس الخمسة، والبيئة العراقية',
-    lessonsCount: 10,
-    questionsCount: 12,
+    lessonsCount: 20,
+    questionsCount: 25,
     isSpecialInteractive: true,
   },
   {
@@ -81,8 +273,8 @@ export const ALL_IRAQI_OFFICIAL_SUBJECTS: Subject[] = [
     icon: '🔢',
     themeColor: 'teal',
     description: 'الأعداد من 1 إلى 20، الجمع والطرح البسيط والمقارنة بين الأشياء',
-    lessonsCount: 10,
-    questionsCount: 10,
+    lessonsCount: 20,
+    questionsCount: 25,
   },
   {
     id: 'isl-1',
@@ -92,9 +284,10 @@ export const ALL_IRAQI_OFFICIAL_SUBJECTS: Subject[] = [
     icon: '🕌',
     themeColor: 'green',
     description: 'السور القرآنية القصيرة، أركان الإيمان، والآداب الإسلامية الحميدة',
-    lessonsCount: 8,
-    questionsCount: 8,
+    lessonsCount: 16,
+    questionsCount: 20,
   },
+
 
   // ================= الصف الثاني الابتدائي =================
   {
@@ -153,6 +346,7 @@ export const ALL_IRAQI_OFFICIAL_SUBJECTS: Subject[] = [
     questionsCount: 10,
   },
 
+
   // ================= الصف الثالث الابتدائي =================
   {
     id: 'ar-3',
@@ -209,6 +403,7 @@ export const ALL_IRAQI_OFFICIAL_SUBJECTS: Subject[] = [
     lessonsCount: 12,
     questionsCount: 12,
   },
+
 
   // ================= الصف الرابع الابتدائي =================
   {
@@ -278,6 +473,7 @@ export const ALL_IRAQI_OFFICIAL_SUBJECTS: Subject[] = [
     questionsCount: 14,
   },
 
+
   // ================= الصف الخامس الابتدائي =================
   {
     id: 'ar-5',
@@ -345,6 +541,7 @@ export const ALL_IRAQI_OFFICIAL_SUBJECTS: Subject[] = [
     lessonsCount: 16,
     questionsCount: 16,
   },
+
 
   // ================= الصف السادس الابتدائي =================
   {
@@ -416,6 +613,8 @@ export const ALL_IRAQI_OFFICIAL_SUBJECTS: Subject[] = [
 ];
 
 
+
+
 const DEFAULT_EXTRA_QUESTIONS: Question[] = [
   // Islamic Grade 5
   {
@@ -454,6 +653,7 @@ const DEFAULT_EXTRA_QUESTIONS: Question[] = [
     difficulty: 'medium',
     isVipOnly: false,
   },
+
 
   // English Grade 5
   {
@@ -497,6 +697,7 @@ const DEFAULT_EXTRA_QUESTIONS: Question[] = [
     correctAnswerIndex: 0,
   },
 
+
   // English Grade 2
   {
     id: 'q-eng2-1',
@@ -524,6 +725,7 @@ const DEFAULT_EXTRA_QUESTIONS: Question[] = [
     options: ['Cat', 'Dog', 'Bird', 'Fish'],
     correctAnswerIndex: 0,
   },
+
 
   // English Grade 3
   {
@@ -553,6 +755,7 @@ const DEFAULT_EXTRA_QUESTIONS: Question[] = [
     correctAnswerIndex: 0,
   },
 
+
   // Islamic Grade 2
   {
     id: 'q-isl2-1',
@@ -565,6 +768,7 @@ const DEFAULT_EXTRA_QUESTIONS: Question[] = [
     difficulty: 'easy',
     isVipOnly: false,
   },
+
 
   // Islamic Grade 3
   {
@@ -580,11 +784,16 @@ const DEFAULT_EXTRA_QUESTIONS: Question[] = [
   },
 ];
 
+
 interface GradePortalProps {
   onStartQuiz: (subject: Subject, questions: Question[]) => void;
   onOpenSearch: () => void;
   onOpenUpgradeModal: () => void;
+  adminInspectingGradeId?: GradeId | null;
+  onBackToAdmin?: () => void;
+  onChangeAdminGrade?: (gradeId: GradeId) => void;
 }
+
 
 const DEFAULT_IRAQI_CHAPTERS: Record<string, string[]> = {
   // ================= الصف الأول الابتدائي =================
@@ -618,6 +827,7 @@ const DEFAULT_IRAQI_CHAPTERS: Record<string, string[]> = {
     'الفصل الثالث: الأخلاق والأدعية والحديث الشريف',
   ],
 
+
   // ================= الصف الثاني الابتدائي =================
   'math-2': [
     'الفصل الأول: الأعداد حتى 999 والقيمة المكانية',
@@ -638,6 +848,7 @@ const DEFAULT_IRAQI_CHAPTERS: Record<string, string[]> = {
     'الفصل الرابع: الغذاء والتغذية',
   ],
 
+
   // ================= الصف الثالث الابتدائي =================
   'math-3': [
     'الفصل الأول: الأعداد حتى 9999 والقيمة المكانية',
@@ -646,6 +857,7 @@ const DEFAULT_IRAQI_CHAPTERS: Record<string, string[]> = {
     'الفصل الرابع: القسمة وعلاقتها بالضرب',
     'الفصل الخامس: الكسور والقياس والأشكال الهندسية',
   ],
+
 
   // ================= الصف الرابع الابتدائي =================
   'math-4': [
@@ -657,6 +869,7 @@ const DEFAULT_IRAQI_CHAPTERS: Record<string, string[]> = {
     'الفصل السادس: الهندسة والزوايا والقياس',
   ],
 
+
   // ================= الصف الخامس الابتدائي =================
   'math-5': [
     'الفصل الأول: الأعداد ضمن المليارات والقيمة المكانية',
@@ -665,6 +878,7 @@ const DEFAULT_IRAQI_CHAPTERS: Record<string, string[]> = {
     'الفصل الرابع: الكسور العشرية والعمليات عليها',
     'الفصل الخامس: المساحة والمحيط والدائرة',
   ],
+
 
   // ================= الصف السادس الابتدائي (الوزاري المعتمد) =================
   'math-6': [
@@ -683,6 +897,7 @@ const DEFAULT_IRAQI_CHAPTERS: Record<string, string[]> = {
     'الوحدة الرابعة: المفعول المطلق والمفعول فيه (وزاري)',
   ],
 };
+
 
 // ================= مكتبة قصائد المحفوظات والأناشيد المقررة للحفظ =================
 const IRAQI_POEMS_DATA: Record<string, { title: string; author: string; verses: { l1: string; l2: string }[] }[]> = {
@@ -764,6 +979,7 @@ const IRAQI_POEMS_DATA: Record<string, { title: string; author: string; verses: 
   ],
 };
 
+
 // ================= مكتبة القرآن الكريم والأحاديث النبوية المقررة للحفظ =================
 const IRAQI_ISLAMIC_DATA: Record<string, { title: string; type: 'surah' | 'hadith'; text: string; lessons: string }[]> = {
   'grade-1': [
@@ -822,6 +1038,7 @@ const IRAQI_ISLAMIC_DATA: Record<string, { title: string; type: 'surah' | 'hadit
   ],
 };
 
+
 // ================= مكتبة اللغة الإنجليزية التفاعلية (English for Iraq) =================
 const IRAQI_ENGLISH_DATA: Record<string, { unit: string; topic: string; items: { en: string; ar: string; note: string }[] }[]> = {
   'grade-1': [
@@ -870,48 +1087,70 @@ const IRAQI_ENGLISH_DATA: Record<string, { unit: string; topic: string; items: {
   ],
 };
 
+
+// تثبيت انتماء الأسئلة حصراً لمادتها بدون أي تداخل أو قفز بين المواد
 function sanitizeQuestionSubject(q: Question): Question {
-  const text = `${q.questionText || ''} ${q.chapter || ''} ${q.lessonName || ''} ${(q.tags || []).join(' ')}`.toLowerCase();
-
-  if (q.gradeId === 'grade-1') {
-    const scienceKeywords = [
-      'كائن', 'كائنات', 'نبات', 'حيوان', 'بيئة', 'جذور', 'ساق', 'أوراق',
-      'مادة', 'صلبة', 'سائلة', 'غازية', 'دفع', 'سحب', 'حركة', 'خياشيم',
-      'صحراو', 'موارد', 'حواس', 'حي وغير حي', 'جماد', 'علوم'
-    ];
-    const readingKeywords = [
-      'حرف', 'مقطع', 'مقاطع', 'دار', 'دور', 'دادا', 'رباب', 'بابا', 'ماما',
-      'ميزان', 'قدوري', 'وزان', 'تهجي', 'قراءتي', 'أصوات'
-    ];
-
-    const isScience = scienceKeywords.some((k) => text.includes(k));
-    const isReading = readingKeywords.some((k) => text.includes(k));
-
-    if (isScience && !isReading && q.subjectId === 'ar-1') {
-      return { ...q, subjectId: 'sci-1' };
-    }
-
-    if (isReading && !isScience && q.subjectId === 'sci-1') {
-      return { ...q, subjectId: 'ar-1' };
-    }
-  }
-
   return q;
 }
+
+
+export interface SelfEnglishLetter {
+  u: string;
+  l: string;
+  w: string;
+  ar: string;
+  em: string;
+  pr: string;
+}
+
+const SELF_CONTAINED_ENGLISH_LETTERS: SelfEnglishLetter[] = [
+  { u: 'A', l: 'a', w: 'Apple', ar: 'تفاحة', em: '🍎', pr: 'آبل' },
+  { u: 'B', l: 'b', w: 'Ball', ar: 'كرة', em: '⚽', pr: 'بول' },
+  { u: 'C', l: 'c', w: 'Cat', ar: 'قطة', em: '🐱', pr: 'كات' },
+  { u: 'D', l: 'd', w: 'Duck', ar: 'بطة', em: '🦆', pr: 'دَك' },
+  { u: 'E', l: 'e', w: 'Elephant', ar: 'فيل', em: '🐘', pr: 'إيليفانت' },
+  { u: 'F', l: 'f', w: 'Fish', ar: 'سمكة', em: '🐟', pr: 'فِش' },
+  { u: 'G', l: 'g', w: 'Giraffe', ar: 'زرافة', em: '🦒', pr: 'جيراف' },
+  { u: 'H', l: 'h', w: 'Horse', ar: 'حصان', em: '🐴', pr: 'هورس' },
+  { u: 'I', l: 'i', w: 'Ice cream', ar: 'مثلجات', em: '🍦', pr: 'آيس كريم' },
+  { u: 'J', l: 'j', w: 'Juice', ar: 'عصير', em: '🧃', pr: 'جوس' },
+  { u: 'K', l: 'k', w: 'Kite', ar: 'طائرة ورقية', em: '🪁', pr: 'كايت' },
+  { u: 'L', l: 'l', w: 'Lion', ar: 'أسد', em: '🦁', pr: 'لايون' },
+  { u: 'M', l: 'm', w: 'Moon', ar: 'قمر', em: '🌙', pr: 'مون' },
+  { u: 'N', l: 'n', w: 'Nest', ar: 'عش الطائر', em: '🪺', pr: 'نِست' },
+  { u: 'O', l: 'o', w: 'Orange', ar: 'برتقالة', em: '🍊', pr: 'أورنج' },
+  { u: 'P', l: 'p', w: 'Pen', ar: 'قلم', em: '🖊️', pr: 'بين' },
+  { u: 'Q', l: 'q', w: 'Queen', ar: 'ملكة', em: '👑', pr: 'كوين' },
+  { u: 'R', l: 'r', w: 'Rabbit', ar: 'أرنب', em: '🐰', pr: 'رابت' },
+  { u: 'S', l: 's', w: 'Sun', ar: 'شمس', em: '☀️', pr: 'صَن' },
+  { u: 'T', l: 't', w: 'Tiger', ar: 'نمر', em: '🐯', pr: 'تايغر' },
+  { u: 'U', l: 'u', w: 'Umbrella', ar: 'مظلة', em: '☂️', pr: 'أمبريلا' },
+  { u: 'V', l: 'v', w: 'Van', ar: 'حافلة', em: '🚐', pr: 'فان' },
+  { u: 'W', l: 'w', w: 'Water', ar: 'ماء', em: '💧', pr: 'ووتر' },
+  { u: 'X', l: 'x', w: 'Xylophone', ar: 'إكسيلوفون', em: '🎼', pr: 'زايلوفون' },
+  { u: 'Y', l: 'y', w: 'Yo-yo', ar: 'يويو', em: '🪀', pr: 'يويو' },
+  { u: 'Z', l: 'z', w: 'Zebra', ar: 'حمار وحشي', em: '🦓', pr: 'زيبرا' },
+];
 
 export const GradePortal: React.FC<GradePortalProps> = ({
   onStartQuiz,
   onOpenSearch,
   onOpenUpgradeModal,
+  adminInspectingGradeId,
+  onBackToAdmin,
+  onChangeAdminGrade,
 }) => {
-  const { currentStudent, subjects, questions, logout } = useEdu();
+  const { currentStudent, isAdmin, subjects, questions, updateQuestion, deleteQuestion, logout } = useEdu();
 
-  if (!currentStudent) return null;
+  const effectiveGradeId: GradeId = adminInspectingGradeId || currentStudent?.gradeId || 'grade-1';
+
+  if (!currentStudent && !adminInspectingGradeId && !isAdmin) return null;
 
   // دعم التصفح والتنقل بين كافة المراحل الدراسية مباشرة
-  const [activeGradeId, setActiveGradeId] = useState<GradeId>(currentStudent.gradeId);
+  const [activeGradeId, setActiveGradeId] = useState<GradeId>(effectiveGradeId);
   const currentGradeId = activeGradeId;
   const gradeInfo = GRADES_DATA.find((g) => g.id === currentGradeId);
+
 
   // نضمن ظهور كافة المواد الرسمية (بما فيها الإنجليزي والإسلامية والاجتماعيات) لكل صف
   const officialForGrade = ALL_IRAQI_OFFICIAL_SUBJECTS.filter((s) => s.gradeId === currentGradeId);
@@ -923,21 +1162,122 @@ export const GradePortal: React.FC<GradePortalProps> = ({
     }
   }
 
+
   const [selectedSubjectId, setSelectedSubjectId] = useState<string>(
     gradeSubjects[0]?.id || ''
   );
   const [activeTab, setActiveTab] = useState<'qa' | 'exams' | 'curriculum'>('qa');
+
+
+  // شروحات وفيديوهات المناهج المتزامنة سحابياً عبر Firebase عبر كافة الهواتف والحواسيب
+    // حالة عارض كتب ومناهج الـ PDF التفاعلي المدمج لتجاوز قيود تسجيل الدخول في جوجل
+  const [selectedBookForViewer, setSelectedBookForViewer] = useState<any | null>(null);
+  const [selectedEngLetter, setSelectedEngLetter] = useState<SelfEnglishLetter>(SELF_CONTAINED_ENGLISH_LETTERS[0]);
+
+
+  // ميزة المنتدى: حالة نافذة التعديل السريع للأسئلة
+  const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
+
+
+  // ميزة المنتدى: حالة نافذة تعديل الفيديو
+  const [editingVideo, setEditingVideo] = useState<any | null>(null);
+
+
+  // ميزة المنتدى: حالة نافذة تعديل رابط الكتاب
+    // حالة إضافة ملزمة أو كتاب أو أسئلة وزارية جديدة
+  const [isAddMaterialOpen, setIsAddMaterialOpen] = useState(false);
+  const [newMatTitle, setNewMatTitle] = useState('');
+  const [newMatCategory, setNewMatCategory] = useState<'book' | 'malzama' | 'ministerial' | 'activity'>('malzama');
+  const [newMatDriveUrl, setNewMatDriveUrl] = useState('');
+  const [newMatIsVip, setNewMatIsVip] = useState(false);
+  const [customMaterialsList, setCustomMaterialsList] = useState<any[]>(() => {
+    try {
+      const saved = localStorage.getItem('iraq_edu_custom_materials_v1');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return [];
+  });
+
+  useEffect(() => {
+    try {
+      const unsub = onSnapshot(collection(db, 'materials'), (snap) => {
+        if (!snap.empty) {
+          const remoteMats = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+          setCustomMaterialsList(remoteMats);
+          try { localStorage.setItem('iraq_edu_custom_materials_v1', JSON.stringify(remoteMats)); } catch {}
+        }
+      });
+      return () => unsub();
+    } catch (e) {}
+  }, []);
+  const [editingBook, setEditingBook] = useState<any | null>(null);
+
+
+  // ميزة إضافة امتحان جديد لفصل محدد
+  const [addingExamChapter, setAddingExamChapter] = useState<string | null>(null);
+  const [newExamTitle, setNewExamTitle] = useState('');
+
+
+  const [platformVideos, setPlatformVideos] = useState<any[]>(() => {
+    try {
+      const saved = localStorage.getItem('iraq_edu_admin_custom_videos_v1');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
+    return [
+      {
+        id: 'vid-default-math-1',
+        gradeId: 'grade-1',
+        subjectId: 'math-1',
+        subjectName: 'الرياضيات',
+        title: 'شرح رياضيات الصف الأول الابتدائي - الأعداد والجمع',
+        youtubeUrl: 'https://youtu.be/sW8cpXQU0sY',
+        chapter: 'الدرس الأول',
+      }
+    ];
+  });
+
+
+  // مزامنة فورية حية مع قاعدة بيانات Firebase Firestore ليظهر الفيديو على أي موبايل أو حاسبة فوراً
+  useEffect(() => {
+    try {
+      const unsub = onSnapshot(collection(db, 'videos'), (snapshot) => {
+        if (!snapshot.empty) {
+          const remoteVids = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+          setPlatformVideos(remoteVids);
+          try {
+            localStorage.setItem('iraq_edu_admin_custom_videos_v1', JSON.stringify(remoteVids));
+          } catch {}
+        }
+      });
+      return () => unsub();
+    } catch (e) {
+      console.warn('Firestore live videos sync fallback:', e);
+    }
+  }, []);
   const [speakingId, setSpeakingId] = useState<string | null>(null);
+
 
   const selectedSubject =
     gradeSubjects.find((s) => s.id === selectedSubjectId) || gradeSubjects[0];
 
-  const allQuestions = [...questions, ...DEFAULT_EXTRA_QUESTIONS];
+
+  const rawQuestions = [...questions, ...DEFAULT_EXTRA_QUESTIONS];
+  const uniqueQuestionsMap = new Map<string, Question>();
+  rawQuestions.forEach((q) => {
+    if (q && q.id && !uniqueQuestionsMap.has(q.id)) {
+      uniqueQuestionsMap.set(q.id, q);
+    }
+  });
+  const allQuestions = Array.from(uniqueQuestionsMap.values());
   const currentSubjectQuestions = allQuestions
     .map(sanitizeQuestionSubject)
     .filter(
       (q) => q.gradeId === currentGradeId && q.subjectId === selectedSubject?.id
     );
+
 
   const handleSpeakArabic = (textToSpeak: string, id: string) => {
     if (speakingId === id) {
@@ -953,6 +1293,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
     });
   };
 
+
   const handleSpeakEnglish = (textToSpeak: string, id: string) => {
     if (speakingId === id) {
       stopSpeaking();
@@ -961,6 +1302,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
     }
     setSpeakingId(id);
 
+
     // نطق صوتي مبسط للطفل (اسم الحرف بالعربي ثم بالإنجليزي ثم المعنى بالعربي)
     if (typeof window !== 'undefined' && 'speechSynthesis' in window && textToSpeak.includes(' - ')) {
       try {
@@ -968,6 +1310,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
         const parts = textToSpeak.split(' - ');
         const letterChar = parts[0].trim()[0].toUpperCase();
         const word = parts[1].trim();
+
 
         const AR_LETTER_MAP: Record<string, { arName: string; arMean: string }> = {
           A: { arName: 'إي', arMean: 'تفاحة حمراء' },
@@ -998,22 +1341,27 @@ export const GradePortal: React.FC<GradePortalProps> = ({
           Z: { arName: 'زد', arMean: 'حمار وحشي' },
         };
 
+
         const info = AR_LETTER_MAP[letterChar];
         if (info) {
           const u1 = new SpeechSynthesisUtterance(`حرف ال ${info.arName}`);
           u1.lang = 'ar-SA';
           u1.rate = 0.85;
 
+
           const u2 = new SpeechSynthesisUtterance(`${letterChar} ... ${word}`);
           u2.lang = 'en-US';
           u2.rate = 0.75;
+
 
           const u3 = new SpeechSynthesisUtterance(`معناها ${info.arMean}`);
           u3.lang = 'ar-SA';
           u3.rate = 0.85;
 
+
           u3.onend = () => setSpeakingId(null);
           u3.onerror = () => setSpeakingId(null);
+
 
           window.speechSynthesis.speak(u1);
           window.speechSynthesis.speak(u2);
@@ -1023,12 +1371,14 @@ export const GradePortal: React.FC<GradePortalProps> = ({
       } catch (e) {}
     }
 
+
     speakEnglishPhonics(textToSpeak, {
       onStart: () => setSpeakingId(id),
       onEnd: () => setSpeakingId(null),
       onError: () => setSpeakingId(null),
     });
   };
+
 
   const getSubjectChapters = (subjectId: string): string[] => {
     try {
@@ -1041,6 +1391,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
       }
     } catch (e) {}
 
+
     const defaults = DEFAULT_IRAQI_CHAPTERS[subjectId] || [
       'الفصل الأول: المفاهيم والدروس الأساسية',
       'الفصل الثاني: الأنشطة والتطبيقات العملية',
@@ -1048,11 +1399,40 @@ export const GradePortal: React.FC<GradePortalProps> = ({
       'الفصل الرابع: الاختبارات والوزاريات النهائية',
     ];
 
+
     const fromQuestions = currentSubjectQuestions.map((q) => q.chapter).filter(Boolean);
     return Array.from(new Set([...defaults, ...fromQuestions]));
   };
 
+
   const subjectChapters = selectedSubject ? getSubjectChapters(selectedSubject.id) : [];
+
+
+    // ميزة التقديم والتأخير للأسئلة والمواضيع كمنتدى
+  const handleMoveQuestion = (qId: string, direction: 'up' | 'down', chapName: string, chapterQuestions: Question[]) => {
+    playClickSound();
+    const currIdx = chapterQuestions.findIndex((q) => q.id === qId);
+    if (currIdx === -1) return;
+    const targetIdx = direction === 'up' ? currIdx - 1 : currIdx + 1;
+    if (targetIdx < 0 || targetIdx >= chapterQuestions.length) return;
+
+    const newOrderList = [...chapterQuestions];
+    const [moved] = newOrderList.splice(currIdx, 1);
+    newOrderList.splice(targetIdx, 0, moved);
+
+    const key = `iraq_edu_order_${currentGradeId}_${selectedSubject?.id}_${chapName}`;
+    const orderMap: Record<string, number> = {};
+    newOrderList.forEach((q, idx) => {
+      orderMap[q.id] = idx;
+    });
+
+    try {
+      localStorage.setItem(key, JSON.stringify(orderMap));
+    } catch {}
+
+    // إعادة رندر فورية
+    setQuestions([...questions]);
+  };
 
   const getOrderedQuestionsForChapter = (chapName: string): Question[] => {
     const raw = currentSubjectQuestions.filter((q) => q.chapter === chapName);
@@ -1063,6 +1443,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
       if (saved) orderMap = JSON.parse(saved);
     } catch (e) {}
 
+
     return [...raw].sort((a, b) => {
       const orderA = orderMap[a.id] !== undefined ? orderMap[a.id] : 9999;
       const orderB = orderMap[b.id] !== undefined ? orderMap[b.id] : 9999;
@@ -1070,16 +1451,19 @@ export const GradePortal: React.FC<GradePortalProps> = ({
     });
   };
 
+
   // هل المادة الحالية لغة عربية أو قراءة؟
   const isArabicSubject =
     selectedSubject?.id.startsWith('ar-') ||
     selectedSubject?.name.includes('قراءتي') ||
     selectedSubject?.name.includes('العربية');
 
+
   // هل المادة إسلامية؟
   const isIslamicSubject =
     selectedSubject?.id.startsWith('isl-') ||
     selectedSubject?.name.includes('إسلامية');
+
 
   // هل المادة إنجليزية؟
   const isEnglishSubject =
@@ -1087,18 +1471,42 @@ export const GradePortal: React.FC<GradePortalProps> = ({
     selectedSubject?.name.toLowerCase().includes('english') ||
     selectedSubject?.name.includes('إنجليزية');
 
+
   const gradePoems = IRAQI_POEMS_DATA[currentGradeId] || IRAQI_POEMS_DATA['grade-6'];
   const gradeIslamic = IRAQI_ISLAMIC_DATA[currentGradeId] || IRAQI_ISLAMIC_DATA['grade-1'];
   const gradeEnglish = IRAQI_ENGLISH_DATA[currentGradeId] || IRAQI_ENGLISH_DATA['grade-1'];
 
+
   return (
-    <div className="space-y-8 animate-in fade-in duration-300">
+        <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-300 w-full max-w-full overflow-hidden">
+      {/* شريط المشرف العام للتحكم المباشر بالمنهج كمنتدى */}
+      {(isAdmin || adminInspectingGradeId) && (
+        <div className="bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-slate-950 p-4 rounded-3xl shadow-lg border-2 border-amber-300 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <span className="text-2xl">🛡️</span>
+            <div>
+              <h3 className="font-black text-sm sm:text-base leading-tight">وضع المشرف العام (التحكم بالمنهج كمنتدى)</h3>
+              <p className="text-xs font-bold text-amber-950">تستطيع الآن تعديل أو حذف أي سؤال أو فيديو أو كتاب مباشرة من هنا</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {onBackToAdmin && (
+              <button
+                onClick={onBackToAdmin}
+                className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-black shadow-md cursor-pointer transition-all"
+              >
+                العودة للوحة الإدارة ↩️
+              </button>
+            )}
+          </div>
+        </div>
+      )}
       {/* Student Welcome Banner */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-emerald-600 via-teal-700 to-cyan-800 text-white p-6 sm:p-8 shadow-xl shadow-teal-900/10">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-emerald-600 via-teal-700 to-cyan-800 text-white p-4 sm:p-8 shadow-xl shadow-teal-900/10 w-full">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex items-start sm:items-center gap-4">
             <span className="text-4xl sm:text-5xl p-2.5 rounded-2xl bg-white/10 backdrop-blur-md shadow-inner">
-              {currentStudent.avatar}
+              {currentStudent?.avatar || "🛡️"}
             </span>
             <div>
               <div className="flex flex-wrap items-center gap-2 mb-1">
@@ -1122,23 +1530,28 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                     ))}
                   </select>
                 </div>
-                {currentStudent.subscription === 'paid' ? (
-                  <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-white/20 text-white backdrop-blur-xs flex items-center gap-1">
-                    <Sparkles className="w-3 h-3 text-amber-300" />
+                {(currentStudent?.subscription === 'paid' || isAdmin) ? (
+                  <span className="px-3 py-1 rounded-full text-xs font-black bg-white/20 text-white backdrop-blur-xs flex items-center gap-2 shadow-xs">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-300" />
                     <span>مشترك VIP مفعل ⭐</span>
+                    <span className="text-[11px] font-mono text-amber-200 bg-black/25 px-2 py-0.5 rounded-lg border border-amber-300/40">
+                      صالح حتى: {currentStudent?.subscriptionExpiry || '2026-12-31'}
+                    </span>
                   </span>
                 ) : (
-                  <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-white/15 text-white/90">
-                    حساب مجاني
+                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-white/15 text-white/90 flex items-center gap-1.5">
+                    <span>حساب مجاني</span>
+                    <span className="text-[10px] text-emerald-200">(تواصل لتفعيل VIP)</span>
                   </span>
                 )}
               </div>
               <h2 className="text-xl sm:text-2xl font-black">
-                أهلاً بك يا بطل، {currentStudent.fullName} 🌟
+                أهلاً بك، {currentStudent?.fullName || "مشرف المنصة العام"} 🌟
               </h2>
               <p className="text-xs sm:text-sm text-emerald-100/90 font-medium mt-0.5">
                 منهاجك متكامل: محفوظات، قرآن وحديث، رياضيات، إنجليزي، وامتحانات مطولة ذكية
               </p>
+
 
               <div className="flex flex-wrap items-center gap-2 pt-2.5">
                 <button
@@ -1155,22 +1568,24 @@ export const GradePortal: React.FC<GradePortalProps> = ({
             </div>
           </div>
 
+
           <div className="flex items-center gap-3">
             <div className="p-3 px-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 text-center">
               <span className="block text-lg font-black text-amber-300">
-                {currentStudent.starsEarned || 0} ⭐
+                {currentStudent?.starsEarned || 100} ⭐
               </span>
               <p className="text-[11px] text-emerald-100 font-bold">نجوم التفوق</p>
             </div>
             <div className="p-3 px-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 text-center">
               <span className="block text-lg font-black text-white">
-                {currentStudent.totalScore || 0}
+                {currentStudent?.totalScore || 1000}
               </span>
               <p className="text-[11px] text-emerald-100 font-bold">النقاط الكلية</p>
             </div>
           </div>
         </div>
       </div>
+
 
       {/* Subjects Grid */}
       <div className="space-y-4">
@@ -1184,12 +1599,14 @@ export const GradePortal: React.FC<GradePortalProps> = ({
           </span>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3 w-full">
           {gradeSubjects.map((subj) => {
             const isSelected = selectedSubject?.id === subj.id;
             const subjectQuestionsCount = [...questions, ...DEFAULT_EXTRA_QUESTIONS]
               .map(sanitizeQuestionSubject)
               .filter((q) => q.gradeId === currentGradeId && q.subjectId === subj.id).length;
+
 
             return (
               <button
@@ -1223,6 +1640,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
         </div>
       </div>
 
+
       {selectedSubject && (
         <div className="bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-8 shadow-xs space-y-6">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pb-4 border-b border-slate-100 text-center sm:text-right">
@@ -1240,6 +1658,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
               </div>
             </div>
 
+
             {/* زر بدء الاختبار الشامل المطول */}
             <button
               onClick={() => {
@@ -1252,6 +1671,337 @@ export const GradePortal: React.FC<GradePortalProps> = ({
               <span>بدء الامتحان الشامل المطول 🎯</span>
             </button>
           </div>
+
+
+                    {/* 1. كتب وملازم المادة الرسمية (PDF) مع المعرفات الحقيقية والتصفح والتحميل المباشر */}
+          {(() => {
+            // جلب الكتب والملازم المعتمدة لهذه المادة من قاعدة البيانات
+            const subjectBooks = ALL_CURRICULUM_BOOKS.filter(
+              (b) => b.gradeId === currentGradeId && b.subjectId === selectedSubject.id
+            );
+
+            // الكتاب الرئيسي الافتراضي
+            const primaryBook = subjectBooks.find((b) => b.category === 'book') || subjectBooks[0] || {
+              id: `book-${selectedSubject.id}`,
+              title: `كتاب ${selectedSubject.name} الرسمي`,
+              driveFileId: '1zM3D1AUpzxzhiytq3vVmyYOnSGJqM4lP',
+              category: 'book',
+            };
+
+            // بقية الملازم وكراسات الأنشطة التابعة للمادة
+            const extraMaterials = [
+              ...subjectBooks.filter((b) => b.id !== primaryBook.id),
+              ...customMaterialsList.filter((m: any) => m.gradeId === currentGradeId && m.subjectId === selectedSubject.id)
+            ];
+
+            return (
+              <div className="space-y-4">
+                <div className="bg-gradient-to-r from-sky-50 via-indigo-50 to-emerald-50 rounded-3xl border border-sky-200 p-4 sm:p-5 shadow-xs space-y-3 text-right">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <span className="text-3xl p-2 rounded-2xl bg-sky-600 text-white shadow-xs shrink-0">📚</span>
+                      <div>
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-sky-200 text-sky-900">
+                            الكتاب الوزاري المعتمد
+                          </span>
+                          <span className="text-[10px] font-bold text-slate-500">طبعة وزارة التربية العراقية</span>
+                        </div>
+                        <h4 className="font-black text-sm sm:text-base text-slate-900 leading-snug">
+                          {primaryBook.title}
+                        </h4>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          playClickSound();
+                          setSelectedBookForViewer({
+                            title: primaryBook.title,
+                            driveLink: `https://drive.google.com/file/d/${primaryBook.driveFileId}/preview`,
+                            downloadUrl: `https://drive.google.com/uc?export=download&id=${primaryBook.driveFileId}`,
+                            subjectName: selectedSubject.name,
+                          });
+                        }}
+                        className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs flex items-center justify-center gap-1.5 transition-colors shadow-sm shrink-0 cursor-pointer"
+                      >
+                        <BookOpen className="w-4 h-4" />
+                        <span>تصفح وقراءة الكتاب كاملاً داخل المنصة 📖</span>
+                      </button>
+
+
+                    </div>
+                  </div>
+
+                  {/* تحكم المشرف بالكتاب */}
+                  {isAdmin && (
+                    <div className="pt-3 border-t border-sky-200/60 flex flex-wrap items-center justify-between gap-2">
+                      <span className="text-[11px] font-black text-slate-700">
+                        🛡️ تحكم المشرف بالكتاب الرسمي:
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            playClickSound();
+                            setNewMatTitle(`ملزمة / أسئلة وزارية لمادة ${selectedSubject.name}`);
+                            setNewMatDriveUrl('');
+                            setNewMatIsVip(false);
+                            setIsAddMaterialOpen(true);
+                          }}
+                          className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs cursor-pointer shadow-xs flex items-center gap-1"
+                        >
+                          ➕ إضافة ملزمة أو أسئلة وزارية جديدة
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            playClickSound();
+                            setEditingBook({
+                              subjectId: selectedSubject.id,
+                              subjectName: selectedSubject.name,
+                              driveLink: `https://drive.google.com/file/d/${primaryBook.driveFileId}/view`,
+                            });
+                          }}
+                          className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-black text-xs cursor-pointer shadow-xs flex items-center gap-1"
+                        >
+                          ✏️ تعديل رابط الكتاب
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* عرض الملازم وكراسات الأنشطة الإضافية إن وجدت */}
+                {extraMaterials.length > 0 && (
+                  <div className="p-4 rounded-2xl bg-amber-50/70 border border-amber-200 space-y-2.5 text-right">
+                    <span className="text-xs font-black text-amber-900 flex items-center gap-1.5">
+                      <span>📑 الملازم والأنشطة الإضافية التابعة لهذه المادة ({extraMaterials.length}):</span>
+                    </span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      {extraMaterials.map((mat) => {
+                        const isMatVip = mat.isVipOnly === true;
+                        const isLocked = isMatVip && !isAdmin && currentStudent?.subscription !== 'paid';
+
+                        return (
+                          <div key={mat.id} className="p-3.5 bg-white rounded-2xl border border-amber-200 shadow-2xs flex items-center justify-between gap-2">
+                            <div className="min-w-0 text-right">
+                              <div className="flex items-center gap-1.5">
+                                <h5 className="font-bold text-xs text-slate-900 truncate">{mat.title}</h5>
+                                {isMatVip && (
+                                  <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full bg-amber-400 text-amber-950 shrink-0 shadow-2xs">
+                                    👑 VIP
+                                  </span>
+                                )}
+                              </div>
+                              <span className="text-[10px] text-slate-400 font-bold block mt-0.5">
+                                {mat.category === 'workbook' ? 'كراسة تمرينات' : mat.category === 'activity' ? 'نشاط صفي' : mat.category === 'ministerial' ? 'أسئلة وزارية' : 'ملزمة مراجعة'}
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              {isLocked ? (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    playClickSound();
+                                    onOpenUpgradeModal();
+                                  }}
+                                  className="px-3 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-500 text-slate-950 font-black text-[11px] shadow-xs cursor-pointer flex items-center gap-1"
+                                >
+                                  <span>🔒 قفل VIP</span>
+                                </button>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    playClickSound();
+                                    setSelectedBookForViewer({
+                                      title: mat.title,
+                                      driveLink: `https://drive.google.com/file/d/${mat.driveFileId}/preview`,
+                                      subjectName: selectedSubject.name,
+                                    });
+                                  }}
+                                  className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs cursor-pointer shadow-xs"
+                                >
+                                  قراءة 📖
+                                </button>
+                              )}
+
+                              {isAdmin && (
+                                <button
+                                  type="button"
+                                  onClick={async () => {
+                                    if (confirm('هل تريد حذف هذه الملزمة نهائياً؟')) {
+                                      const updated = customMaterialsList.filter(m => m.id !== mat.id);
+                                      setCustomMaterialsList(updated);
+                                      try { localStorage.setItem('iraq_edu_custom_materials_v1', JSON.stringify(updated)); } catch {}
+                                      try {
+                                        const { deleteDoc, doc } = await import('firebase/firestore');
+                                        await deleteDoc(doc(db, 'materials', mat.id));
+                                      } catch (err) {}
+                                    }
+                                  }}
+                                  className="p-1.5 rounded-lg bg-rose-100 hover:bg-rose-200 text-rose-700 text-xs cursor-pointer"
+                                  title="حذف"
+                                >
+                                  🗑️
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
+          {/* 2. شروحات وفيديوهات اليوتيوب الخاصة بهذه المادة حصراً (مشغل مدمج داخل التطبيق يمنع التشتت) */}
+          {(() => {
+            // تصفية ذكية ومرنة لجميع الفيديوهات المضافة لهذه المادة
+            const subjectVideos = platformVideos.filter((v: any) => {
+              if (v.gradeId && v.gradeId !== currentGradeId) return false;
+              if (v.subjectId === selectedSubject.id) return true;
+              const vSub = (v.subjectName || '').toLowerCase().replace(/[()]/g, '').trim();
+              const sSub = (selectedSubject.name || '').toLowerCase().replace(/[()]/g, '').trim();
+              if (vSub && sSub && (vSub.includes(sSub) || sSub.includes(vSub))) return true;
+              if ((v.subjectId?.includes('eng') || vSub.includes('eng') || vSub.includes('إنجليز')) &&
+                  (selectedSubject.id.includes('eng') || sSub.includes('eng') || sSub.includes('إنجليز'))) return true;
+              if ((v.subjectId?.includes('ar') || vSub.includes('عرب') || vSub.includes('قراء')) &&
+                  (selectedSubject.id.includes('ar') || sSub.includes('عرب') || sSub.includes('قراء'))) return true;
+              if ((v.subjectId?.includes('math') || vSub.includes('رياض')) &&
+                  (selectedSubject.id.includes('math') || sSub.includes('رياض'))) return true;
+              if ((v.subjectId?.includes('sci') || vSub.includes('علوم')) &&
+                  (selectedSubject.id.includes('sci') || sSub.includes('علوم'))) return true;
+              if ((v.subjectId?.includes('isl') || vSub.includes('إسلام')) &&
+                  (selectedSubject.id.includes('isl') || sSub.includes('إسلام'))) return true;
+              return false;
+            });
+
+            if (subjectVideos.length === 0) {
+              return isAdmin ? (
+                <div className="bg-slate-900 text-white rounded-3xl p-5 border border-dashed border-slate-700 text-center space-y-2">
+                  <span className="text-3xl block">🎬</span>
+                  <h4 className="font-black text-sm text-amber-300">لم تتم إضافة شروحات فيديو لمادة {selectedSubject.name} بعد</h4>
+                  <p className="text-xs text-slate-400">كمشرف للمنصة، يمكنك إضافة فيديو جديد لهذه المادة من تبويب (شروحات وفيديوهات المناهج) في لوحة الإدارة.</p>
+                </div>
+              ) : null;
+            }
+
+
+            return (
+              <div className="bg-slate-950 text-white rounded-3xl p-3 sm:p-5 shadow-md border border-slate-800 space-y-4 text-right w-full">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-2xl p-1.5 rounded-xl bg-rose-600 text-white shadow-xs">🎬</span>
+                    <div>
+                      <h4 className="font-black text-sm sm:text-base text-white">
+                        الشروحات والدروس المرئية المعتمدة لمادة {selectedSubject.name}
+                      </h4>
+                      <p className="text-[11px] text-slate-400 font-medium">
+                        مشغل داخلي مخصص للدراسة داخل المنصة بدون إعلانات أو خروج لليوتيوب
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-slate-800 text-rose-400 border border-slate-700">
+                    {subjectVideos.length} فيديو تعليمي
+                  </span>
+                </div>
+
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {subjectVideos.map((vd: any, idx: number) => {
+                    const isVideoVip = vd.isVipOnly === true;
+                    const isLockedForStudent = isVideoVip && !isAdmin && currentStudent?.subscription !== 'paid';
+
+                    return (
+                      <div key={idx} className="bg-slate-900 rounded-3xl p-3 sm:p-4 border border-slate-800 space-y-3 w-full">
+                        {/* مشغل الفيديو بنسبة 16:9 الهندسية الدقيقة بدون أي حواف سوداء من الأعلى أو الأسفل */}
+                        <div
+                          className="relative w-full rounded-2xl overflow-hidden bg-black shadow-2xl"
+                          style={{ paddingTop: '56.25%' }}
+                        >
+                          {isLockedForStudent ? (
+                            /* بطاقة قفل الـ VIP للشرح */
+                            <div className="absolute inset-0 bg-slate-950/95 flex flex-col items-center justify-center p-4 text-center space-y-2">
+                              <span className="text-3xl">👑</span>
+                              <h5 className="font-black text-sm text-amber-300">هذا الشرح المرئي مخصص لمشتركي VIP 🔒</h5>
+                              <p className="text-xs text-slate-300 max-w-xs">اشترك الآن لفتح كافة الشروحات المرئية والأسئلة الوزارية</p>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  playClickSound();
+                                  onOpenUpgradeModal();
+                                }}
+                                className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-950 font-black text-xs shadow-md cursor-pointer mt-1"
+                              >
+                                تفعيل اشتراك VIP ⚡
+                              </button>
+                            </div>
+                          ) : (
+                            /* المشغل المباشر النظيف والواضح */
+                            <iframe
+                              src={getYouTubeEmbedUrl(vd.youtubeUrl)}
+                              title={vd.title}
+                              style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 0 }}
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                              allowFullScreen
+                            />
+                          )}
+                        </div>
+
+                        {/* معلومات الفيديو والتحكم */}
+                        <div className="flex items-center justify-between pt-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-rose-950 text-rose-300 border border-rose-800">
+                              {vd.chapter || 'درس مرئي'}
+                            </span>
+                            {isVideoVip && (
+                              <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-amber-400 text-amber-950 shadow-xs flex items-center gap-1">
+                                👑 VIP
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-[10px] text-slate-400 font-bold">
+                            منصة المتفوق التعليمية 🎬
+                          </span>
+                        </div>
+
+                        <h5 className="font-black text-xs sm:text-sm text-slate-100 leading-snug text-right">
+                          {vd.title}
+                        </h5>
+
+                        {isAdmin && (
+                          <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                playClickSound();
+                                setEditingVideo(vd);
+                              }}
+                              className="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-bold shadow-xs cursor-pointer flex items-center gap-1"
+                            >
+                              ✏️ تعديل هذا الفيديو
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
+
+
+
+
+
 
           {/* 1. مجلد الحروف التفاعلية: للأول والثاني قراءتي */}
           {(currentGradeId === 'grade-1' || currentGradeId === 'grade-2') && isArabicSubject && (
@@ -1271,6 +2021,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
             </details>
           )}
 
+
           {/* 2. مجلد قصائد وأناشيد المحفوظات مع النطق الصوتي التفاعلي (لكل المراحل) */}
           {isArabicSubject && gradePoems && gradePoems.length > 0 && (
             <details className="group bg-gradient-to-r from-emerald-50 via-teal-50 to-cyan-50 rounded-3xl border-2 border-emerald-300 p-4 sm:p-6 transition-all shadow-xs" open>
@@ -1288,6 +2039,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                   const fullPoemText = poem.verses.map((v) => `${v.l1} ... ${v.l2}`).join('. ');
                   const isSpeakingThis = speakingId === `poem_${pIdx}`;
 
+
                   return (
                     <div key={pIdx} className="bg-white rounded-2xl p-5 border border-emerald-200 shadow-2xs space-y-4">
                       <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pb-3 border-b border-slate-100">
@@ -1298,6 +2050,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                           </h4>
                           <span className="text-xs text-slate-500 font-bold">{poem.author}</span>
                         </div>
+
 
                         <button
                           type="button"
@@ -1313,11 +2066,13 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                         </button>
                       </div>
 
+
                       {/* أبيات القصيدة مشكولة بالكامل */}
                       <div className="space-y-2.5 text-center sm:text-right font-serif">
                         {poem.verses.map((v, vIdx) => {
                           const verseText = `${v.l1} ، ${v.l2}`;
                           const isVerseSpeaking = speakingId === `v_${pIdx}_${vIdx}`;
+
 
                           return (
                             <div
@@ -1329,6 +2084,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                                 <span className="text-slate-300 font-bold px-1">❊</span>
                                 <span className="inline-block px-2 text-teal-900">{v.l2}</span>
                               </div>
+
 
                               <button
                                 type="button"
@@ -1353,6 +2109,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
             </details>
           )}
 
+
           {/* 3. مجلد القرآن الكريم والسور والأحاديث النبوية مع التلاوة الصوتية */}
           {isIslamicSubject && gradeIslamic && gradeIslamic.length > 0 && (
             <details className="group bg-gradient-to-r from-amber-50 via-yellow-50 to-orange-50 rounded-3xl border-2 border-amber-300 p-4 sm:p-6 transition-all shadow-xs" open>
@@ -1369,6 +2126,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                 {gradeIslamic.map((item, idx) => {
                   const isSpeakingThis = speakingId === `isl_${idx}`;
 
+
                   return (
                     <div key={idx} className="bg-white rounded-2xl p-5 border border-amber-200 shadow-2xs space-y-3 text-right">
                       <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pb-2 border-b border-slate-100">
@@ -1378,6 +2136,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                           </span>
                           <h4 className="font-black text-base text-slate-900">{item.title}</h4>
                         </div>
+
 
                         <button
                           type="button"
@@ -1393,10 +2152,12 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                         </button>
                       </div>
 
+
                       {/* النص القرآني أو الحديث بالرسم الواضح */}
                       <div className="p-4 rounded-xl bg-amber-50/50 border border-amber-200 font-serif text-base sm:text-lg font-bold text-amber-950 leading-loose text-center sm:text-right">
                         {item.text}
                       </div>
+
 
                       <p className="text-xs text-slate-600 font-medium">
                         💡 <strong>الدروس والعبر: </strong> {item.lessons}
@@ -1407,6 +2168,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
               </div>
             </details>
           )}
+
 
           {/* قسم الحروف الإنجليزية التفاعلية مفتوح وظاهر ومباشر للأول والثاني الابتدائي */}
           {(currentGradeId === 'grade-1' || currentGradeId === 'grade-2') && isEnglishSubject && (
@@ -1428,11 +2190,69 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                 </span>
               </div>
 
+
               <div>
-                <Grade1EnglishLetters />
+                <div className="space-y-4">
+                  {/* شريط الحروف التفاعلية الكاملة من A إلى Z */}
+                  <div className="grid grid-cols-4 sm:grid-cols-7 lg:grid-cols-9 gap-2">
+                    {SELF_CONTAINED_ENGLISH_LETTERS.map((item) => {
+                      const isSel = selectedEngLetter.u === item.u;
+                      return (
+                        <button
+                          key={item.u}
+                          type="button"
+                          onClick={() => {
+                            playClickSound();
+                            setSelectedEngLetter(item);
+                            handleSpeakEnglish(`${item.u} - ${item.w}`, `letter_${item.u}`);
+                          }}
+                          className={`p-2.5 rounded-2xl border-2 transition-all flex flex-col items-center justify-center cursor-pointer ${
+                            isSel
+                              ? 'border-indigo-600 bg-indigo-50 shadow-md scale-105'
+                              : 'border-slate-200 bg-white hover:border-indigo-300'
+                          }`}
+                        >
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-xl font-black text-indigo-700 font-mono">{item.u}</span>
+                            <span className="text-sm font-bold text-slate-500 font-mono">{item.l}</span>
+                          </div>
+                          <span className="text-xl my-0.5">{item.em}</span>
+                          <span className="text-[10px] font-bold text-slate-700">{item.w}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* البطاقة التفاعلية للحرف المختار مع النطق الصوتي */}
+                  <div className="p-5 rounded-3xl bg-white border border-indigo-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                      <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-indigo-600 to-sky-500 text-white flex items-center justify-center font-mono font-black text-3xl shadow-md">
+                        {selectedEngLetter.u}{selectedEngLetter.l}
+                      </div>
+                      <div className="text-right">
+                        <h4 className="text-lg font-black text-slate-900 font-mono">
+                          Letter {selectedEngLetter.u} ({selectedEngLetter.w})
+                        </h4>
+                        <p className="text-xs font-bold text-slate-600 mt-0.5">
+                          النطق: <strong className="text-indigo-700">({selectedEngLetter.pr})</strong> • المعنى: <strong className="text-emerald-700">{selectedEngLetter.ar} {selectedEngLetter.em}</strong>
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handleSpeakEnglish(`${selectedEngLetter.u} - ${selectedEngLetter.w}`, `letter_${selectedEngLetter.u}`)}
+                      className="px-5 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs shadow-md transition-all cursor-pointer flex items-center gap-2"
+                    >
+                      <Volume2 className="w-4 h-4" />
+                      <span>🔊 استمع لنطق الحرف والكلمة</span>
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           )}
+
 
           {/* 4. مجلد اللغة الإنجليزية التفاعلي (English for Iraq) لكافة المراحل */}
           {isEnglishSubject && gradeEnglish && gradeEnglish.length > 0 && (
@@ -1456,6 +2276,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                       </div>
                     </div>
 
+
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                       {u.items.map((it, itIdx) => {
                         const isSpeakingThis = speakingId === `en_${uIdx}_${itIdx}`;
@@ -1469,6 +2290,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                               <div className="text-xs font-bold text-slate-600">{it.ar}</div>
                               {it.note && <div className="text-[10px] text-blue-600 mt-0.5">{it.note}</div>}
                             </div>
+
 
                             <button
                               type="button"
@@ -1492,6 +2314,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
             </details>
           )}
 
+
           {/* التبويبات الرئيسية الثلاثة */}
           <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 pb-2">
             <button
@@ -1509,6 +2332,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
               <span>المنهاج والأسئلة مرتبة بالفصول ({currentSubjectQuestions.length})</span>
             </button>
 
+
             <button
               onClick={() => {
                 playClickSound();
@@ -1523,6 +2347,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
               <Award className="w-4 h-4" />
               <span>📝 الامتحانات والاختبارات المطولة النموذجية</span>
             </button>
+
 
             <button
               onClick={() => {
@@ -1540,12 +2365,14 @@ export const GradePortal: React.FC<GradePortalProps> = ({
             </button>
           </div>
 
+
           {/* Tab 1: الأسئلة مقسمة ومرتبة بدقة حسب الفصول */}
           {activeTab === 'qa' && (
             <div className="space-y-6 pt-2">
               {subjectChapters.map((chapName, chapIdx) => {
                 const chapterQuestions = getOrderedQuestionsForChapter(chapName);
                 if (chapterQuestions.length === 0) return null;
+
 
                 return (
                   <div key={chapIdx} className="rounded-3xl border border-slate-200 bg-slate-50/40 overflow-hidden shadow-2xs">
@@ -1567,6 +2394,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                         </div>
                       </div>
 
+
                       <button
                         onClick={() => {
                           playClickSound();
@@ -1579,20 +2407,65 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                       </button>
                     </div>
 
+
                     <div className="p-4 space-y-3">
                       {chapterQuestions.map((q, idx) => (
-                        <QuestionCard
-                          key={q.id}
-                          question={q}
-                          studentSubscription={currentStudent.subscription}
-                          onUpgradePrompt={onOpenUpgradeModal}
-                          index={idx}
-                        />
+                        <div key={q.id} className="space-y-1">
+                          <QuestionCard
+                            key={q.id}
+                            question={q}
+                            studentSubscription={currentStudent?.subscription || 'free'}
+                            onUpgradePrompt={onOpenUpgradeModal}
+                            index={idx}
+                          />
+                          {isAdmin && (
+                            <div className="flex items-center justify-end gap-2 bg-amber-50 p-2 rounded-xl border border-amber-200">
+                              <span className="text-[10px] font-black text-amber-900 ml-auto">🛡️ تحكم المشرف بالسؤال:</span>
+                              <div className="flex items-center gap-1">
+                                <button
+                                  type="button"
+                                  onClick={() => handleMoveQuestion(q.id, 'up', chapName, chapterQuestions)}
+                                  disabled={idx === 0}
+                                  className="px-2 py-1 rounded-lg bg-slate-200 hover:bg-slate-300 disabled:opacity-30 text-slate-800 text-xs font-bold cursor-pointer"
+                                  title="تقديم السؤال للأعلى"
+                                >
+                                  ⬆️
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleMoveQuestion(q.id, 'down', chapName, chapterQuestions)}
+                                  disabled={idx === chapterQuestions.length - 1}
+                                  className="px-2 py-1 rounded-lg bg-slate-200 hover:bg-slate-300 disabled:opacity-30 text-slate-800 text-xs font-bold cursor-pointer"
+                                  title="تأخير السؤال للأسفل"
+                                >
+                                  ⬇️
+                                </button>
+                              </div>
+                              <button
+                                onClick={() => setEditingQuestion(q)}
+                                className="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-xs cursor-pointer flex items-center gap-1"
+                              >
+                                ✏️ تعديل
+                              </button>
+                              <button
+                                onClick={() => {
+                                  if (confirm('هل تريد حذف هذا السؤال نهائياً؟')) {
+                                    deleteQuestion(q.id);
+                                  }
+                                }}
+                                className="px-3 py-1 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold shadow-xs cursor-pointer flex items-center gap-1"
+                              >
+                                🗑️ حذف
+                              </button>
+                            </div>
+                          )}
+                        </div>
                       ))}
                     </div>
                   </div>
                 );
               })}
+
 
               {currentSubjectQuestions.length === 0 && (
                 <div className="py-12 text-center text-slate-500 space-y-3">
@@ -1609,6 +2482,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
               )}
             </div>
           )}
+
 
           {/* Tab 2: قسم الامتحانات والاختبارات المطولة النموذجية */}
           {activeTab === 'exams' && (
@@ -1633,6 +2507,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                     </div>
                   </div>
 
+
                   <button
                     disabled={currentSubjectQuestions.length === 0}
                     onClick={() => {
@@ -1646,6 +2521,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                   </button>
                 </div>
 
+
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-white/20 text-center text-xs font-bold">
                   <div className="p-2 rounded-xl bg-white/10">⏱️ اختبار شامل ومطول</div>
                   <div className="p-2 rounded-xl bg-white/10">⭐ نجوم تفوق عند النجاح</div>
@@ -1653,6 +2529,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                   <div className="p-2 rounded-xl bg-white/10">🎯 نطق صوتي للأسئلة</div>
                 </div>
               </div>
+
 
               {/* امتحانات الفصول الدورية */}
               <div className="space-y-3">
@@ -1666,10 +2543,12 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                   </span>
                 </div>
 
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {subjectChapters.map((chapName, chapIdx) => {
                     const chapterQuestions = getOrderedQuestionsForChapter(chapName);
                     const hasQuestions = chapterQuestions.length > 0;
+
 
                     return (
                       <div
@@ -1690,6 +2569,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                             </span>
                           </div>
 
+
                           <h5 className="font-black text-sm text-slate-900">
                             {chapName}
                           </h5>
@@ -1698,11 +2578,13 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                           </p>
                         </div>
 
+
                         <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
                           <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
                             <Clock className="w-3.5 h-3.5" />
                             <span>تصحيح فوري ذكي</span>
                           </span>
+
 
                           <button
                             disabled={!hasQuestions}
@@ -1724,6 +2606,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
             </div>
           )}
 
+
           {activeTab === 'curriculum' && (
             <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 text-slate-700 text-xs sm:text-sm leading-relaxed space-y-3 text-right">
               <h4 className="font-black text-slate-900 text-base">
@@ -1739,8 +2622,406 @@ export const GradePortal: React.FC<GradePortalProps> = ({
           )}
         </div>
       )}
+          {/* ================= 1. عارض الكتب والمناهج التفاعلي المدمج (تجاوز قيود تسجيل الدخول) ================= */}
+      {selectedBookForViewer && (() => {
+        const driveInfo = getDriveEmbedUrl(selectedBookForViewer.driveLink);
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/85 backdrop-blur-md">
+            <div className="relative w-full max-w-5xl h-[92vh] bg-slate-900 rounded-3xl overflow-hidden shadow-2xl flex flex-col border border-slate-700">
+              {/* Header */}
+              <div className="p-3.5 sm:p-4 bg-slate-950 text-white flex items-center justify-between border-b border-slate-800 gap-2">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <span className="text-2xl shrink-0">📖</span>
+                  <div className="min-w-0 text-right">
+                    <h4 className="font-black text-xs sm:text-sm text-amber-300 truncate">
+                      {selectedBookForViewer.title}
+                    </h4>
+                    <span className="text-[10px] sm:text-[11px] text-slate-400 block">
+                      قراءة وتصفح كافة صفحات الكتاب مباشرة داخل المنصة
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+
+
+                  <button
+                    type="button"
+                    onClick={() => setSelectedBookForViewer(null)}
+                    className="w-8 h-8 rounded-full bg-white/10 hover:bg-rose-600 text-white font-black text-sm flex items-center justify-center transition-colors cursor-pointer"
+                    title="إغلاق"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+
+              {/* Reader / Embed frame */}
+              <div className="flex-1 w-full bg-slate-900 relative">
+                <iframe
+                  src={selectedBookForViewer.driveLink || driveInfo.embedUrl}
+                  title={selectedBookForViewer.title}
+                  className="w-full h-full border-0"
+                  allow="autoplay"
+                />
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+            {/* ================= نافذة إضافة ملزمة أو كتاب أو أسئلة وزارية جديدة للمادة ================= */}
+      {isAddMaterialOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+          <div className="relative w-full max-w-md bg-white rounded-3xl p-6 shadow-2xl border-2 border-emerald-400 space-y-4 text-right">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+              <h4 className="font-black text-sm text-slate-900 flex items-center gap-2">
+                <span>📑 إضافة كتاب / ملزمة / أسئلة وزارية جديدة</span>
+              </h4>
+              <button onClick={() => setIsAddMaterialOpen(false)} className="font-bold text-slate-500">✕</button>
+            </div>
+
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                if (!newMatTitle.trim() || !newMatDriveUrl.trim()) return;
+                const fileId = extractDriveFileId(newMatDriveUrl.trim());
+                const newMatItem = {
+                  id: `mat-${Date.now()}`,
+                  gradeId: currentGradeId,
+                  subjectId: selectedSubject.id,
+                  title: newMatTitle.trim(),
+                  category: newMatCategory,
+                  driveFileId: fileId || newMatDriveUrl.trim(),
+                  isVipOnly: newMatIsVip,
+                };
+                const updated = [newMatItem, ...customMaterialsList];
+                setCustomMaterialsList(updated);
+                try { localStorage.setItem('iraq_edu_custom_materials_v1', JSON.stringify(updated)); } catch {}
+                try {
+                  const { setDoc, doc } = await import('firebase/firestore');
+                  await setDoc(doc(db, 'materials', newMatItem.id), newMatItem);
+                } catch (err) {
+                  console.error('Error saving material:', err);
+                }
+                alert('تمت إضافة الملف بنجاح وحفظه سحابياً ليظهر لجميع الطلاب ✓');
+                setIsAddMaterialOpen(false);
+              }}
+              className="space-y-3"
+            >
+              <div>
+                <label className="text-xs font-black text-slate-700 block mb-1">عنوان الملف أو الملزمة:</label>
+                <input
+                  type="text"
+                  value={newMatTitle}
+                  onChange={(e) => setNewMatTitle(e.target.value)}
+                  placeholder="مثال: أسئلة وحلول وزارية 2026 / ملزمة المراجعة المركزة"
+                  className="w-full p-2.5 rounded-xl border border-slate-200 text-xs font-bold outline-none focus:border-emerald-500"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-black text-slate-700 block mb-1">نوع المادة المضافة:</label>
+                <select
+                  value={newMatCategory}
+                  onChange={(e) => setNewMatCategory(e.target.value as any)}
+                  className="w-full p-2.5 rounded-xl border border-slate-200 text-xs font-bold outline-none cursor-pointer"
+                >
+                  <option value="malzama">📑 ملزمة شرح وتلخيص</option>
+                  <option value="ministerial">🏛️ أسئلة وزارية ونماذج امتحانات</option>
+                  <option value="activity">✍️ كراسة نشاط وتمارين</option>
+                  <option value="book">📖 كتاب منهجي إضافي</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-xs font-black text-slate-700 block mb-1">رابط Google Drive أو معرف الملف (ID):</label>
+                <input
+                  type="text"
+                  value={newMatDriveUrl}
+                  onChange={(e) => setNewMatDriveUrl(e.target.value)}
+                  placeholder="انسخ رابط المشاركة للملف من Google Drive"
+                  className="w-full p-2.5 rounded-xl border border-slate-200 text-xs font-medium outline-none focus:border-emerald-500"
+                  dir="ltr"
+                  required
+                />
+              </div>
+
+              <div className="flex items-center gap-2 p-3 rounded-xl bg-amber-50 border border-amber-200">
+                <input
+                  type="checkbox"
+                  id="matVipCheck"
+                  checked={newMatIsVip}
+                  onChange={(e) => setNewMatIsVip(e.target.checked)}
+                  className="w-4 h-4 rounded text-amber-600 cursor-pointer"
+                />
+                <label htmlFor="matVipCheck" className="text-xs font-black text-amber-950 cursor-pointer">
+                  👑 قفل هذا الملف لـ VIP فقط (يتطلب تفعيل اشتراك)
+                </label>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsAddMaterialOpen(false)}
+                  className="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold cursor-pointer"
+                >
+                  إلغاء
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black cursor-pointer shadow-md"
+                >
+                  إضافة وحفظ سحابياً ✓
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ================= 2. نافذة التعديل السريع للسؤال (مثل نظام المنتدى) ================= */}
+      {editingQuestion && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm overflow-y-auto">
+          <div className="relative w-full max-w-lg bg-white rounded-3xl p-6 shadow-2xl border-2 border-amber-400 space-y-4 my-8">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+              <div className="flex items-center gap-2 text-slate-900 font-black">
+                <span className="text-xl">✏️</span>
+                <h4>تعديل السؤال المنهجي (صلاحيات المدير)</h4>
+              </div>
+              <button
+                onClick={() => setEditingQuestion(null)}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-black flex items-center justify-center cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                updateQuestion(editingQuestion.id, editingQuestion);
+                playCorrectSound();
+                alert('تم تحديث السؤال وحفظه سحابياً بنجاح ✓');
+                setEditingQuestion(null);
+              }}
+              className="space-y-3 text-right"
+            >
+              <div>
+                <label className="text-xs font-black text-slate-700 block mb-1">نص السؤال:</label>
+                <textarea
+                  value={editingQuestion.questionText}
+                  onChange={(e) => setEditingQuestion({ ...editingQuestion, questionText: e.target.value })}
+                  rows={2}
+                  className="w-full p-2.5 rounded-xl border border-slate-300 text-xs font-bold focus:ring-2 focus:ring-amber-400 outline-hidden"
+                  required
+                />
+              </div>
+
+
+              <div>
+                <label className="text-xs font-black text-slate-700 block mb-1">الإجابة والشرح النموذجي:</label>
+                <textarea
+                  value={editingQuestion.answerText}
+                  onChange={(e) => setEditingQuestion({ ...editingQuestion, answerText: e.target.value })}
+                  rows={2}
+                  className="w-full p-2.5 rounded-xl border border-slate-300 text-xs font-medium focus:ring-2 focus:ring-amber-400 outline-hidden"
+                  required
+                />
+              </div>
+
+
+              {editingQuestion.options && editingQuestion.options.length > 0 && (
+                <div>
+                  <label className="text-xs font-black text-slate-700 block mb-1">الخيارات الأربعة (حدد الإجابة الصحيحة):</label>
+                  <div className="space-y-1.5">
+                    {editingQuestion.options.map((opt, oIdx) => (
+                      <div key={oIdx} className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          name="correctOption"
+                          checked={editingQuestion.correctAnswerIndex === oIdx}
+                          onChange={() => setEditingQuestion({ ...editingQuestion, correctAnswerIndex: oIdx })}
+                          className="w-4 h-4 text-emerald-600 cursor-pointer"
+                        />
+                        <input
+                          type="text"
+                          value={opt}
+                          onChange={(e) => {
+                            const newOpts = [...(editingQuestion.options || [])];
+                            newOpts[oIdx] = e.target.value;
+                            setEditingQuestion({ ...editingQuestion, options: newOpts });
+                          }}
+                          className="flex-1 p-2 rounded-xl border border-slate-300 text-xs font-medium focus:ring-2 focus:ring-amber-400 outline-hidden"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+
+              <div className="flex items-center gap-4 pt-2">
+                <label className="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={editingQuestion.isVipOnly || false}
+                    onChange={(e) => setEditingQuestion({ ...editingQuestion, isVipOnly: e.target.checked })}
+                    className="w-4 h-4 rounded text-amber-500 cursor-pointer"
+                  />
+                  <span>خاص بمشتركي VIP 👑</span>
+                </label>
+              </div>
+
+
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200">
+                <button
+                  type="button"
+                  onClick={() => setEditingQuestion(null)}
+                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold cursor-pointer"
+                >
+                  إلغاء
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-black cursor-pointer shadow-md"
+                >
+                  حفظ التعديل سحابياً ✓
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+
+      {/* ================= 3. نافذة تعديل الفيديو (صلاحيات المدير) ================= */}
+      {editingVideo && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+          <div className="relative w-full max-w-md bg-white rounded-3xl p-6 shadow-2xl border-2 border-blue-400 space-y-4 text-right">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+              <h4 className="font-black text-sm text-slate-900">تعديل شرح الفيديو 🎬</h4>
+              <button onClick={() => setEditingVideo(null)} className="font-bold text-slate-500">✕</button>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-black text-slate-700 block mb-1">عنوان الفيديو:</label>
+                <input
+                  type="text"
+                  value={editingVideo.title}
+                  onChange={(e) => setEditingVideo({ ...editingVideo, title: e.target.value })}
+                  className="w-full p-2.5 rounded-xl border border-slate-300 text-xs font-bold"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-black text-slate-700 block mb-1">رابط يوتيوب أو الفيديو:</label>
+                <input
+                  type="text"
+                  value={editingVideo.youtubeUrl}
+                  onChange={(e) => setEditingVideo({ ...editingVideo, youtubeUrl: e.target.value })}
+                  className="w-full p-2.5 rounded-xl border border-slate-300 text-xs font-mono"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-black text-slate-700 block mb-1">الفصل أو الدرس:</label>
+                <input
+                  type="text"
+                  value={editingVideo.chapter || ''}
+                  onChange={(e) => setEditingVideo({ ...editingVideo, chapter: e.target.value })}
+                  className="w-full p-2.5 rounded-xl border border-slate-300 text-xs font-medium"
+                />
+              </div>
+              <div className="flex items-center gap-2 p-3 rounded-xl bg-amber-50 border border-amber-200">
+                <input
+                  type="checkbox"
+                  id="editVidVipCheck"
+                  checked={editingVideo.isVipOnly || false}
+                  onChange={(e) => setEditingVideo({ ...editingVideo, isVipOnly: e.target.checked })}
+                  className="w-4 h-4 rounded text-amber-600 cursor-pointer accent-amber-600"
+                />
+                <label htmlFor="editVidVipCheck" className="text-xs font-black text-amber-950 cursor-pointer">
+                  👑 قفل هذا الشرح كـ فيديو VIP للمشتركين فقط
+                </label>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  onClick={() => setEditingVideo(null)}
+                  className="px-4 py-2 rounded-xl bg-slate-100 text-xs font-bold"
+                >
+                  إلغاء
+                </button>
+                <button
+                  onClick={async () => {
+                    const updated = platformVideos.map(v => v.id === editingVideo.id ? editingVideo : v);
+                    setPlatformVideos(updated);
+                    try {
+                      const { setDoc, doc } = await import('firebase/firestore');
+                      await setDoc(doc(db, 'videos', editingVideo.id), editingVideo);
+                    } catch (e) {
+                      console.error('Error saving edited video:', e);
+                    }
+                    alert('تم حفظ تعديل الفيديو سحابياً ✓');
+                    setEditingVideo(null);
+                  }}
+                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-black cursor-pointer shadow-md"
+                >
+                  حفظ التعديل ✓
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+
+      {/* ================= 4. نافذة تعديل رابط الكتاب أو الملزمة ================= */}
+      {editingBook && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+          <div className="relative w-full max-w-md bg-white rounded-3xl p-6 shadow-2xl border-2 border-emerald-400 space-y-4 text-right">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+              <h4 className="font-black text-sm text-slate-900">تعديل رابط كتاب {editingBook.subjectName} 📖</h4>
+              <button onClick={() => setEditingBook(null)} className="font-bold text-slate-500">✕</button>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-black text-slate-700 block mb-1">رابط جوجل درايف أو رابط الـ PDF المباشر:</label>
+                <input
+                  type="text"
+                  value={editingBook.driveLink}
+                  onChange={(e) => setEditingBook({ ...editingBook, driveLink: e.target.value })}
+                  placeholder="https://drive.google.com/file/d/..."
+                  className="w-full p-2.5 rounded-xl border border-slate-300 text-xs font-mono"
+                />
+                <span className="text-[10px] text-slate-500 block mt-1">
+                  يمكنك وضع أي رابط جوجل درايف عام، أو رابط ملف PDF مباشر.
+                </span>
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  onClick={() => setEditingBook(null)}
+                  className="px-4 py-2 rounded-xl bg-slate-100 text-xs font-bold"
+                >
+                  إلغاء
+                </button>
+                <button
+                  onClick={() => {
+                    localStorage.setItem(`iraq_edu_book_override_${selectedSubject.id}`, editingBook.driveLink);
+                    alert('تم تحديث رابط الكتاب بنجاح ✓');
+                    setEditingBook(null);
+                  }}
+                  className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black cursor-pointer shadow-md"
+                >
+                  حفظ الرابط ✓
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
-export default GradePortal;

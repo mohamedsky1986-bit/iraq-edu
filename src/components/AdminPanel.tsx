@@ -191,7 +191,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
   const [newCurrency, setNewCurrency] = useState(subscriptionConfig.currency);
   const [newPeriodName, setNewPeriodName] = useState(subscriptionConfig.periodName);
   const [newZainWallet, setNewZainWallet] = useState(subscriptionConfig.zainCashWallet);
-  const [newQiCard, setNewQiCard] = useState(subscriptionConfig.qiCardNumber);
+  const [newQiCard, setNewQiCard] = useState((subscriptionConfig as any).masterCardNumber || subscriptionConfig.qiCardNumber || '5377-0000-1122-3344');
+  const [newAsiaNumber, setNewAsiaNumber] = useState((subscriptionConfig as any).asiaCellNumber || subscriptionConfig.supportPhone || '07709876543');
+  const [newWhatsAppNumber, setNewWhatsAppNumber] = useState((subscriptionConfig as any).whatsappNumber || subscriptionConfig.supportPhone || '07709876543');
   const [pricingFeedback, setPricingFeedback] = useState(false);
 
 

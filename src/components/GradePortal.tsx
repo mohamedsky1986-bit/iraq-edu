@@ -1965,14 +1965,22 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                               </button>
                             </div>
                           ) : (
-                            /* المشغل المباشر النظيف والواضح */
-                            <iframe
-                              src={getYouTubeEmbedUrl(vd.youtubeUrl)}
-                              title={vd.title}
-                              style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 0 }}
-                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                              allowFullScreen
-                            />
+                            /* المشغل المباشر المحمي داخل المنصة بدون فتح يوتيوب */
+                            <div className="absolute inset-0 w-full h-full">
+                              <iframe
+                                src={getYouTubeEmbedUrl(vd.youtubeUrl)}
+                                title={vd.title}
+                                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 0 }}
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                allowFullScreen
+                              />
+                              {/* درع حماية شفاف غير مرئي فوق شريط العنوان يمنع النقر عليه والانتقال لليوتيوب */}
+                              <div
+                                className="absolute top-0 inset-x-0 h-14 z-10 cursor-default"
+                                style={{ pointerEvents: 'auto', background: 'transparent' }}
+                                title="مشاهدة الفيديو داخل المنصة حصراً"
+                              />
+                            </div>
                           )}
                         </div>
 

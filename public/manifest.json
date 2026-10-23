@@ -1,0 +1,12 @@
+{
+  "name": "منصة المتفوق التعليمية العراقية",
+  "short_name": "المتفوق",
+  "description": "المنصة التعليمية العراقية الرائدة للمرحلة الابتدائية - مناهج تفاعلية، نطق صوتي، وشروحات مرئية",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0f172a",
+  "theme_color": "#059669",
+  "lang": "ar",
+  "dir": "rtl"
+}

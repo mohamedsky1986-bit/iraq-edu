@@ -197,6 +197,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
   // Security Credentials State
   const [newAdminUser, setNewAdminUser] = useState(adminUsername);
   const [newAdminPass, setNewAdminPass] = useState('');
+  const [confirmAdminPass, setConfirmAdminPass] = useState('');
+  const [showPasswordToggle, setShowPasswordToggle] = useState(false);
   const [securityFeedback, setSecurityFeedback] = useState<{ text: string; success: boolean } | null>(null);
 
 
@@ -566,31 +568,47 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
   };
 
 
-  const handleSaveCredentials = (e: React.FormEvent) => {
+  const handleSaveCredentials = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newAdminUser.trim() || newAdminUser.trim().length < 3) {
-      playWrongSound();
-      setSecurityFeedback({ text: 'اسم المشرف يجب ألا يقل عن 3 أحرف', success: false });
-      return;
-    }
     if (!newAdminPass || newAdminPass.trim().length < 4) {
       playWrongSound();
       setSecurityFeedback({ text: 'كلمة المرور يجب أن تتكون من 4 خانات على الأقل', success: false });
       return;
     }
+    if (confirmAdminPass && newAdminPass.trim() !== confirmAdminPass.trim()) {
+      playWrongSound();
+      setSecurityFeedback({ text: 'كلمتا المرور غير متطابقتين، يرجى التأكد', success: false });
+      return;
+    }
 
+    const cleanUser = newAdminUser.trim() || adminUsername;
+    const cleanPass = newAdminPass.trim();
 
-    const success = changeAdminCredentials(newAdminUser.trim(), newAdminPass.trim());
+    const success = changeAdminCredentials(cleanUser, cleanPass);
     if (success) {
       playCorrectSound();
+      try {
+        localStorage.setItem('iraq_edu_admin_user_v2', cleanUser);
+        localStorage.setItem('iraq_edu_admin_pass_v2', cleanPass);
+      } catch {}
+      try {
+        await setDoc(
+          doc(db, 'settings', 'admin'),
+          { username: cleanUser, password: cleanPass, updatedAt: new Date().toISOString() },
+          { merge: true }
+        );
+      } catch (err) {
+        console.error('Error saving admin pass to Firestore:', err);
+      }
       setSecurityFeedback({
-        text: 'تم تحديث اسم المشرف وكلمة المرور بنجاح 🔒',
+        text: `تم حفظ وتثبيت كلمة المرور الجديدة بنجاح: (${cleanPass}) ✓`,
         success: true,
       });
       setNewAdminPass('');
+      setConfirmAdminPass('');
     } else {
       playWrongSound();
-      setSecurityFeedback({ text: 'فشل تحديث البيانات', success: false });
+      setSecurityFeedback({ text: 'فشل تحديث البيانات، يرجى المحاولة ثانية', success: false });
     }
   };
 
@@ -1578,67 +1596,94 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
 
       {/* TAB 6: SECURITY */}
       {activeTab === 'security' && (
-        <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 max-w-xl shadow-xs space-y-5">
+        <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 max-w-xl shadow-xs space-y-6 text-right">
           <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
-            <div className="w-11 h-11 rounded-2xl bg-rose-100 text-rose-700 flex items-center justify-center shadow-xs">
-              <Shield className="w-6 h-6" />
+            <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center shadow-xs">
+              <KeyRound className="w-6 h-6 text-amber-600" />
             </div>
             <div>
               <h2 className="font-black text-slate-900 text-base sm:text-lg">
-                تأمين وحماية حساب المشرف (اسم مستخدم + كلمة مرور)
+                تغيير كلمة مرور المشرف (Admin Password) 🔒
               </h2>
               <p className="text-xs text-slate-500 font-medium">
-                تغيير اسم المشرف وكلمة المرور لمنع الاختراق وضمان أمان المنصة
+                اكتب كلمة المرور الجديدة لتسجيل الدخول إلى لوحة تحكم المنصة
               </p>
             </div>
           </div>
 
-
           <form onSubmit={handleSaveCredentials} className="space-y-4">
+            <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+              <div>
+                <span className="text-[11px] font-bold text-slate-500 block">حساب المشرف المسجل حالياً:</span>
+                <span className="text-xs sm:text-sm font-black font-mono text-slate-900">{adminUsername}</span>
+              </div>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                الحساب الرئيسي 🛡️
+              </span>
+            </div>
+
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                اسم المشرف الجديد (Admin Username)
+              <label className="block text-xs font-black text-slate-800 mb-1.5">
+                كلمة المرور الجديدة (New Password):
               </label>
               <div className="relative">
-                <UserCheck className="absolute right-3.5 top-3.5 w-4 h-4 text-slate-400" />
+                <input
+                  type={showPasswordToggle ? "text" : "password"}
+                  value={newAdminPass}
+                  onChange={(e) => setNewAdminPass(e.target.value)}
+                  placeholder="اكتب كلمة المرور الجديدة هنا"
+                  className="w-full pr-4 pl-16 py-3 rounded-2xl border-2 border-slate-200 focus:border-amber-500 outline-none text-xs sm:text-sm font-medium transition-all"
+                  dir="ltr"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPasswordToggle(!showPasswordToggle)}
+                  className="absolute left-3 top-3 text-slate-400 hover:text-slate-700 text-xs font-bold cursor-pointer"
+                >
+                  {showPasswordToggle ? "إخفاء 🙈" : "إظهار 👁️"}
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-black text-slate-800 mb-1.5">
+                تأكيد كلمة المرور الجديدة (Confirm Password):
+              </label>
+              <input
+                type={showPasswordToggle ? "text" : "password"}
+                value={confirmAdminPass}
+                onChange={(e) => setConfirmAdminPass(e.target.value)}
+                placeholder="أعد كتابة كلمة المرور للتأكيد"
+                className="w-full pr-4 pl-4 py-3 rounded-2xl border-2 border-slate-200 focus:border-amber-500 outline-none text-xs sm:text-sm font-medium transition-all"
+                dir="ltr"
+                required
+              />
+            </div>
+
+            <details className="p-3 rounded-2xl bg-slate-50 border border-slate-200 text-xs">
+              <summary className="font-bold text-slate-600 cursor-pointer select-none">
+                ⚙️ (اختياري) تعديل إيميل أو يوزرنيم المشرف
+              </summary>
+              <div className="pt-3 space-y-1.5">
+                <label className="block text-[11px] font-bold text-slate-600">اسم المستخدم / البريد:</label>
                 <input
                   type="text"
                   value={newAdminUser}
                   onChange={(e) => setNewAdminUser(e.target.value)}
-                  placeholder="اسم المستخدم الجديد"
-                  className="w-full pr-10 pl-4 py-3 rounded-2xl border border-slate-200 focus:border-rose-500 outline-none text-xs sm:text-sm font-mono font-medium transition-all"
+                  placeholder="mohamedsky1986@gmail.com"
+                  className="w-full p-2.5 rounded-xl border border-slate-200 bg-white font-mono text-xs"
                   dir="ltr"
-                  required
                 />
               </div>
-            </div>
-
-
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                كلمة المرور الجديدة (Admin Password)
-              </label>
-              <div className="relative">
-                <KeyRound className="absolute right-3.5 top-3.5 w-4 h-4 text-slate-400" />
-                <input
-                  type="password"
-                  value={newAdminPass}
-                  onChange={(e) => setNewAdminPass(e.target.value)}
-                  placeholder="اكتب كلمة مرور قوية جديدة"
-                  className="w-full pr-10 pl-4 py-3 rounded-2xl border border-slate-200 focus:border-rose-500 outline-none text-xs sm:text-sm font-medium transition-all"
-                  dir="ltr"
-                  required
-                />
-              </div>
-            </div>
-
+            </details>
 
             {securityFeedback && (
               <div
-                className={`p-3 rounded-2xl text-xs font-bold flex items-center gap-2 ${
+                className={`p-3.5 rounded-2xl text-xs font-bold flex items-center gap-2 ${
                   securityFeedback.success
-                    ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                    : 'bg-rose-50 text-rose-800 border border-rose-200'
+                    ? 'bg-emerald-50 text-emerald-800 border border-emerald-300'
+                    : 'bg-rose-50 text-rose-800 border border-rose-300'
                 }`}
               >
                 <span>{securityFeedback.success ? '✓' : '⚠️'}</span>
@@ -1646,12 +1691,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
               </div>
             )}
 
-
             <button
               type="submit"
-              className="w-full py-3.5 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-black text-sm shadow-md transition-all cursor-pointer"
+              className="w-full py-3.5 rounded-2xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-sm shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
             >
-              حفظ وتأمين حساب المشرف 🔒
+              <KeyRound className="w-4 h-4" />
+              <span>حفظ كلمة المرور الجديدة وتثبيتها سحابياً 🔒</span>
             </button>
           </form>
         </div>

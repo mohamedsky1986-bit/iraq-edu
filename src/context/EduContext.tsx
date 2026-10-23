@@ -832,19 +832,42 @@ export const EduProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         ? 'free'
         : 'paid';
 
-    const updated = {
+    // استخدام قيمة نصية فارغة بدلاً من undefined لكي يقبلها Firestore بدون أي خطأ
+    const cleanUpdated: Student = {
       ...targetStudent,
       subscription: targetType,
-      subscriptionExpiry: targetType === 'paid' ? '2026-12-31' : undefined,
+      subscriptionExpiry: targetType === 'paid' ? '2026-12-31' : '',
     };
 
-    setStudents((prev) => prev.map((s) => (s.id === studentId ? updated : s)));
+    const newStudentsList = students.map((s) => (s.id === studentId ? cleanUpdated : s));
+    setStudents(newStudentsList);
+
+    // حفظ فوري في الذاكرة المحلية لضمان عدم الرجوع بعد التحديث
+    try {
+      localStorage.setItem(STORAGE_KEYS.STUDENTS, JSON.stringify(newStudentsList));
+    } catch {}
 
     if (currentStudent && currentStudent.id === studentId) {
-      setCurrentStudent(updated);
+      setCurrentStudent(cleanUpdated);
+      try {
+        localStorage.setItem(STORAGE_KEYS.ACTIVE_STUDENT, JSON.stringify(cleanUpdated));
+      } catch {}
     }
 
-    setDoc(doc(db, 'students', studentId), updated, { merge: true }).catch(console.error);
+    // حفظ سحابي دائم في قاعدة بيانات Firestore
+    const firestoreData = {
+      subscription: targetType,
+      subscriptionExpiry: targetType === 'paid' ? '2026-12-31' : '',
+      updatedAt: new Date().toISOString(),
+    };
+
+    setDoc(doc(db, 'students', studentId), firestoreData, { merge: true })
+      .then(() => {
+        console.log('تم تحديث حالة اشتراك الطالب بنجاح في السيرفر:', studentId, targetType);
+      })
+      .catch((err) => {
+        console.error('خطأ في حفظ الاشتراك في السيرفر:', err);
+      });
   };
 
   const resetStudentPassword = (studentId: string, newPass: string) => {

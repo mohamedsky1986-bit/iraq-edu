@@ -1550,16 +1550,60 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                   </div>
 
 
-                  <a
-                    href={currentBook.driveUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-sky-600 text-white font-black text-xs flex items-center justify-center gap-1.5 transition-colors shadow-sm shrink-0 cursor-pointer"
-                  >
-                    <Download className="w-4 h-4" />
-                    <span>قراءة وتصفح الكتاب مباشرة 📖</span>
-                  </a>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        playClickSound();
+                        setSelectedBookForViewer({
+                          title: currentBook.bookTitle,
+                          driveLink: currentBook.driveUrl,
+                          subjectName: selectedSubject.name,
+                        });
+                      }}
+                      className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs flex items-center justify-center gap-1.5 transition-colors shadow-sm shrink-0 cursor-pointer"
+                    >
+                      <BookOpen className="w-4 h-4" />
+                      <span>تصفح وقراءة الكتاب داخل المنصة 📖</span>
+                    </button>
+
+                    <a
+                      href={currentBook.driveUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3.5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-black text-xs flex items-center justify-center gap-1.5 transition-colors shadow-sm shrink-0 cursor-pointer"
+                      title="تحميل نسخة PDF"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>تحميل PDF 📥</span>
+                    </a>
+                  </div>
                 </div>
+
+                {/* تحكم المشرف بالكتاب والملزمة */}
+                {isAdmin && (
+                  <div className="pt-3 border-t border-sky-200/60 flex flex-wrap items-center justify-between gap-2">
+                    <span className="text-[11px] font-black text-slate-700">
+                      🛡️ تحكم المشرف بالكتب والملازم:
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          playClickSound();
+                          setEditingBook({
+                            subjectId: selectedSubject.id,
+                            subjectName: selectedSubject.name,
+                            driveLink: currentBook.driveUrl,
+                          });
+                        }}
+                        className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-black text-xs cursor-pointer shadow-xs flex items-center gap-1"
+                      >
+                        ✏️ تعديل رابط الكتاب أو الملزمة
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })()}
@@ -1621,36 +1665,15 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {subjectVideos.map((vd: any, idx: number) => (
                     <div key={idx} className="bg-slate-900 rounded-2xl p-3 border border-slate-800 space-y-2.5">
-                      {/* مشغل منصة المتفوق الداخلي: محمي من الخروج لليوتيوب ومعزول تماماً */}
-                      <div className="relative aspect-video w-full rounded-2xl overflow-hidden bg-black border-2 border-slate-800 shadow-2xl group">
-                        {/* 1. إطار المشغل الداخلي مع حظر فتح النوافذ الخارجية (sandbox يمنع فتح روابط يوتيوب) */}
+                      {/* مشغل الفيديو الصافي والمكبر بدون أي كتابة تغطي الشاشة */}
+                      <div className="relative aspect-video w-full min-h-[220px] sm:min-h-[300px] md:min-h-[360px] rounded-2xl overflow-hidden bg-black border-2 border-slate-800 shadow-2xl">
                         <iframe
                           src={getYouTubeEmbedUrl(vd.youtubeUrl)}
                           title={vd.title}
                           className="w-full h-full border-0"
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                           allowFullScreen
-                          sandbox="allow-scripts allow-same-origin allow-presentation"
                         />
-
-
-                        {/* 2. شريط حماية علوي يعرض هوية المنصة ويمنع الضغط على عنوان الفيديو لعدم الخروج لليوتيوب */}
-                        <div className="absolute top-0 inset-x-0 h-9 bg-gradient-to-b from-black/85 via-black/40 to-transparent pointer-events-auto flex items-center justify-between px-3 text-[11px] font-black text-amber-300 z-10 select-none">
-                          <span className="flex items-center gap-1.5">
-                            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                            <span>منصة المتفوق التعليمية 🎬</span>
-                          </span>
-                          <span className="text-[10px] text-slate-300 font-bold bg-black/50 px-2 py-0.5 rounded-md border border-white/10">
-                            مشاهدة آمنة داخل التطبيق
-                          </span>
-                        </div>
-
-
-                        {/* 3. درع حماية زجاجي يغطي الزاوية السفلية لمنع النقر على شعار يوتيوب المائي */}
-                        <div
-                          className="absolute bottom-1 right-1 w-32 h-10 pointer-events-auto z-10 cursor-default"
-                          title="العرض مخصص داخل منصة المتفوق فقط">
-                        </div>
                       </div>
                       <div className="flex items-center justify-between pt-1">
                         <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-rose-950 text-rose-300 border border-rose-800">
@@ -2319,7 +2342,11 @@ export const GradePortal: React.FC<GradePortalProps> = ({
             {/* Iframe Viewer */}
             <div className="flex-1 w-full bg-slate-800 relative">
               <iframe
-                src={`https://drive.google.com/file/d/${extractDriveFileId(selectedBookForViewer.driveLink)}/preview`}
+                src={
+                  selectedBookForViewer.driveLink.includes('drive.google.com')
+                    ? `https://drive.google.com/file/d/${extractDriveFileId(selectedBookForViewer.driveLink)}/preview`
+                    : `https://docs.google.com/viewer?url=${encodeURIComponent(selectedBookForViewer.driveLink)}&embedded=true`
+                }
                 title={selectedBookForViewer.title}
                 className="w-full h-full border-0"
                 allow="autoplay"

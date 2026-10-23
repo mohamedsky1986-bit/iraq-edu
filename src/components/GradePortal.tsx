@@ -90,16 +90,11 @@ function extractDriveFileId(url?: string): string {
 
 function getYouTubeEmbedUrl(url: string): string {
   if (!url) return '';
-  if (url.includes('embed/')) return url;
-  const matchShort = url.match(/youtu\.be\/([a-zA-Z0-9_-]+)/);
-  if (matchShort) {
-    return `https://www.youtube-nocookie.com/embed/${matchShort[1]}?modestbranding=1&rel=0&iv_load_policy=3&controls=1&showinfo=0&playsinline=1`;
-  }
-  const matchLong = url.match(/[?&]v=([a-zA-Z0-9_-]+)/);
-  if (matchLong) {
-    return `https://www.youtube-nocookie.com/embed/${matchLong[1]}?modestbranding=1&rel=0&iv_load_policy=3&controls=1&showinfo=0&playsinline=1`;
-  }
-  return url;
+  const clean = url.trim();
+  const match = clean.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
+  const id = match ? match[1] : (clean.length === 11 ? clean : '');
+  if (!id) return clean;
+  return `https://www.youtube.com/embed/${id}?autoplay=0&rel=0&modestbranding=1&playsinline=1&controls=1`;
 }
 
 
@@ -1970,20 +1965,14 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                               </button>
                             </div>
                           ) : (
-                            /* المشغل المباشر النظيف */
-                            <div className="absolute inset-0 w-full h-full relative">
-                              <iframe
-                                src={getYouTubeEmbedUrl(vd.youtubeUrl)}
-                                title={vd.title}
-                                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 0 }}
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                allowFullScreen
-                                sandbox="allow-scripts allow-same-origin allow-presentation"
-                              />
-                              {/* دروع حماية شفافة لمنع النقر على العنوان أو شعار يوتيوب للخروج من المنصة */}
-                              <div className="absolute top-0 inset-x-0 h-10 pointer-events-auto z-10 cursor-default" title="مشاهدة داخل المنصة حصراً" />
-                              <div className="absolute bottom-0 right-0 w-28 h-10 pointer-events-auto z-10 cursor-default" title="مشاهدة داخل المنصة حصراً" />
-                            </div>
+                            /* المشغل المباشر النظيف والواضح */
+                            <iframe
+                              src={getYouTubeEmbedUrl(vd.youtubeUrl)}
+                              title={vd.title}
+                              style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 0 }}
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                              allowFullScreen
+                            />
                           )}
                         </div>
 

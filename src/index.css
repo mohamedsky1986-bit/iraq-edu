@@ -1,32 +1,44 @@
-<!doctype html>
-<html lang="ar" dir="rtl">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
-    <title>منصة المتفوق التعليمية العراقية | الابتدائية (١ - ٦)</title>
-    <meta name="description" content="المنصة التعليمية العراقية الرائدة للمرحلة الابتدائية من الصف الأول إلى الصف السادس، مناهج تفاعلية، نطق صوتي، بنك أسئلة واختبارات ولوحة تحكم متكاملة." />
-    
-    <!-- PWA & Mobile Web App Settings (Official Android & Smart TV) -->
-    <link rel="manifest" href="/manifest.json" />
-    <meta name="theme-color" content="#059669" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="المتفوق" />
-    <link rel="icon" type="image/png" href="/icon-192.png" />
-    <link rel="apple-touch-icon" href="/icon-192.png" />
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Tajawal:wght@400;500;700;800&display=swap');
+@import "tailwindcss";
 
-    <meta property="og:title" content="منصة المتفوق التعليمية العراقية" />
-    <meta property="og:description" content="منصة تعليمية عراقية تفاعلية للمرحلة الابتدائية من الصف الأول إلى السادس" />
-    <meta property="og:type" content="website" />
-    <meta name="twitter:card" content="summary_large_image" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
-  </head>
-  <body class="bg-slate-50 text-slate-800 antialiased selection:bg-amber-200 selection:text-amber-900">
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
-</html>
+@theme {
+  --font-sans: 'Tajawal', 'Cairo', 'Noto Kufi Arabic', 'Noto Sans Arabic', system-ui, -apple-system, sans-serif;
+}
 
+*, ::before, ::after {
+  font-family: 'Tajawal', 'Cairo', 'Noto Kufi Arabic', 'Noto Sans Arabic', system-ui, -apple-system, sans-serif;
+}
+
+body {
+  font-family: 'Tajawal', 'Cairo', 'Noto Kufi Arabic', 'Noto Sans Arabic', system-ui, -apple-system, sans-serif;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Pulsing effect for interactive audio */
+@keyframes voice-pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+
+.speaking-animation {
+  animation: voice-pulse 1s infinite ease-in-out;
+}

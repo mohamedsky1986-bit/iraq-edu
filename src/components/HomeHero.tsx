@@ -289,16 +289,7 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
 
 
 
-            <button
-              onClick={() => {
-                playClickSound();
-                onOpenAdminLogin();
-              }}
-              className="px-4 py-4 rounded-2xl bg-white/10 hover:bg-white/15 text-slate-300 font-bold text-xs flex items-center gap-2 transition-all cursor-pointer"
-            >
-              <ShieldCheck className="w-4 h-4" />
-              <span>لوحة تحكم المشرف 🔒</span>
-            </button>
+
           </div>
         </div>
 
@@ -586,6 +577,22 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
             </button>
           </form>
         </div>
+      </div>
+      {/* تذييل الصفحة الرسمي والدخول المخصص للمشرف فقط في الأسفل */}
+      <div className="pt-8 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400">
+        <p className="font-medium">منصة المتفوق التعليمية - جمهورية العراق 🇮🇶 © {new Date().getFullYear()}</p>
+        <button
+          type="button"
+          onClick={() => {
+            playClickSound();
+            onOpenAdminLogin();
+          }}
+          className="text-slate-400 hover:text-slate-700 font-bold flex items-center gap-1.5 p-2 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
+          title="دخول لوحة تحكم المشرف"
+        >
+          <ShieldCheck className="w-4 h-4 text-slate-400" />
+          <span>لوحة تحكم المشرف (Admin) 🔒</span>
+        </button>
       </div>
     </div>
   );

@@ -1195,6 +1195,19 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
                 <span>إضافة الفيديو 🎥</span>
               </button>
             </div>
+
+            <div className="sm:col-span-5 flex items-center gap-2 p-3 rounded-2xl bg-amber-50 border border-amber-300">
+              <input
+                type="checkbox"
+                id="vidVipCheck"
+                checked={newVidIsVip}
+                onChange={(e) => setNewVidIsVip(e.target.checked)}
+                className="w-4 h-4 rounded text-amber-600 cursor-pointer accent-amber-600"
+              />
+              <label htmlFor="vidVipCheck" className="text-xs font-black text-amber-950 cursor-pointer flex items-center gap-1">
+                <span>👑 تحديد هذا الشرح كـ فيديو VIP للمشتركين فقط (مقفل للطلبة المجانيين)</span>
+              </label>
+            </div>
           </form>
 
 
@@ -1210,9 +1223,16 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onInspectGrade }) => {
                 {videosList.map((vd) => (
                   <div key={vd.id} className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3 text-right">
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-rose-100 text-rose-800">
-                        {vd.subjectName}
-                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-rose-100 text-rose-800">
+                          {vd.subjectName}
+                        </span>
+                        {vd.isVipOnly && (
+                          <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-amber-400 text-amber-950 shadow-xs">
+                            👑 VIP حصري
+                          </span>
+                        )}
+                      </div>
                       <span className="text-[10px] text-slate-400 font-medium">
                         {getIraqiGradeName(vd.gradeId)}
                       </span>

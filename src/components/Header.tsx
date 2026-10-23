@@ -178,18 +178,7 @@ export const Header: React.FC<HeaderProps> = ({
                 </div>
               </div>
 
-              {/* زر دخول الإدارة السريع للمشرف مباشرة من حساب الطالب */}
-              <button
-                onClick={() => {
-                  playClickSound();
-                  onOpenAdminLogin();
-                }}
-                className="p-2 sm:p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors shrink-0 cursor-pointer"
-                title="لوحة تحكم الإدارة (Admin)"
-                aria-label="لوحة تحكم الإدارة"
-              >
-                <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-rose-600" />
-              </button>
+
 
               <button
                 onClick={() => {
@@ -233,17 +222,7 @@ export const Header: React.FC<HeaderProps> = ({
               >
                 <span>دخول الطالب</span>
               </button>
-              <button
-                onClick={() => {
-                  playClickSound();
-                  onOpenAdminLogin();
-                }}
-                className="p-2 sm:p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors cursor-pointer"
-                title="تسجيل دخول الإدارة (Admin)"
-                aria-label="تسجيل دخول الإدارة"
-              >
-                <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5" />
-              </button>
+
             </div>
           )}
         </div>
@@ -253,3 +232,4 @@ export const Header: React.FC<HeaderProps> = ({
 };
 
 export default Header;
+

@@ -1,235 +1,209 @@
-import React from 'react';
-import { useEdu } from '../context/EduContext';
-import { getIraqiGradeName } from '../utils/edu-logic';
-import { playClickSound } from '../utils/audio';
-import {
-  GraduationCap,
-  Volume2,
-  VolumeX,
-  ShieldCheck,
-  LogOut,
-  Sparkles,
-  Download,
-  HelpCircle,
-  Crown,
-  Search,
-} from 'lucide-react';
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>منصة المتفوق التعليمية العراقية | الابتدائية (١ - ٦)</title>
+    <meta name="description" content="المنصة التعليمية العراقية الرائدة للمرحلة الابتدائية من الصف الأول إلى الصف السادس، مناهج تفاعلية، نطق صوتي، بنك أسئلة واختبارات ولوحة تحكم متكاملة." />
+    <meta property="og:title" content="منصة المتفوق التعليمية العراقية" />
+    <meta property="og:description" content="منصة تعليمية عراقية تفاعلية للمرحلة الابتدائية من الصف الأول إلى السادس" />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
 
-interface HeaderProps {
-  onOpenAuth: () => void;
-  onOpenAdminLogin: () => void;
-  onOpenSupport: () => void;
-  onOpenZipModal: () => void;
-  onOpenSearch: () => void;
-}
+    <!-- إعدادات تطبيق الويب وتثبيته على الموبايل والحاسبة (PWA) -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#059669" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="المتفوق" />
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="apple-touch-icon" href="/icon.svg" />
 
-export const Header: React.FC<HeaderProps> = ({
-  onOpenAuth,
-  onOpenAdminLogin,
-  onOpenSupport,
-  onOpenZipModal,
-  onOpenSearch,
-}) => {
-  const { currentStudent, isAdmin, logout, logoutAdmin, soundOn, toggleSound } = useEdu();
+    <!-- خطوط المنهاج العراقي الرسمية -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
 
-  return (
-    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs">
-      <div className="max-w-7xl w-full mx-auto px-2.5 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-1.5 sm:gap-4 overflow-hidden">
-        {/* Brand identity - اللوجو المطور وشارة علم العراق IQ */}
-        <div 
-          onClick={() => {
-            playClickSound();
-            window.location.href = '/';
-          }}
-          className="flex items-center gap-2.5 sm:gap-3.5 shrink-0 cursor-pointer group select-none"
-          title="منصة المتفوق التعليمية - جمهورية العراق"
-        >
-          {/* أيقونة اللوجو الفخمة والواضحة */}
-          <div className="relative w-9 h-9 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-gradient-to-br from-emerald-500 via-teal-600 to-emerald-700 flex items-center justify-center text-white shadow-md shadow-emerald-600/30 ring-2 ring-emerald-200/90 group-hover:scale-105 transition-transform shrink-0">
-            <GraduationCap className="w-6 h-6 sm:w-7 sm:h-7 text-white drop-shadow-xs" />
-            <Sparkles className="w-3.5 h-3.5 text-amber-300 absolute -top-1 -right-1 animate-pulse" />
-          </div>
+    <style>
+      /* شريط التثبيت التلقائي الفوري أعلى الصفحة */
+      #pwa-install-banner {
+        display: none;
+        position: fixed;
+        top: 12px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: calc(100% - 24px);
+        max-width: 500px;
+        z-index: 999999;
+        background: linear-gradient(135deg, #065f46 0%, #047857 50%, #0f172a 100%);
+        color: #ffffff;
+        padding: 12px 16px;
+        border-radius: 20px;
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.2);
+        font-family: 'Tajawal', 'Cairo', system-ui, sans-serif;
+        animation: pwaSlideDown 0.4s ease-out;
+        direction: rtl;
+        text-align: right;
+      }
+      @keyframes pwaSlideDown {
+        from { opacity: 0; transform: translate(-50%, -20px); }
+        to { opacity: 1; transform: translate(-50%, 0); }
+      }
+      #pwa-install-banner .pwa-inner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+      #pwa-install-banner .pwa-info {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      #pwa-install-banner .pwa-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        background: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        flex-shrink: 0;
+      }
+      #pwa-install-banner .pwa-title {
+        font-weight: 900;
+        font-size: 13px;
+        line-height: 1.2;
+        color: #ffffff;
+      }
+      #pwa-install-banner .pwa-desc {
+        font-size: 11px;
+        color: #a7f3d0;
+        margin-top: 2px;
+        font-weight: 500;
+      }
+      #pwa-install-banner .pwa-actions {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-shrink: 0;
+      }
+      #pwa-install-btn {
+        background: #f59e0b;
+        color: #0f172a;
+        font-weight: 900;
+        font-size: 12px;
+        border: none;
+        padding: 8px 14px;
+        border-radius: 12px;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+        transition: transform 0.15s, background 0.15s;
+        white-space: nowrap;
+      }
+      #pwa-install-btn:hover {
+        background: #fbbf24;
+        transform: scale(1.05);
+      }
+      #pwa-close-btn {
+        background: transparent;
+        border: none;
+        color: #cbd5e1;
+        font-size: 16px;
+        cursor: pointer;
+        padding: 4px 6px;
+        line-height: 1;
+      }
+      #pwa-close-btn:hover {
+        color: #ffffff;
+      }
+    </style>
+  </head>
+  <body class="bg-slate-50 text-slate-800 antialiased selection:bg-amber-200 selection:text-amber-900">
 
-          {/* نص الشعار وشارة علم العراق IQ الفخمة */}
-          <div className="flex flex-col justify-center">
-            <div className="flex items-center gap-2">
-              <span className="font-black text-base sm:text-xl text-slate-900 tracking-tight group-hover:text-emerald-700 transition-colors">
-                منصة المتفوّق
-              </span>
-
-              {/* شارة فيكة علم العراق و IQ المرتبة والجاذبة */}
-              <div className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-900 border border-slate-700/80 text-white shadow-xs">
-                {/* مجسم علم العراق الصغير المصمم بدقة */}
-                <div 
-                  className="w-4 h-3 rounded-[2.5px] overflow-hidden border border-white/50 shadow-2xs flex flex-col shrink-0" 
-                  title="علم جمهورية العراق 🇮🇶"
-                >
-                  <div className="h-[33.3%] bg-[#ce1126]" />
-                  <div className="h-[33.4%] bg-white flex items-center justify-center">
-                    <span className="text-[4px] font-black text-[#007a3d] leading-none select-none">
-                      ★
-                    </span>
-                  </div>
-                  <div className="h-[33.3%] bg-black" />
-                </div>
-
-                <span className="text-[10px] sm:text-[11px] font-black text-white tracking-wide">
-                  العراق
-                </span>
-                <span className="text-[8px] sm:text-[9px] font-black px-1.5 py-0.2 rounded-full bg-emerald-500 text-slate-950 font-mono">
-                  IQ
-                </span>
-              </div>
-            </div>
-
-            <p className="hidden sm:block text-[11px] text-slate-500 font-semibold mt-0.5">
-              المنهاج الرسمي لوزارة التربية العراقية 🇮🇶
-            </p>
+    <!-- شريط طلب التثبيت التلقائي للباركود والموبايل -->
+    <div id="pwa-install-banner">
+      <div class="pwa-inner">
+        <div class="pwa-info">
+          <div class="pwa-icon">🎓</div>
+          <div>
+            <div class="pwa-title">تطبيق منصة المتفوق 🇮🇶</div>
+            <div class="pwa-desc">تثبيت التطبيق على شاشة هاتفك</div>
           </div>
         </div>
-
-        {/* Center / Action buttons */}
-        <div className="hidden md:flex items-center gap-2">
-          {currentStudent && (
-            <button
-              onClick={() => {
-                playClickSound();
-                onOpenSearch();
-              }}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold transition-all shadow-2xs cursor-pointer"
-            >
-              <Search className="w-4 h-4 text-slate-500" />
-              <span>بحث عن سؤال أو مسألة</span>
-              <kbd className="text-[10px] bg-white px-1.5 py-0.5 rounded-sm border border-slate-300 text-slate-500">
-                سريع
-              </kbd>
-            </button>
-          )}
-
-          <button
-            onClick={() => {
-              playClickSound();
-              onOpenSupport();
-            }}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-800 text-xs font-bold border border-sky-200 transition-all cursor-pointer"
-          >
-            <HelpCircle className="w-4 h-4 text-sky-600" />
-            <span>دعم فوري</span>
-          </button>
-        </div>
-
-        {/* User state & controls */}
-        <div className="flex items-center gap-1 sm:gap-3 shrink-0">
-          {/* Sound Toggle */}
-          <button
-            onClick={() => {
-              playClickSound();
-              toggleSound();
-            }}
-            aria-label={soundOn ? 'كتم الصوت' : 'تفعيل أصوات النظام'}
-            className="p-2 sm:p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors cursor-pointer shrink-0"
-            title={soundOn ? 'الأصوات مفعلة' : 'الأصوات مكتومة'}
-          >
-            {soundOn ? (
-              <Volume2 className="w-5 h-5 text-emerald-600" />
-            ) : (
-              <VolumeX className="w-5 h-5 text-slate-400" />
-            )}
-          </button>
-
-          {/* If Student is logged in */}
-          {currentStudent ? (
-            <div className="flex items-center gap-1.5 sm:gap-2.5">
-              <div className="flex items-center gap-1.5 sm:gap-2 bg-slate-50 hover:bg-slate-100/70 border border-slate-200/90 px-2 py-1 sm:px-3 sm:py-1.5 rounded-xl sm:rounded-2xl transition-all shadow-2xs min-w-0">
-                <span className="text-2xl sm:text-3xl shrink-0" role="img" aria-label="avatar">
-                  {currentStudent.avatar}
-                </span>
-                <div className="text-right flex flex-col justify-center min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    {/* الاسم الأول واسم الوالد بالموبايل، والاسم الكامل بالشاشات الأكبر */}
-                    <span className="text-xs sm:text-sm font-black text-slate-950 leading-tight">
-                      <span className="sm:hidden">
-                        {(currentStudent.fullName || '').trim().split(/\s+/).slice(0, 2).join(' ')}
-                      </span>
-                      <span className="hidden sm:inline">
-                        {currentStudent.fullName}
-                      </span>
-                    </span>
-                    {currentStudent.subscription === 'paid' ? (
-                      <span className="inline-flex items-center gap-0.5 text-[9px] sm:text-[10px] font-black px-1.5 py-0.5 rounded-full bg-amber-400 text-amber-950 shadow-xs shrink-0">
-                        <Crown className="w-2.5 h-2.5" /> VIP
-                      </span>
-                    ) : (
-                      <span className="text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-slate-200 text-slate-700 shrink-0">
-                        مجاني
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-slate-500 font-bold mt-0.5">
-                    <span className="text-emerald-700 font-extrabold">
-                      {getIraqiGradeName(currentStudent.gradeId)}
-                    </span>
-                    <span className="hidden sm:inline">•</span>
-                    <span className="hidden sm:inline-flex items-center gap-1 text-amber-600 font-bold">
-                      <Sparkles className="w-3 h-3 fill-amber-500" />
-                      {currentStudent.starsEarned} نجمة
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-
-
-              <button
-                onClick={() => {
-                  playClickSound();
-                  logout();
-                }}
-                className="p-2 sm:p-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 transition-colors shrink-0 cursor-pointer"
-                title="تسجيل الخروج"
-                aria-label="تسجيل الخروج"
-              >
-                <LogOut className="w-4 h-4 sm:w-5 sm:h-5" />
-              </button>
-            </div>
-          ) : isAdmin ? (
-            /* Admin active badge */
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-900 text-xs font-bold">
-                <ShieldCheck className="w-4 h-4 text-rose-600" />
-                <span>لوحة تحكم المشرف (Admin)</span>
-              </div>
-              <button
-                onClick={() => {
-                  playClickSound();
-                  logoutAdmin();
-                }}
-                className="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 cursor-pointer"
-                title="مغادرة لوحة التحكم"
-              >
-                <LogOut className="w-5 h-5" />
-              </button>
-            </div>
-          ) : (
-            /* Guest buttons */
-            <div className="flex items-center gap-1.5 sm:gap-2">
-              <button
-                onClick={() => {
-                  playClickSound();
-                  onOpenAuth();
-                }}
-                className="px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-xs sm:text-sm shadow-md shadow-emerald-600/20 transition-all cursor-pointer whitespace-nowrap"
-              >
-                <span>دخول الطالب</span>
-              </button>
-
-            </div>
-          )}
+        <div class="pwa-actions">
+          <button id="pwa-install-btn" type="button">تثبيت التطبيق 📲</button>
+          <button id="pwa-close-btn" type="button" aria-label="إغلاق">✕</button>
         </div>
       </div>
-    </header>
-  );
-};
+    </div>
 
-export default Header;
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+
+    <!-- سكربت إظهار زر التثبيت فور فتح الباركود -->
+    <script>
+      (function() {
+        // التحقق إذا كان التطبيق مثبتاً ويعمل بالفعل كبرنامج
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+        if (isStandalone) return;
+
+        let deferredPrompt = null;
+        const banner = document.getElementById('pwa-install-banner');
+        const installBtn = document.getElementById('pwa-install-btn');
+        const closeBtn = document.getElementById('pwa-close-btn');
+
+        // إمساك حدث التثبيت الرسمي من متصفح أندرويد والكمبيوتر
+        window.addEventListener('beforeinstallprompt', function(e) {
+          e.preventDefault();
+          deferredPrompt = e;
+          if (banner) banner.style.display = 'block';
+        });
+
+        // إذا لم يدعم المتصفح الحدث تلقائياً (مثل آيفون أو بعض أجهزة أندرويد)، نظهر الشريط بعد ثانية واحدة
+        setTimeout(function() {
+          if (banner && !isStandalone && !sessionStorage.getItem('pwa_dismissed')) {
+            banner.style.display = 'block';
+          }
+        }, 1200);
+
+        // عند ضغط زر التثبيت
+        if (installBtn) {
+          installBtn.addEventListener('click', function() {
+            if (deferredPrompt) {
+              deferredPrompt.prompt();
+              deferredPrompt.userChoice.then(function(choiceResult) {
+                if (choiceResult.outcome === 'accepted') {
+                  banner.style.display = 'none';
+                }
+                deferredPrompt = null;
+              });
+            } else {
+              // التحقق إذا كان الجهاز آيفون
+              const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+              if (isIOS) {
+                alert('📱 لتثبيت التطبيق على الآيفون:\n\n1. اضغط على زر المشاركة (المربع الذي يخرج منه سهم ⬆️) أسفل الشاشة.\n2. مرر للأسفل واختر (إضافة إلى الشاشة الرئيسية 📲).\n\nسيتثبت التطبيق فوراً كبرنامج رسمي على شاشتك!');
+              } else {
+                alert('📱 لتثبيت التطبيق على جهازك:\n\n1. اضغط على خيارات المتصفح (⋮) في أعلى زاوية الشاشة.\n2. اختر (تثبيت التطبيق) أو (إضافة إلى الشاشة الرئيسية).\n\nسيتثبت التطبيق فوراً وبدون أي تحذيرات!');
+              }
+            }
+          });
+        }
+
+        // عند ضغط زر الإغلاق
+        if (closeBtn) {
+          closeBtn.addEventListener('click', function() {
+            if (banner) banner.style.display = 'none';
+            sessionStorage.setItem('pwa_dismissed', 'true');
+          });
+        }
+      })();
+    </script>
+  </body>
+</html>
+
+
 

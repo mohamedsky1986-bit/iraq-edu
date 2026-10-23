@@ -1189,6 +1189,32 @@ export const GradePortal: React.FC<GradePortalProps> = ({
 
 
   // ميزة المنتدى: حالة نافذة تعديل رابط الكتاب
+    // حالة إضافة ملزمة أو كتاب أو أسئلة وزارية جديدة
+  const [isAddMaterialOpen, setIsAddMaterialOpen] = useState(false);
+  const [newMatTitle, setNewMatTitle] = useState('');
+  const [newMatCategory, setNewMatCategory] = useState<'book' | 'malzama' | 'ministerial' | 'activity'>('malzama');
+  const [newMatDriveUrl, setNewMatDriveUrl] = useState('');
+  const [newMatIsVip, setNewMatIsVip] = useState(false);
+  const [customMaterialsList, setCustomMaterialsList] = useState<any[]>(() => {
+    try {
+      const saved = localStorage.getItem('iraq_edu_custom_materials_v1');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return [];
+  });
+
+  useEffect(() => {
+    try {
+      const unsub = onSnapshot(collection(db, 'materials'), (snap) => {
+        if (!snap.empty) {
+          const remoteMats = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+          setCustomMaterialsList(remoteMats);
+          try { localStorage.setItem('iraq_edu_custom_materials_v1', JSON.stringify(remoteMats)); } catch {}
+        }
+      });
+      return () => unsub();
+    } catch (e) {}
+  }, []);
   const [editingBook, setEditingBook] = useState<any | null>(null);
 
 
@@ -1386,6 +1412,32 @@ export const GradePortal: React.FC<GradePortalProps> = ({
 
   const subjectChapters = selectedSubject ? getSubjectChapters(selectedSubject.id) : [];
 
+
+    // ميزة التقديم والتأخير للأسئلة والمواضيع كمنتدى
+  const handleMoveQuestion = (qId: string, direction: 'up' | 'down', chapName: string, chapterQuestions: Question[]) => {
+    playClickSound();
+    const currIdx = chapterQuestions.findIndex((q) => q.id === qId);
+    if (currIdx === -1) return;
+    const targetIdx = direction === 'up' ? currIdx - 1 : currIdx + 1;
+    if (targetIdx < 0 || targetIdx >= chapterQuestions.length) return;
+
+    const newOrderList = [...chapterQuestions];
+    const [moved] = newOrderList.splice(currIdx, 1);
+    newOrderList.splice(targetIdx, 0, moved);
+
+    const key = `iraq_edu_order_${currentGradeId}_${selectedSubject?.id}_${chapName}`;
+    const orderMap: Record<string, number> = {};
+    newOrderList.forEach((q, idx) => {
+      orderMap[q.id] = idx;
+    });
+
+    try {
+      localStorage.setItem(key, JSON.stringify(orderMap));
+    } catch {}
+
+    // إعادة رندر فورية
+    setQuestions([...questions]);
+  };
 
   const getOrderedQuestionsForChapter = (chapName: string): Question[] => {
     const raw = currentSubjectQuestions.filter((q) => q.chapter === chapName);
@@ -1642,7 +1694,10 @@ export const GradePortal: React.FC<GradePortalProps> = ({
             };
 
             // بقية الملازم وكراسات الأنشطة التابعة للمادة
-            const extraMaterials = subjectBooks.filter((b) => b.id !== primaryBook.id);
+            const extraMaterials = [
+              ...subjectBooks.filter((b) => b.id !== primaryBook.id),
+              ...customMaterialsList.filter((m: any) => m.gradeId === currentGradeId && m.subjectId === selectedSubject.id)
+            ];
 
             return (
               <div className="space-y-4">
@@ -1700,20 +1755,35 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                       <span className="text-[11px] font-black text-slate-700">
                         🛡️ تحكم المشرف بالكتاب الرسمي:
                       </span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          playClickSound();
-                          setEditingBook({
-                            subjectId: selectedSubject.id,
-                            subjectName: selectedSubject.name,
-                            driveLink: `https://drive.google.com/file/d/${primaryBook.driveFileId}/view`,
-                          });
-                        }}
-                        className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-black text-xs cursor-pointer shadow-xs flex items-center gap-1"
-                      >
-                        ✏️ تعديل رابط هذا الكتاب
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            playClickSound();
+                            setNewMatTitle(`ملزمة / أسئلة وزارية لمادة ${selectedSubject.name}`);
+                            setNewMatDriveUrl('');
+                            setNewMatIsVip(false);
+                            setIsAddMaterialOpen(true);
+                          }}
+                          className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs cursor-pointer shadow-xs flex items-center gap-1"
+                        >
+                          ➕ إضافة ملزمة أو أسئلة وزارية جديدة
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            playClickSound();
+                            setEditingBook({
+                              subjectId: selectedSubject.id,
+                              subjectName: selectedSubject.name,
+                              driveLink: `https://drive.google.com/file/d/${primaryBook.driveFileId}/view`,
+                            });
+                          }}
+                          className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-black text-xs cursor-pointer shadow-xs flex items-center gap-1"
+                        >
+                          ✏️ تعديل رابط الكتاب
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -2327,11 +2397,31 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                           {isAdmin && (
                             <div className="flex items-center justify-end gap-2 bg-amber-50 p-2 rounded-xl border border-amber-200">
                               <span className="text-[10px] font-black text-amber-900 ml-auto">🛡️ تحكم المشرف بالسؤال:</span>
+                              <div className="flex items-center gap-1">
+                                <button
+                                  type="button"
+                                  onClick={() => handleMoveQuestion(q.id, 'up', chapName, chapterQuestions)}
+                                  disabled={idx === 0}
+                                  className="px-2 py-1 rounded-lg bg-slate-200 hover:bg-slate-300 disabled:opacity-30 text-slate-800 text-xs font-bold cursor-pointer"
+                                  title="تقديم السؤال للأعلى"
+                                >
+                                  ⬆️
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleMoveQuestion(q.id, 'down', chapName, chapterQuestions)}
+                                  disabled={idx === chapterQuestions.length - 1}
+                                  className="px-2 py-1 rounded-lg bg-slate-200 hover:bg-slate-300 disabled:opacity-30 text-slate-800 text-xs font-bold cursor-pointer"
+                                  title="تأخير السؤال للأسفل"
+                                >
+                                  ⬇️
+                                </button>
+                              </div>
                               <button
                                 onClick={() => setEditingQuestion(q)}
                                 className="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-xs cursor-pointer flex items-center gap-1"
                               >
-                                ✏️ تعديل السؤال
+                                ✏️ تعديل
                               </button>
                               <button
                                 onClick={() => {
@@ -2563,6 +2653,117 @@ export const GradePortal: React.FC<GradePortalProps> = ({
           </div>
         );
       })()}
+
+            {/* ================= نافذة إضافة ملزمة أو كتاب أو أسئلة وزارية جديدة للمادة ================= */}
+      {isAddMaterialOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+          <div className="relative w-full max-w-md bg-white rounded-3xl p-6 shadow-2xl border-2 border-emerald-400 space-y-4 text-right">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+              <h4 className="font-black text-sm text-slate-900 flex items-center gap-2">
+                <span>📑 إضافة كتاب / ملزمة / أسئلة وزارية جديدة</span>
+              </h4>
+              <button onClick={() => setIsAddMaterialOpen(false)} className="font-bold text-slate-500">✕</button>
+            </div>
+
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                if (!newMatTitle.trim() || !newMatDriveUrl.trim()) return;
+                const fileId = extractDriveFileId(newMatDriveUrl.trim());
+                const newMatItem = {
+                  id: `mat-${Date.now()}`,
+                  gradeId: currentGradeId,
+                  subjectId: selectedSubject.id,
+                  title: newMatTitle.trim(),
+                  category: newMatCategory,
+                  driveFileId: fileId || newMatDriveUrl.trim(),
+                  isVipOnly: newMatIsVip,
+                };
+                const updated = [newMatItem, ...customMaterialsList];
+                setCustomMaterialsList(updated);
+                try { localStorage.setItem('iraq_edu_custom_materials_v1', JSON.stringify(updated)); } catch {}
+                try {
+                  const { setDoc, doc } = await import('firebase/firestore');
+                  await setDoc(doc(db, 'materials', newMatItem.id), newMatItem);
+                } catch (err) {
+                  console.error('Error saving material:', err);
+                }
+                alert('تمت إضافة الملف بنجاح وحفظه سحابياً ليظهر لجميع الطلاب ✓');
+                setIsAddMaterialOpen(false);
+              }}
+              className="space-y-3"
+            >
+              <div>
+                <label className="text-xs font-black text-slate-700 block mb-1">عنوان الملف أو الملزمة:</label>
+                <input
+                  type="text"
+                  value={newMatTitle}
+                  onChange={(e) => setNewMatTitle(e.target.value)}
+                  placeholder="مثال: أسئلة وحلول وزارية 2026 / ملزمة المراجعة المركزة"
+                  className="w-full p-2.5 rounded-xl border border-slate-200 text-xs font-bold outline-none focus:border-emerald-500"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-black text-slate-700 block mb-1">نوع المادة المضافة:</label>
+                <select
+                  value={newMatCategory}
+                  onChange={(e) => setNewMatCategory(e.target.value as any)}
+                  className="w-full p-2.5 rounded-xl border border-slate-200 text-xs font-bold outline-none cursor-pointer"
+                >
+                  <option value="malzama">📑 ملزمة شرح وتلخيص</option>
+                  <option value="ministerial">🏛️ أسئلة وزارية ونماذج امتحانات</option>
+                  <option value="activity">✍️ كراسة نشاط وتمارين</option>
+                  <option value="book">📖 كتاب منهجي إضافي</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-xs font-black text-slate-700 block mb-1">رابط Google Drive أو معرف الملف (ID):</label>
+                <input
+                  type="text"
+                  value={newMatDriveUrl}
+                  onChange={(e) => setNewMatDriveUrl(e.target.value)}
+                  placeholder="انسخ رابط المشاركة للملف من Google Drive"
+                  className="w-full p-2.5 rounded-xl border border-slate-200 text-xs font-medium outline-none focus:border-emerald-500"
+                  dir="ltr"
+                  required
+                />
+              </div>
+
+              <div className="flex items-center gap-2 p-3 rounded-xl bg-amber-50 border border-amber-200">
+                <input
+                  type="checkbox"
+                  id="matVipCheck"
+                  checked={newMatIsVip}
+                  onChange={(e) => setNewMatIsVip(e.target.checked)}
+                  className="w-4 h-4 rounded text-amber-600 cursor-pointer"
+                />
+                <label htmlFor="matVipCheck" className="text-xs font-black text-amber-950 cursor-pointer">
+                  👑 قفل هذا الملف لـ VIP فقط (يتطلب تفعيل اشتراك)
+                </label>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsAddMaterialOpen(false)}
+                  className="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold cursor-pointer"
+                >
+                  إلغاء
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black cursor-pointer shadow-md"
+                >
+                  إضافة وحفظ سحابياً ✓
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* ================= 2. نافذة التعديل السريع للسؤال (مثل نظام المنتدى) ================= */}
       {editingQuestion && (

@@ -1478,7 +1478,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
 
 
   return (
-        <div className="space-y-8 animate-in fade-in duration-300">
+        <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-300 w-full max-w-full overflow-hidden">
       {/* شريط المشرف العام للتحكم المباشر بالمنهج كمنتدى */}
       {(isAdmin || adminInspectingGradeId) && (
         <div className="bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-slate-950 p-4 rounded-3xl shadow-lg border-2 border-amber-300 flex flex-wrap items-center justify-between gap-3">
@@ -1502,7 +1502,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
         </div>
       )}
       {/* Student Welcome Banner */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-emerald-600 via-teal-700 to-cyan-800 text-white p-6 sm:p-8 shadow-xl shadow-teal-900/10">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-emerald-600 via-teal-700 to-cyan-800 text-white p-4 sm:p-8 shadow-xl shadow-teal-900/10 w-full">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex items-start sm:items-center gap-4">
             <span className="text-4xl sm:text-5xl p-2.5 rounded-2xl bg-white/10 backdrop-blur-md shadow-inner">
@@ -1600,7 +1600,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
         </div>
 
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3 w-full">
           {gradeSubjects.map((subj) => {
             const isSelected = selectedSubject?.id === subj.id;
             const subjectQuestionsCount = [...questions, ...DEFAULT_EXTRA_QUESTIONS]
@@ -1731,16 +1731,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                         <span>تصفح وقراءة الكتاب كاملاً داخل المنصة 📖</span>
                       </button>
 
-                      <a
-                        href={`https://drive.google.com/uc?export=download&id=${primaryBook.driveFileId}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-black text-xs flex items-center justify-center gap-1.5 transition-colors shadow-sm shrink-0 cursor-pointer"
-                        title="تحميل نسخة PDF كاملة"
-                      >
-                        <Download className="w-3.5 h-3.5" />
-                        <span>تحميل PDF 📥</span>
-                      </a>
+
                     </div>
                   </div>
 
@@ -1823,32 +1814,20 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                                   <span>🔒 قفل VIP</span>
                                 </button>
                               ) : (
-                                <>
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      playClickSound();
-                                      setSelectedBookForViewer({
-                                        title: mat.title,
-                                        driveLink: `https://drive.google.com/file/d/${mat.driveFileId}/preview`,
-                                        downloadUrl: `https://drive.google.com/uc?export=download&id=${mat.driveFileId}&confirm=t`,
-                                        subjectName: selectedSubject.name,
-                                      });
-                                    }}
-                                    className="px-2.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-[11px] cursor-pointer shadow-2xs"
-                                  >
-                                    قراءة 📖
-                                  </button>
-                                  <a
-                                    href={`https://drive.google.com/uc?export=download&id=${mat.driveFileId}&confirm=t`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="px-2.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-[11px] shadow-2xs"
-                                    title="تحميل PDF"
-                                  >
-                                    📥
-                                  </a>
-                                </>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    playClickSound();
+                                    setSelectedBookForViewer({
+                                      title: mat.title,
+                                      driveLink: `https://drive.google.com/file/d/${mat.driveFileId}/preview`,
+                                      subjectName: selectedSubject.name,
+                                    });
+                                  }}
+                                  className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs cursor-pointer shadow-xs"
+                                >
+                                  قراءة 📖
+                                </button>
                               )}
 
                               {isAdmin && (
@@ -1965,22 +1944,14 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                               </button>
                             </div>
                           ) : (
-                            /* المشغل المباشر المحمي داخل المنصة بدون فتح يوتيوب */
-                            <div className="absolute inset-0 w-full h-full">
-                              <iframe
-                                src={getYouTubeEmbedUrl(vd.youtubeUrl)}
-                                title={vd.title}
-                                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 0 }}
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                                allowFullScreen
-                              />
-                              {/* درع حماية شفاف غير مرئي فوق شريط العنوان يمنع النقر عليه والانتقال لليوتيوب */}
-                              <div
-                                className="absolute top-0 inset-x-0 h-14 z-10 cursor-default"
-                                style={{ pointerEvents: 'auto', background: 'transparent' }}
-                                title="مشاهدة الفيديو داخل المنصة حصراً"
-                              />
-                            </div>
+                            /* المشغل المباشر النظيف والواضح */
+                            <iframe
+                              src={getYouTubeEmbedUrl(vd.youtubeUrl)}
+                              title={vd.title}
+                              style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 0 }}
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                              allowFullScreen
+                            />
                           )}
                         </div>
 
@@ -2672,15 +2643,7 @@ export const GradePortal: React.FC<GradePortalProps> = ({
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
-                  <a
-                    href={selectedBookForViewer.downloadUrl || driveInfo.downloadUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-3 sm:px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black flex items-center gap-1.5 shadow-md transition-all cursor-pointer"
-                  >
-                    <Download className="w-3.5 h-3.5" />
-                    <span>تحميل نسخة PDF 📥</span>
-                  </a>
+
 
                   <button
                     type="button"

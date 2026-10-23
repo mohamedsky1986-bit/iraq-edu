@@ -17,6 +17,14 @@ import {
   MessageCircle,
 } from 'lucide-react';
 
+// ==========================================
+// أرقام الدفع والواتساب للمشرف (يمكنك تعديل أرقامك هنا مباشرة)
+// ==========================================
+const DEFAULT_ADMIN_WHATSAPP = '07709876543'; // رقم الواتساب الذي يستقبل رسائل تفعيل الطلاب
+const DEFAULT_ASIACELL_NUMBER = '07709876543'; // رقم تحويل رصيد آسيا سيل
+const DEFAULT_MASTERCARD_NUMBER = '5377-0000-1122-3344'; // رقم بطاقة الماستر كارد / كي كارد
+const DEFAULT_ZAIN_CASH = '07801234567'; // رقم محفظة زين كاش
+
 interface UpgradeModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -42,11 +50,11 @@ export const UpgradeModal: React.FC<UpgradeModalProps> = ({
 
   if (!isOpen) return null;
 
-  // أرقام الدفع والواتساب للمشرف (قابلة للتعديل من لوحة الإدارة)
-  const adminWhatsApp = (subscriptionConfig as any).whatsappNumber || subscriptionConfig.supportPhone || '07709876543';
-  const asiacellNumber = (subscriptionConfig as any).asiaCellNumber || subscriptionConfig.supportPhone || '07709876543';
-  const masterCardNumber = (subscriptionConfig as any).masterCardNumber || subscriptionConfig.qiCardNumber || '5377-0000-1122-3344';
-  const zainCashNumber = subscriptionConfig.zainCashWallet || '07801234567';
+  // جلب أرقام الدفع من لوحة التحكم أو استخدام القيم الافتراضية
+  const adminWhatsApp = (subscriptionConfig as any)?.whatsappNumber || subscriptionConfig?.supportPhone || DEFAULT_ADMIN_WHATSAPP;
+  const asiacellNumber = (subscriptionConfig as any)?.asiaCellNumber || subscriptionConfig?.supportPhone || DEFAULT_ASIACELL_NUMBER;
+  const masterCardNumber = (subscriptionConfig as any)?.masterCardNumber || subscriptionConfig?.qiCardNumber || DEFAULT_MASTERCARD_NUMBER;
+  const zainCashNumber = subscriptionConfig?.zainCashWallet || DEFAULT_ZAIN_CASH;
 
   // نسخ الرقم إلى الحافظة
   const handleCopy = (text: string, key: string) => {
@@ -68,7 +76,7 @@ export const UpgradeModal: React.FC<UpgradeModalProps> = ({
 
     const methodTitle =
       paymentMethod === 'asia_cell'
-        ? `تحويل رصيد آسيا سيل (Asiacell) إلى الرقم: ${asiacellNumber}`
+        ? `تحويل رصيد آسيا سيل إلى الرقم: ${asiacellNumber}`
         : paymentMethod === 'master_card'
         ? `تحويل ماستر كارد / كي كارد إلى البطاقة: ${masterCardNumber}`
         : `تحويل محفظة زين كاش إلى الرقم: ${zainCashNumber}`;
@@ -78,14 +86,14 @@ export const UpgradeModal: React.FC<UpgradeModalProps> = ({
 
 👤 اسم الطالب: ${studentName}
 🔑 اسم المستخدم (اليوزر): ${studentUsername}
-📚 المرحلة الدراسية: ${gradeName}
+📚 المرحلة والصف: ${gradeName}
 💰 مبلغ الاشتراك: ${amountStr}
 💳 طريقة الدفع المختارة: ${methodTitle}
-${senderInfo.trim() ? `📲 رقم التحويل / كود الكارت: ${senderInfo.trim()}` : '📲 يرجى تأكيد استلام الرصيد والتحويل'}
+${senderInfo.trim() ? `📱 رقم التحويل / كود الكارت: ${senderInfo.trim()}` : '📱 يرجى تأكيد استلام الرصيد وتفعيل الحساب'}
 
-يرجى تفعيل الحساب لفتح بنك الأسئلة الوزارية والشروحات، وشكراً جزيلاً!`;
+يرجى تفعيل اشتراك الحساب، وشكراً جزيلاً!`;
 
-    // تنظيف رقم الواتساب من الصفر في البداية وإضافة رمز العراق 964
+    // تنظيف رقم الواتساب وإضافة كود العراق 964
     let cleanPhone = adminWhatsApp.replace(/\D/g, '');
     if (cleanPhone.startsWith('07')) {
       cleanPhone = '964' + cleanPhone.slice(1);
@@ -95,7 +103,7 @@ ${senderInfo.trim() ? `📲 رقم التحويل / كود الكارت: ${sende
 
     const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(messageText)}`;
 
-    // تسجيل الطلب محلياً أيضاً
+    // تسجيل الطلب محلياً في لوحة التحكم
     if (currentStudent) {
       submitSubscriptionRequest({
         studentId: currentStudent.id,
@@ -127,7 +135,7 @@ ${senderInfo.trim() ? `📲 رقم التحويل / كود الكارت: ${sende
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-xs animate-in fade-in duration-200">
       <div className="bg-white rounded-3xl max-w-lg w-full p-5 sm:p-7 shadow-2xl border border-slate-100 max-h-[92vh] overflow-y-auto text-right">
         
-        {/* Header */}
+        {/* رأس النافذة */}
         <div className="flex items-center justify-between pb-4 border-b border-slate-100">
           <div className="flex items-center gap-2.5">
             <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-400 text-white flex items-center justify-center shadow-md shadow-amber-500/20 shrink-0">
@@ -159,7 +167,7 @@ ${senderInfo.trim() ? `📲 رقم التحويل / كود الكارت: ${sende
           </button>
         </div>
 
-        {/* 1. بطاقة معلومات حساب الطالب الحالية المسحوبة تلقائياً */}
+        {/* 1. قائمة بيانات حساب الطالب المكتوبة تلقائياً */}
         <div className="my-4 p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
           <span className="text-[11px] font-black text-slate-700 flex items-center gap-1.5">
             <User className="w-3.5 h-3.5 text-emerald-600" />
@@ -356,7 +364,7 @@ ${senderInfo.trim() ? `📲 رقم التحويل / كود الكارت: ${sende
               }}
               className="text-slate-400 hover:text-slate-700 underline cursor-pointer"
             >
-              دخول لوحة الأدمن لتعديل الأرقام
+              دخول لوحة الأدمن لتعديل الأسعار
             </button>
           </div>
         </form>

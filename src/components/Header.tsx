@@ -34,7 +34,7 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
+      <div className="max-w-7xl w-full mx-auto px-2.5 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-1.5 sm:gap-4 overflow-hidden">
         {/* Brand identity - اللوجو المطور وشارة علم العراق IQ */}
         <div 
           onClick={() => {
@@ -45,7 +45,7 @@ export const Header: React.FC<HeaderProps> = ({
           title="منصة المتفوق التعليمية - جمهورية العراق"
         >
           {/* أيقونة اللوجو الفخمة والواضحة */}
-          <div className="relative w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-emerald-500 via-teal-600 to-emerald-700 flex items-center justify-center text-white shadow-md shadow-emerald-600/30 ring-2 ring-emerald-200/90 group-hover:scale-105 transition-transform">
+          <div className="relative w-9 h-9 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-gradient-to-br from-emerald-500 via-teal-600 to-emerald-700 flex items-center justify-center text-white shadow-md shadow-emerald-600/30 ring-2 ring-emerald-200/90 group-hover:scale-105 transition-transform shrink-0">
             <GraduationCap className="w-6 h-6 sm:w-7 sm:h-7 text-white drop-shadow-xs" />
             <Sparkles className="w-3.5 h-3.5 text-amber-300 absolute -top-1 -right-1 animate-pulse" />
           </div>
@@ -58,7 +58,7 @@ export const Header: React.FC<HeaderProps> = ({
               </span>
 
               {/* شارة فيكة علم العراق و IQ المرتبة والجاذبة */}
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-900 border border-slate-700/80 text-white shadow-xs">
+              <div className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-900 border border-slate-700/80 text-white shadow-xs">
                 {/* مجسم علم العراق الصغير المصمم بدقة */}
                 <div 
                   className="w-4 h-3 rounded-[2.5px] overflow-hidden border border-white/50 shadow-2xs flex flex-col shrink-0" 
@@ -119,7 +119,7 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* User state & controls */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1 sm:gap-3 shrink-0">
           {/* Sound Toggle */}
           <button
             onClick={() => {
@@ -127,7 +127,7 @@ export const Header: React.FC<HeaderProps> = ({
               toggleSound();
             }}
             aria-label={soundOn ? 'كتم الصوت' : 'تفعيل أصوات النظام'}
-            className="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors cursor-pointer"
+            className="p-2 sm:p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors cursor-pointer shrink-0"
             title={soundOn ? 'الأصوات مفعلة' : 'الأصوات مكتومة'}
           >
             {soundOn ? (
@@ -140,7 +140,7 @@ export const Header: React.FC<HeaderProps> = ({
           {/* If Student is logged in */}
           {currentStudent ? (
             <div className="flex items-center gap-1.5 sm:gap-2.5">
-              <div className="flex items-center gap-2 bg-slate-50 hover:bg-slate-100/70 border border-slate-200/90 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-2xl transition-all shadow-2xs">
+              <div className="flex items-center gap-1.5 sm:gap-2 bg-slate-50 hover:bg-slate-100/70 border border-slate-200/90 px-2 py-1 sm:px-3 sm:py-1.5 rounded-xl sm:rounded-2xl transition-all shadow-2xs min-w-0">
                 <span className="text-2xl sm:text-3xl shrink-0" role="img" aria-label="avatar">
                   {currentStudent.avatar}
                 </span>

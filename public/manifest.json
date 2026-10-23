@@ -1,12 +1,20 @@
 {
-  "name": "منصة المتفوق التعليمية العراقية",
   "short_name": "المتفوق",
-  "description": "المنصة التعليمية العراقية الرائدة للمرحلة الابتدائية - مناهج تفاعلية، نطق صوتي، وشروحات مرئية",
+  "name": "منصة المتفوق التعليمية العراقية",
+  "description": "المنهاج الرسمي لوزارة التربية العراقية للمرحلة الابتدائية (١ - ٦)",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "192x192 512x512",
+      "purpose": "any maskable"
+    }
+  ],
   "start_url": "/",
-  "display": "standalone",
-  "orientation": "any",
-  "background_color": "#0f172a",
+  "background_color": "#059669",
   "theme_color": "#059669",
-  "lang": "ar",
-  "dir": "rtl"
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "dir": "rtl",
+  "lang": "ar"
 }

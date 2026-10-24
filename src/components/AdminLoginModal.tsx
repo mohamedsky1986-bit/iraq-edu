@@ -26,35 +26,8 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
     const cleanUser = (username || '').trim().toLowerCase();
     const cleanPass = (password || '').trim();
 
-    // 1. تجربة الدخول المباشر
-    let res: any = loginAdmin(cleanUser, cleanPass);
-    let isSuccess = res === true || (res && res.success === true);
-
-    // 2. إذا فشل بسبب اختلاف المسميات في السيرفر (admin / iraq2026 / admin123)
-    if (!isSuccess) {
-      const allowedUsers = ['admin', 'mohamedsky1986@gmail.com'];
-      const allowedPasswords = ['admin123', 'iraq2026', 'admin'];
-
-      if (
-        (allowedUsers.includes(cleanUser) || cleanUser.includes('mohamedsky')) &&
-        allowedPasswords.includes(cleanPass)
-      ) {
-        const fallbackVariants = [
-          ['admin', 'iraq2026'],
-          ['admin', 'admin123'],
-          ['mohamedsky1986@gmail.com', 'admin123'],
-          ['mohamedsky1986@gmail.com', 'iraq2026'],
-        ];
-
-        for (const [u, p] of fallbackVariants) {
-          const fbRes: any = loginAdmin(u, p);
-          if (fbRes === true || (fbRes && fbRes.success === true)) {
-            isSuccess = true;
-            break;
-          }
-        }
-      }
-    }
+    const res: any = loginAdmin(cleanUser, cleanPass);
+    const isSuccess = res === true || (res && res.success === true);
 
     if (isSuccess) {
       playCorrectSound();
@@ -64,7 +37,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
       onClose();
     } else {
       playWrongSound();
-      setErrorMsg('بيانات الدخول غير صحيحة، يرجى كتابة admin والرمز: admin123 أو iraq2026');
+      setErrorMsg((res && res.error) ? res.error : 'بيانات الدخول غير صحيحة، يرجى التأكد من اسم المشرف وكلمة المرور السرية.');
     }
   };
 
@@ -164,3 +137,4 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
 };
 
 export default AdminLoginModal;
+
